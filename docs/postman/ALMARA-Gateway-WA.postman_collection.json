@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "ALMARA Gateway WA",
+    "description": "REST API v1 \u2014 @2026-Alifiandra",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Kirim pesan teks",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/messages/send",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "messages",
+            "send"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"081234567890\",\n  \"message\": \"Halo, ini pesan uji.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Daftar pesan",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/messages?status=sent&per_page=20",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "messages"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "sent"
+            },
+            {
+              "key": "per_page",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Detail pesan",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/messages/msg_xxx",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "messages",
+            "msg_xxx"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Daftar perangkat",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/devices",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "devices"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request tidak valid.",
+    "details": { "to": ["Field tujuan wajib diisi."] }
+  },
+  "meta": { "request_id": "req_01jexample0000000000000000" }
+}

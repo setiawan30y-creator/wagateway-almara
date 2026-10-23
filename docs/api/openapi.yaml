@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: ALMARA Gateway WA API
+  version: 0.1.0
+  description: |
+    REST API sederhana untuk mengirim pesan WhatsApp melalui instalasi ALMARA Gateway WA (self-hosted).
+    Semua respons memakai envelope `success` / `data` / `error` / `meta`.
+    Status: **versi awal (0.1.0)** — hanya endpoint di dokumen ini yang sudah diimplementasikan.
+
+    @2026-Alifiandra
+servers:
+  - url: http://wagateway-almara.test/api
+    description: Lokal (Laragon)
+  - url: https://wa.domain-anda.com/api
+    description: Produksi (contoh)
+security:
+  - BearerApiKey: []
+  - HeaderApiKey: []
+tags:
+  - name: Messages
+  - name: Devices
+  - name: Webhooks
+paths:
+  /v1/messages/send:
+    post:
+      tags: [Messages]
+      summary: Kirim pesan teks
+      description: |
+        Menyimpan pesan ke antrean lalu mengirimkannya lewat perangkat yang dipilih (atau perangkat utama).
+        Dengan `QUEUE_CONNECTION=sync` pengiriman terjadi langsung sehingga `status` sudah `sent`/`failed` di respons.
+        Dengan queue worker, `status` awal adalah `queued`.
+      operationId: sendMessage
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendMessageRequest' }
+            example: { to: '081234567890', message: 'Halo, ini pesan uji.' }
+      responses:
+        '202':
+          description: Pesan diterima
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageEnvelope' }
+        '200':
+          description: Replay idempotency — pesan dengan Idempotency-Key yang sama sudah pernah dibuat
+          headers:
+            Idempotent-Replayed: { schema: { type: string, example: 'true' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /v1/messages:
+    get:
+      tags: [Messages]
+      summary: Daftar pesan
+      operationId: listMessages
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [queued, sent, delivered, read, failed] } }
+        - { name: to, in: query, schema: { type: string }, description: Nomor tujuan (dinormalisasi) }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageListEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /v1/messages/{id}:
+    get:
+      tags: [Messages]
+      summary: Detail pesan
+      operationId: getMessage
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, example: msg_01jexample } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/devices:
+    get:
+      tags: [Devices]
+      summary: Daftar perangkat
+      description: Kredensial provider tidak pernah dikembalikan.
+      operationId: listDevices
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/EnvelopeBase'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Device' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /webhooks/meta:
+    get:
+      tags: [Webhooks]
+      summary: Verifikasi webhook Meta
+      security: []
+      parameters:
+        - { name: hub.mode, in: query, schema: { type: string } }
+        - { name: hub.verify_token, in: query, schema: { type: string } }
+        - { name: hub.challenge, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Mengembalikan hub.challenge, content: { text/plain: { schema: { type: string } } } }
+        '403': { description: Token tidak cocok }
+    post:
+      tags: [Webhooks]
+      summary: Terima event Meta (status pesan)
+      description: Divalidasi dengan header `X-Hub-Signature-256` bila `META_APP_SECRET` diisi. Status tidak pernah mundur (callback duplikat/out-of-order diabaikan).
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Diterima }
+        '401': { description: Signature tidak valid }
+components:
+  securitySchemes:
+    BearerApiKey:
+      type: http
+      scheme: bearer
+      description: 'API key dari menu API Key, mis. `Authorization: Bearer alm_xxx`'
+    HeaderApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Kunci unik (maks. 100 karakter) untuk mencegah pengiriman ganda saat client melakukan retry.
+      schema: { type: string, maxLength: 100 }
+  schemas:
+    SendMessageRequest:
+      type: object
+      required: [to, message]
+      properties:
+        to: { type: string, maxLength: 30, description: 'Nomor tujuan. 08xx / 628xx / +628xx dinormalisasi ke 628xx.' }
+        message: { type: string, maxLength: 4096 }
+        device_id: { type: integer, nullable: true, description: Bila kosong memakai perangkat utama. }
+    Message:
+      type: object
+      properties:
+        id: { type: string, example: msg_01jexample }
+        to: { type: string, example: '6281234567890' }
+        body: { type: string }
+        status: { type: string, enum: [queued, sent, delivered, read, failed] }
+        device_id: { type: integer, nullable: true }
+        provider_message_id: { type: string, nullable: true }
+        error: { type: string, nullable: true }
+        sent_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Device:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        provider: { type: string, enum: [log, meta, qr] }
+        phone_number: { type: string, nullable: true }
+        status: { type: string, enum: [connected, disconnected, unknown] }
+        is_default: { type: boolean }
+        is_active: { type: boolean }
+        last_seen_at: { type: string, format: date-time, nullable: true }
+    Meta:
+      type: object
+      properties:
+        request_id: { type: string, example: req_01jexample }
+    EnvelopeBase:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        meta: { $ref: '#/components/schemas/Meta' }
+    MessageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Message' }
+    MessageListEnvelope:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { type: array, items: { $ref: '#/components/schemas/Message' } }
+        meta:
+          type: object
+          properties:
+            request_id: { type: string }
+            pagination:
+              type: object
+              properties:
+                current_page: { type: integer }
+                per_page: { type: integer }
+                total: { type: integer }
+                last_page: { type: integer }
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            code: { type: string, example: VALIDATION_ERROR }
+            message: { type: string }
+            details: { type: object, additionalProperties: true, nullable: true }
+        meta: { $ref: '#/components/schemas/Meta' }
+  responses:
+    Unauthenticated:
+      description: API key tidak ada / tidak valid / dicabut
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource / perangkat tidak ditemukan (`NOT_FOUND`, `DEVICE_NOT_FOUND`)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Idempotency-Key dipakai untuk request berbeda (`IDEMPOTENCY_CONFLICT`)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    ValidationError:
+      description: Request tidak valid (`VALIDATION_ERROR`)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    RateLimited:
+      description: Melebihi batas request per menit (`RATE_LIMITED`)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

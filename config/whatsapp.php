@@ -1,0 +1,46 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| ALMARA Gateway WA — konfigurasi
+|--------------------------------------------------------------------------
+| @2026-Alifiandra
+*/
+
+return [
+
+    'version' => '0.1.0',
+
+    // Kode negara default untuk normalisasi nomor lokal (08xx -> 628xx)
+    'default_country_code' => env('WA_DEFAULT_COUNTRY_CODE', '62'),
+
+    // Batas request API per API key per menit
+    'api_rate_limit' => (int) env('WA_API_RATE_LIMIT', 60),
+
+    // Panjang maksimum isi pesan teks
+    'max_text_length' => 4096,
+
+    'providers' => [
+        'log' => [
+            'label' => 'Simulasi (Log)',
+            'class' => App\WhatsApp\Providers\LogProvider::class,
+        ],
+        'meta' => [
+            'label' => 'Meta Cloud API (resmi)',
+            'class' => App\WhatsApp\Providers\MetaCloudProvider::class,
+        ],
+        'qr' => [
+            'label' => 'QR Multi-Device Engine (HTTP)',
+            'class' => App\WhatsApp\Providers\QrEngineProvider::class,
+        ],
+    ],
+
+    'meta' => [
+        'graph_url' => env('META_GRAPH_URL', 'https://graph.facebook.com'),
+        'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
+        'webhook_verify_token' => env('META_WEBHOOK_VERIFY_TOKEN'),
+        'app_secret' => env('META_APP_SECRET'),
+    ],
+
+    'http_timeout' => (int) env('WA_HTTP_TIMEOUT', 20),
+];
