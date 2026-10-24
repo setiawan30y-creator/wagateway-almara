@@ -66,12 +66,24 @@ class QrWebhookController extends Controller
 
         $data = $request->validate([
             'from' => ['required', 'string', 'max:40'],
-            'message' => ['required', 'string', 'max:10000'],
+            'message' => ['required_without:media', 'nullable', 'string', 'max:10000'],
             'id' => ['nullable', 'string', 'max:191'],
             'name' => ['nullable', 'string', 'max:150'],
+            'media' => ['nullable', 'array'],
+            'media.mime' => ['required_with:media', 'string', 'max:100'],
+            'media.name' => ['nullable', 'string', 'max:191'],
+            'media.data' => ['required_with:media', 'string'],
         ]);
 
-        $message = $inbound->receive($device, $data['from'], $data['message'], $data['id'] ?? null, $data['name'] ?? null);
+        $media = null;
+        if (! empty($data['media'])) {
+            $binary = base64_decode($data['media']['data'], true);
+            if ($binary !== false && strlen($binary) <= \App\Services\MediaStorage::MAX_KB * 1024) {
+                $media = app(\App\Services\MediaStorage::class)->storeBinary($binary, $data['media']['mime'], $data['media']['name'] ?? null);
+            }
+        }
+
+        $message = $inbound->receive($device, $data['from'], (string) ($data['message'] ?? ''), $data['id'] ?? null, $data['name'] ?? null, $media);
 
         return response()->json(['received' => true, 'message_id' => $message?->public_id]);
     }

@@ -68,6 +68,45 @@ class MessageController extends Controller
         return ApiResponse::success($message->toApiArray(), 202);
     }
 
+    /** Kirim media (multipart/form-data): to, file, caption?, device_id? */
+    public function media(Request $request, MessageService $service, \App\Services\MediaStorage $storage): JsonResponse
+    {
+        /** @var ApiKey $apiKey */
+        $apiKey = $request->attributes->get('api_key');
+
+        $data = $request->validate([
+            'to' => ['required', 'string', 'max:30'],
+            'file' => ['required', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
+            'caption' => ['nullable', 'string', 'max:1024'],
+            'device_id' => ['nullable', 'integer'],
+        ]);
+
+        $to = PhoneNumber::normalize($data['to']);
+
+        if (! PhoneNumber::isValid($to)) {
+            return ApiResponse::error('VALIDATION_ERROR', 'Request tidak valid.', 422, ['to' => ['Nomor WhatsApp tidak valid.']]);
+        }
+
+        $device = isset($data['device_id']) ? Device::where('is_active', true)->find($data['device_id']) : Device::resolveDefault();
+
+        if (! $device) {
+            return ApiResponse::error('DEVICE_NOT_FOUND', 'Perangkat aktif tidak ditemukan.', 404);
+        }
+
+        if ($key = $request->header('Idempotency-Key')) {
+            $existing = Message::where('api_key_id', $apiKey->id)->where('idempotency_key', mb_substr(trim($key), 0, 100))->first();
+
+            if ($existing) {
+                return ApiResponse::success($existing->toApiArray(), 200, [], ['Idempotent-Replayed' => 'true']);
+            }
+        }
+
+        $media = $storage->storeUpload($request->file('file'));
+        $message = $service->queueText($device, $to, (string) ($data['caption'] ?? ''), $apiKey->user, $apiKey, $key ? mb_substr(trim($key), 0, 100) : null, ['media' => $media]);
+
+        return ApiResponse::success($message->toApiArray(), 202);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $data = $request->validate([

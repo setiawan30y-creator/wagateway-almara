@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware(['api.log', 'api.key', 'throttle:wa-api'])->group(function () {
     Route::post('/messages/send', [MessageController::class, 'send']);
+    Route::post('/messages/media', [MessageController::class, 'media']);
     Route::get('/messages', [MessageController::class, 'index']);
     Route::get('/messages/{id}', [MessageController::class, 'show']);
 
@@ -37,6 +38,11 @@ Route::prefix('v1')->middleware(['api.log', 'api.key', 'throttle:wa-api'])->grou
     Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy'])->whereNumber('id');
 
     Route::get('/analytics', [AnalyticsController::class, 'index']);
+
+    Route::get('/smart-links', [\App\Http\Controllers\Api\V1\SmartLinkController::class, 'index']);
+
+    Route::get('/tickets', [\App\Http\Controllers\Api\V1\TicketController::class, 'index']);
+    Route::post('/tickets', [\App\Http\Controllers\Api\V1\TicketController::class, 'store']);
 });
 
 // Webhook masuk dari provider (tanpa API key; diamankan token/signature)

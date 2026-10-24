@@ -83,7 +83,7 @@ class Conversation extends Model
         $inbound = $message->direction === 'in';
 
         $this->forceFill([
-            'last_message_preview' => mb_substr($message->body, 0, 250),
+            'last_message_preview' => mb_substr($message->preview(), 0, 250),
             'last_direction' => $message->direction,
             'last_message_at' => $message->created_at ?? now(),
             'last_inbound_at' => $inbound ? now() : $this->last_inbound_at,

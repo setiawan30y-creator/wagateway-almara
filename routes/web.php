@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
+// Smart Link publik (tanpa login)
+Route::get('/l/{slug}', [\App\Http\Controllers\SmartLinkController::class, 'go'])->where('slug', '[A-Za-z0-9-]+')->name('smart-links.go')->middleware('throttle:120,1');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
@@ -59,6 +62,14 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/kontak/{contact}/tahap', [ContactController::class, 'stage'])->name('contacts.stage');
     Route::delete('/kontak/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy')->middleware('can:admin');
 
+    // Tiket
+    Route::get('/tiket', [\App\Http\Controllers\TicketController::class, 'index'])->name('tickets.index');
+    Route::get('/tiket/buat', [\App\Http\Controllers\TicketController::class, 'create'])->name('tickets.create');
+    Route::post('/tiket', [\App\Http\Controllers\TicketController::class, 'store'])->name('tickets.store');
+    Route::get('/tiket/{ticket}', [\App\Http\Controllers\TicketController::class, 'show'])->name('tickets.show');
+    Route::patch('/tiket/{ticket}', [\App\Http\Controllers\TicketController::class, 'update'])->name('tickets.update');
+    Route::post('/tiket/{ticket}/catatan', [\App\Http\Controllers\TicketController::class, 'note'])->name('tickets.note');
+
     // Kirim & riwayat
     Route::get('/kirim', [SendController::class, 'create'])->name('send.create');
     Route::post('/kirim', [SendController::class, 'store'])->name('send.store');
@@ -66,6 +77,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/pesan/export', [MessageController::class, 'export'])->name('messages.export');
     Route::get('/pesan/{message}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/pesan/{message}/ulang', [MessageController::class, 'retry'])->name('messages.retry');
+
+    Route::get('/media/{message}', [\App\Http\Controllers\MediaController::class, 'show'])->name('media.show');
 
     // Notifikasi & akun
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
@@ -91,6 +104,23 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/broadcast/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
         Route::post('/broadcast/{campaign}/{action}', [CampaignController::class, 'action'])->whereIn('action', ['start', 'pause', 'resume', 'cancel', 'run'])->name('campaigns.action');
         Route::delete('/broadcast/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+
+        Route::get('/smart-link', [\App\Http\Controllers\SmartLinkController::class, 'index'])->name('smart-links.index');
+        Route::get('/smart-link/buat', [\App\Http\Controllers\SmartLinkController::class, 'create'])->name('smart-links.create');
+        Route::post('/smart-link', [\App\Http\Controllers\SmartLinkController::class, 'store'])->name('smart-links.store');
+        Route::get('/smart-link/{smartLink}', [\App\Http\Controllers\SmartLinkController::class, 'show'])->name('smart-links.show');
+        Route::get('/smart-link/{smartLink}/ubah', [\App\Http\Controllers\SmartLinkController::class, 'edit'])->name('smart-links.edit');
+        Route::put('/smart-link/{smartLink}', [\App\Http\Controllers\SmartLinkController::class, 'update'])->name('smart-links.update');
+        Route::delete('/smart-link/{smartLink}', [\App\Http\Controllers\SmartLinkController::class, 'destroy'])->name('smart-links.destroy');
+
+        Route::get('/auto-reply', [\App\Http\Controllers\AutoReplyController::class, 'index'])->name('auto-replies.index');
+        Route::get('/auto-reply/buat', [\App\Http\Controllers\AutoReplyController::class, 'create'])->name('auto-replies.create');
+        Route::post('/auto-reply/uji', [\App\Http\Controllers\AutoReplyController::class, 'test'])->name('auto-replies.test');
+        Route::post('/auto-reply', [\App\Http\Controllers\AutoReplyController::class, 'store'])->name('auto-replies.store');
+        Route::get('/auto-reply/{autoReply}/ubah', [\App\Http\Controllers\AutoReplyController::class, 'edit'])->name('auto-replies.edit');
+        Route::put('/auto-reply/{autoReply}', [\App\Http\Controllers\AutoReplyController::class, 'update'])->name('auto-replies.update');
+        Route::post('/auto-reply/{autoReply}/toggle', [\App\Http\Controllers\AutoReplyController::class, 'toggle'])->name('auto-replies.toggle');
+        Route::delete('/auto-reply/{autoReply}', [\App\Http\Controllers\AutoReplyController::class, 'destroy'])->name('auto-replies.destroy');
 
         Route::get('/perangkat', [DeviceController::class, 'index'])->name('devices.index');
         Route::get('/perangkat/tambah', [DeviceController::class, 'create'])->name('devices.create');

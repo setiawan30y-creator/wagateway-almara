@@ -47,7 +47,11 @@ class SendWhatsAppMessage implements ShouldQueue
         $message->increment('attempts');
 
         try {
-            $result = $providers->for($device)->sendText($device, $message->to, $message->body);
+            $provider = $providers->for($device);
+            $media = $message->mediaFile();
+            $result = $media
+                ? $provider->sendMedia($device, $message->to, $media, $message->body !== '' ? $message->body : null)
+                : $provider->sendText($device, $message->to, $message->body);
         } catch (Throwable $e) {
             Log::error('[WA] Gagal mengirim pesan', ['message' => $message->public_id, 'error' => $e->getMessage()]);
             $result = SendResult::failure('Kesalahan internal saat mengirim pesan.');

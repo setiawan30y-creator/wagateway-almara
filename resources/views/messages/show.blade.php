@@ -33,7 +33,7 @@
     </div>
     <div class="card">
         <div class="card-h">Isi pesan</div>
-        <div class="card-b"><pre class="code" style="white-space:pre-wrap;font-family:inherit;font-size:13px">{{ $message->body }}</pre></div>
+        <div class="card-b">@include('partials.media', ['m' => $message])<pre class="code" style="white-space:pre-wrap;font-family:inherit;font-size:13px;margin-top:6px">{{ $message->body }}</pre></div>
     </div>
 </div>
 @endsection

@@ -1,6 +1,6 @@
 # ALMARA Gateway WA — Dokumentasi API
 
-Versi API: **v1** (aplikasi 0.2.0) · Base URL: `{APP_URL}/api`
+Versi API: **v1** (aplikasi 0.4.0) · Base URL: `{APP_URL}/api`
 
 | Method | Path | Fungsi | Status |
 |---|---|---|---|
@@ -15,7 +15,10 @@ Versi API: **v1** (aplikasi 0.2.0) · Base URL: `{APP_URL}/api`
 | GET | `/v1/analytics` | Ringkasan analitik | ✅ tersedia |
 | GET/POST | `/webhooks/meta` | Webhook Meta (pesan masuk + status) | ✅ tersedia |
 | POST | `/webhooks/qr/{device}` | Pesan masuk engine QR | ✅ tersedia |
-| POST | `/v1/messages/media`, `/v1/groups` | Roadmap blueprint | ⏳ belum |
+| POST | `/v1/messages/media` | Kirim media (multipart) | ✅ tersedia |
+| GET/POST | `/v1/tickets` | Tiket helpdesk | ✅ tersedia |
+| GET | `/v1/smart-links` | Smart link + statistik | ✅ tersedia |
+| GET | `/v1/groups` | Roadmap blueprint | ⏳ belum |
 
 Kontrak lengkap: [`openapi.yaml`](openapi.yaml) / [`openapi.json`](openapi.json) (dihasilkan dari YAML yang sama).
 Postman: [`../postman`](../postman).

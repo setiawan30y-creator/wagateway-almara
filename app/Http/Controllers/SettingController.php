@@ -33,7 +33,17 @@ class SettingController extends Controller
             'stop_reply' => ['nullable', 'string', 'max:1000'],
             'start_reply' => ['nullable', 'string', 'max:1000'],
             'auto_assign' => ['required', Rule::in(['none', 'round_robin'])],
-        ]);
+            'sla_urgent_hours' => ['required', 'integer', 'min:1', 'max:720'],
+            'sla_high_hours' => ['required', 'integer', 'min:1', 'max:720'],
+            'sla_normal_hours' => ['required', 'integer', 'min:1', 'max:720'],
+            'sla_low_hours' => ['required', 'integer', 'min:1', 'max:720'],
+            'work_days' => ['nullable', 'array'],
+            'work_days.*' => ['integer', 'between:1,7'],
+            'work_start' => ['required', 'date_format:H:i'],
+            'work_end' => ['required', 'date_format:H:i', 'after:work_start'],
+        ], [], ['work_end' => 'jam selesai kerja']);
+
+        $data['work_days'] = implode(',', $data['work_days'] ?? []);
 
         $data['quiet_hours_enabled'] = $request->boolean('quiet_hours_enabled') ? '1' : '0';
 

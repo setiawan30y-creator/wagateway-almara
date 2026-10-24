@@ -3,6 +3,7 @@
 namespace App\WhatsApp\Providers;
 
 use App\Models\Device;
+use App\Support\MediaFile;
 use App\WhatsApp\ConnectionStatus;
 use App\WhatsApp\Contracts\WhatsAppProvider;
 use App\WhatsApp\SendResult;
@@ -23,6 +24,13 @@ class LogProvider implements WhatsAppProvider
             'to' => $to,
             'length' => mb_strlen($body),
         ]);
+
+        return SendResult::success('sim_'.Str::lower(Str::random(16)));
+    }
+
+    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult
+    {
+        Log::info('[WA-SIMULASI] Media dikirim', ['device' => $device->name, 'to' => $to, 'type' => $media->type, 'size' => $media->size]);
 
         return SendResult::success('sim_'.Str::lower(Str::random(16)));
     }

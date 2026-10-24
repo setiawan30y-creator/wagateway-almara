@@ -21,5 +21,10 @@ Artisan::command('logs:prune {--days=30}', function () {
     $this->info("Log API dihapus: {$deleted}");
 })->purpose('Hapus log API lama');
 
+Artisan::command('tickets:escalate', function (\App\Services\TicketService $service) {
+    $this->info('Tiket dieskalasi: '.$service->escalateOverdue());
+})->purpose('Eskalasi tiket yang melewati SLA');
+
 Schedule::command('campaigns:run')->everyMinute()->withoutOverlapping();
+Schedule::command('tickets:escalate')->everyFiveMinutes();
 Schedule::command('logs:prune')->daily();

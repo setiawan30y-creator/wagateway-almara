@@ -39,6 +39,32 @@
         </div>
     </div>
 </div>
+<div class="grid grid-2" style="margin-top:10px">
+    <div class="card">
+        <div class="card-h">SLA tiket (jam)</div>
+        <div class="card-b grid grid-2" style="gap:0 10px">
+            @foreach (['urgent' => 'Urgent', 'high' => 'Tinggi', 'normal' => 'Normal', 'low' => 'Rendah'] as $k => $v)
+                <div class="field"><label>{{ $v }}</label><input class="input" type="number" min="1" max="720" name="sla_{{ $k }}_hours" value="{{ $s['sla_'.$k.'_hours'] }}" required></div>
+            @endforeach
+            <div class="hint" style="grid-column:1/-1">Tiket yang melewati SLA dieskalasi otomatis (prioritas naik + notifikasi admin) oleh scheduler.</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-h">Jam kerja (untuk auto-reply “di luar jam kerja”)</div>
+        <div class="card-b">
+            @php $days = explode(',', $s['work_days']); @endphp
+            <div class="checks" style="margin-bottom:8px">
+                @foreach ([1 => 'Sen', 2 => 'Sel', 3 => 'Rab', 4 => 'Kam', 5 => 'Jum', 6 => 'Sab', 7 => 'Min'] as $k => $v)
+                    <label><input type="checkbox" name="work_days[]" value="{{ $k }}" @checked(in_array((string) $k, $days, true))> {{ $v }}</label>
+                @endforeach
+            </div>
+            <div class="grid grid-2" style="gap:0 10px">
+                <div class="field"><label>Mulai</label><input class="input" type="time" name="work_start" value="{{ $s['work_start'] }}" required></div>
+                <div class="field"><label>Selesai</label><input class="input" type="time" name="work_end" value="{{ $s['work_end'] }}" required>@error('work_end')<div class="error-text">{{ $message }}</div>@enderror</div>
+            </div>
+        </div>
+    </div>
+</div>
 <div style="margin-top:10px"><button class="btn btn-primary" data-once>Simpan pengaturan</button></div>
 </form>
 @endsection

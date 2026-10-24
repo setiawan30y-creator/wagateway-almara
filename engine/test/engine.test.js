@@ -17,7 +17,7 @@ function setup() {
     createDriver: async (ctx) => {
       ctxRef = ctx;
       setTimeout(() => ctx.onQr('QR-STRING'), 0);
-      return { sendText: async (to, text) => ({ id: 'MSG-' + to }), logout: async () => {}, close: async () => {} };
+      return { sendText: async (to, text) => ({ id: 'MSG-' + to }), sendMedia: async (to, m) => ({ id: 'MED-' + m.type + '-' + m.buffer.length }), logout: async () => {}, close: async () => {} };
     },
   });
   const app = createApp({ manager, token: 'tok', toDataUrl: async (qr) => 'data:image/png;base64,' + Buffer.from(qr).toString('base64') });
@@ -52,6 +52,9 @@ test('alur pairing, kirim pesan, pesan masuk, logout', async () => {
 
   r = await (await fetch(base + '/send-message', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev1', to: '+62 812-3456-7890', message: 'Halo' }) })).json();
   assert.deepEqual(r, { success: true, id: 'MSG-6281234567890' });
+
+  r = await (await fetch(base + '/send-media', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev1', to: '6281234567890', type: 'image', mime: 'image/png', data: Buffer.from('abc').toString('base64') }) })).json();
+  assert.deepEqual(r, { success: true, id: 'MED-image-3' });
 
   ctx().onMessage({ from: '6281111111111', message: 'Pesan masuk', id: 'X1', name: 'Budi' });
   ctx().onStatus({ id: 'MSG-6281234567890', status: 'read' });

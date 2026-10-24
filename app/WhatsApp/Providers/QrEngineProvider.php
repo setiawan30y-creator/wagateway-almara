@@ -3,6 +3,7 @@
 namespace App\WhatsApp\Providers;
 
 use App\Models\Device;
+use App\Support\MediaFile;
 use App\WhatsApp\ConnectionStatus;
 use App\WhatsApp\Contracts\WhatsAppProvider;
 use App\WhatsApp\SendResult;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Http;
  *   GET  {base}/status?session= -> {"connected": bool, "message", "phone"}
  *   GET  {base}/qr?session=     -> {"qr": "data:image/png;base64,..." | teks QR, "connected"}
  *   POST {base}/send-message    {"session","to","message"} -> {"success", "id"}
+ *   POST {base}/send-media      {"session","to","type","mime","name","caption","data"(base64)}
  *   POST {base}/sessions/logout {"session"}
  * Event engine -> gateway: POST {APP_URL}/api/webhooks/qr/{device_id} (header X-Webhook-Token)
  *
@@ -48,6 +50,29 @@ class QrEngineProvider implements WhatsAppProvider
         $error = $response->json('message') ?? $response->json('error') ?? ('HTTP '.$response->status());
 
         return SendResult::failure('Engine QR: '.(is_string($error) ? $error : json_encode($error)), retryable: $response->serverError());
+    }
+
+    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult
+    {
+        try {
+            $response = $this->client($device)->timeout(120)->post('/send-media', [
+                'session' => $this->session($device),
+                'to' => $to,
+                'type' => $media->type,
+                'mime' => $media->mime,
+                'name' => $media->name,
+                'caption' => $caption,
+                'data' => $media->base64(),
+            ]);
+        } catch (ConnectionException $e) {
+            return SendResult::failure('Engine QR tidak dapat dihubungi. Pastikan engine berjalan (npm start di folder engine).', retryable: true);
+        }
+
+        if ($response->successful() && $response->json('success', true) !== false) {
+            return SendResult::success($response->json('id') ? (string) $response->json('id') : null);
+        }
+
+        return SendResult::failure('Engine QR: '.($response->json('message') ?? 'HTTP '.$response->status()), $response->serverError());
     }
 
     public function status(Device $device): ConnectionStatus

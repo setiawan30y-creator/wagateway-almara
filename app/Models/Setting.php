@@ -34,6 +34,13 @@ class Setting extends Model
         'stop_reply' => 'Anda telah berhenti berlangganan pesan dari kami. Balas MULAI untuk berlangganan kembali.',
         'start_reply' => 'Terima kasih, Anda kembali berlangganan informasi dari kami.',
         'auto_assign' => 'none', // none | round_robin
+        'sla_urgent_hours' => '4',
+        'sla_high_hours' => '8',
+        'sla_normal_hours' => '24',
+        'sla_low_hours' => '72',
+        'work_days' => '1,2,3,4,5,6', // 1 = Senin ... 7 = Minggu
+        'work_start' => '08:00',
+        'work_end' => '17:00',
     ];
 
     public static function get(string $key, ?string $default = null): ?string
@@ -56,6 +63,21 @@ class Setting extends Model
             ->filter()
             ->values()
             ->all();
+    }
+
+    /** Apakah sekarang di dalam jam kerja (untuk auto-reply di luar jam kerja)? */
+    public static function inWorkingHours(?\DateTimeInterface $at = null): bool
+    {
+        $now = $at ? \Illuminate\Support\Carbon::instance($at) : now();
+        $days = array_map('intval', array_filter(explode(',', (string) static::get('work_days'))));
+
+        if (! in_array($now->dayOfWeekIso, $days, true)) {
+            return false;
+        }
+
+        $t = $now->format('H:i');
+
+        return $t >= (string) static::get('work_start') && $t < (string) static::get('work_end');
     }
 
     /** Apakah waktu sekarang berada di jam tenang (quiet hours)? */

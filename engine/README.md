@@ -38,6 +38,7 @@ Biarkan jendela `npm start` tetap terbuka. Sesi tersimpan di `engine/storage/` s
 | GET | `/qr?session=` | QR (data URI PNG) atau status terhubung |
 | GET | `/status?session=` | Status koneksi + nomor |
 | POST | `/send-message` | Kirim teks `{session, to, message}` |
+| POST | `/send-media` | Kirim media `{session, to, type, mime, name, caption, data(base64)}` (maks. 16 MB) |
 | POST | `/sessions/logout` | Keluarkan nomor & hapus sesi |
 
 Header: `Authorization: Bearer <ENGINE_TOKEN>`.

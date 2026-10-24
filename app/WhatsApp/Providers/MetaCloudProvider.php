@@ -3,6 +3,7 @@
 namespace App\WhatsApp\Providers;
 
 use App\Models\Device;
+use App\Support\MediaFile;
 use App\WhatsApp\ConnectionStatus;
 use App\WhatsApp\Contracts\WhatsAppProvider;
 use App\WhatsApp\SendResult;
@@ -45,6 +46,69 @@ class MetaCloudProvider implements WhatsAppProvider
         $error = $response->json('error.message') ?? ('HTTP '.$response->status());
 
         return SendResult::failure('Meta: '.$error, retryable: $response->serverError() || $response->status() === 429);
+    }
+
+    /** Upload media ke Meta lalu kirim memakai media id (tidak perlu URL publik). */
+    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult
+    {
+        $phoneNumberId = $device->credential('phone_number_id');
+
+        if (! $phoneNumberId || ! $device->credential('access_token')) {
+            return SendResult::failure('Kredensial Meta belum lengkap (phone_number_id / access_token).');
+        }
+
+        try {
+            $upload = $this->client($device)
+                ->attach('file', $media->contents(), $media->name, ['Content-Type' => $media->mime])
+                ->post("{$phoneNumberId}/media", ['messaging_product' => 'whatsapp', 'type' => $media->mime]);
+
+            if (! $upload->successful() || ! $upload->json('id')) {
+                return SendResult::failure('Meta (upload media): '.($upload->json('error.message') ?? 'HTTP '.$upload->status()), $upload->serverError());
+            }
+
+            $object = ['id' => $upload->json('id')];
+            if ($caption && $media->type !== 'audio') {
+                $object['caption'] = $caption;
+            }
+            if ($media->type === 'document') {
+                $object['filename'] = $media->name;
+            }
+
+            $response = $this->client($device)->post("{$phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $to,
+                'type' => $media->type,
+                $media->type => $object,
+            ]);
+        } catch (ConnectionException $e) {
+            return SendResult::failure('Tidak dapat terhubung ke Meta Graph API.', retryable: true);
+        }
+
+        if ($response->successful()) {
+            return SendResult::success($response->json('messages.0.id'));
+        }
+
+        return SendResult::failure('Meta: '.($response->json('error.message') ?? 'HTTP '.$response->status()), $response->serverError() || $response->status() === 429);
+    }
+
+    /** Unduh media masuk dari Meta (media id -> URL -> biner). @return array{0:string,1:string}|null [data, mime] */
+    public function downloadMedia(Device $device, string $mediaId): ?array
+    {
+        try {
+            $meta = $this->client($device)->get($mediaId);
+            $url = $meta->json('url');
+
+            if (! $meta->successful() || ! $url || (int) $meta->json('file_size', 0) > \App\Services\MediaStorage::MAX_KB * 1024) {
+                return null;
+            }
+
+            $file = \Illuminate\Support\Facades\Http::withToken((string) $device->credential('access_token'))->timeout(60)->get($url);
+
+            return $file->successful() ? [$file->body(), (string) ($meta->json('mime_type') ?? $file->header('Content-Type'))] : null;
+        } catch (ConnectionException $e) {
+            return null;
+        }
     }
 
     public function status(Device $device): ConnectionStatus

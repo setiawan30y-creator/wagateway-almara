@@ -16,6 +16,8 @@ class Webhook extends Model
         'message.status' => 'Status pesan berubah',
         'contact.opted_out' => 'Kontak berhenti (opt-out)',
         'campaign.finished' => 'Campaign selesai / dijeda otomatis',
+        'ticket.created' => 'Tiket dibuat',
+        'ticket.updated' => 'Tiket diperbarui',
     ];
 
     protected $fillable = ['name', 'url', 'secret', 'events', 'is_active', 'last_status', 'last_called_at'];

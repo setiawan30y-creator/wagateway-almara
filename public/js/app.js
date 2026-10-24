@@ -197,3 +197,17 @@
     });
   });
 })();
+
+/* ---- Lampiran: tampilkan nama berkas terpilih ---- @2026-Alifiandra */
+(function () {
+  document.querySelectorAll('[data-file-input]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var label = input.closest('label');
+      var span = label && label.querySelector('[data-file-label]');
+      var f = input.files && input.files[0];
+      if (span) span.textContent = f ? (f.name.length > 22 ? f.name.slice(0, 20) + '…' : f.name) : 'Lampiran';
+      if (label) label.classList.toggle('has-file', !!f);
+      if (f && f.size > 16 * 1024 * 1024) { alert('Berkas maksimal 16 MB.'); input.value = ''; if (span) span.textContent = 'Lampiran'; label.classList.remove('has-file'); }
+    });
+  });
+})();

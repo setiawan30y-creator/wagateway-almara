@@ -13,12 +13,15 @@
             ['dashboard', 'Dashboard', 'home', 'dashboard', false],
             ['inbox.index', 'Inbox', 'inbox', 'inbox.*', false, $navCounts['inbox'] ?? 0],
             ['contacts.index', 'Kontak & CRM', 'contacts', 'contacts.*', false],
+            ['tickets.index', 'Tiket', 'ticket', 'tickets.*', false, $navCounts['tickets'] ?? 0],
             ['send.create', 'Kirim Pesan', 'send', 'send.*', false],
             ['messages.index', 'Riwayat', 'list', 'messages.*', false],
         ],
         'Growth' => [
             ['campaigns.index', 'Broadcast', 'broadcast', 'campaigns.*', true],
             ['templates.index', 'Template', 'template', 'templates.*', true],
+            ['smart-links.index', 'Smart Link', 'link', 'smart-links.*', true],
+            ['auto-replies.index', 'Auto-Reply', 'bot', 'auto-replies.*', true],
         ],
         'Gateway' => [
             ['devices.index', 'Perangkat', 'device', 'devices.*', true],

@@ -4,6 +4,7 @@
 @section('crumb', 'Kontak / Detail')
 @section('actions')
     <form method="POST" action="{{ route('inbox.start') }}" class="inline">@csrf<input type="hidden" name="contact_id" value="{{ $contact->id }}"><button class="btn btn-primary">@include('partials.icon', ['n' => 'inbox']) Buka chat</button></form>
+    <a class="btn" href="{{ route('tickets.create', ['contact' => $contact->id]) }}">+ Tiket</a>
     <a class="btn" href="{{ route('contacts.edit', $contact) }}">Ubah</a>
     @can('admin')
         <form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="inline" data-confirm="Hapus kontak ini beserta percakapannya? Riwayat pesan tetap tersimpan.">@csrf @method('DELETE')<button class="btn btn-danger">Hapus</button></form>

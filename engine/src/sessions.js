@@ -152,6 +152,16 @@ export class SessionManager {
     return s.driver.sendText(to, text);
   }
 
+  async sendMedia(name, to, media) {
+    const s = this.get(name);
+    if (!s || s.state !== 'connected') {
+      const err = new Error('Sesi belum terhubung. Scan QR terlebih dahulu.');
+      err.status = 409;
+      throw err;
+    }
+    return s.driver.sendMedia(to, media);
+  }
+
   async logout(name) {
     const s = this.get(name);
     if (s?.driver) {

@@ -46,9 +46,10 @@ class InboxController extends Controller
     public function reply(Request $request, Conversation $conversation, MessageService $service)
     {
         $data = $request->validate([
-            'body' => ['required', 'string', 'max:'.config('whatsapp.max_text_length')],
+            'body' => ['required_without:file', 'nullable', 'string', 'max:'.config('whatsapp.max_text_length')],
+            'file' => ['nullable', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
             'device_id' => ['nullable', 'integer', 'exists:devices,id'],
-        ], [], ['body' => 'pesan']);
+        ], ['body.required_without' => 'Tulis pesan atau pilih lampiran.'], ['body' => 'pesan', 'file' => 'lampiran']);
 
         $device = isset($data['device_id'])
             ? Device::where('is_active', true)->findOrFail($data['device_id'])
@@ -57,7 +58,8 @@ class InboxController extends Controller
         abort_unless($device, 422, 'Belum ada perangkat aktif.');
 
         $contact = $conversation->contact;
-        $message = $service->queueText($device, $contact->phone, $data['body'], $request->user(), options: ['contact' => $contact]);
+        $media = $request->hasFile('file') ? app(\App\Services\MediaStorage::class)->storeUpload($request->file('file')) : null;
+        $message = $service->queueText($device, $contact->phone, (string) ($data['body'] ?? ''), $request->user(), options: ['contact' => $contact, 'media' => $media]);
 
         if (! $conversation->assigned_to) {
             $conversation->forceFill(['assigned_to' => $request->user()->id])->save();

@@ -431,3 +431,21 @@ img, svg, canvas { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Media pesan — @2026-Alifiandra */
+.media { margin-bottom: 4px; }
+.media img { display: block; max-width: 260px; max-height: 260px; border-radius: 6px; object-fit: cover; }
+.media video { display: block; max-width: 280px; border-radius: 6px; }
+.media audio { display: block; width: 260px; max-width: 100%; }
+.media .doc { display: inline-flex; gap: 6px; align-items: center; padding: 6px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); color: var(--text); max-width: 260px; }
+.media .doc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media .doc small { color: var(--muted); white-space: nowrap; }
+.attach { cursor: pointer; }
+.attach.has-file { border-color: var(--primary); color: var(--primary); }
+.st-tk-open::before { background: var(--warn); } .st-tk-pending::before { background: var(--info); }
+.st-tk-resolved::before { background: var(--ok); } .st-tk-closed::before { background: var(--muted); }
+
+.bubble { white-space: normal; }
+.bubble .txt { white-space: pre-wrap; }
+.note { white-space: normal; }
+.note .txt { white-space: pre-wrap; }

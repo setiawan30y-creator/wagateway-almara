@@ -380,6 +380,145 @@
           ]
         }
       }
+    },
+    {
+      "name": "Kirim media",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/messages/media",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "messages",
+            "media"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "to",
+              "value": "081234567890",
+              "type": "text"
+            },
+            {
+              "key": "caption",
+              "value": "Katalog terbaru",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Buat tiket",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/tickets",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "tickets"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"081234567890\",\n  \"subject\": \"Pesanan belum sampai\",\n  \"priority\": \"high\",\n  \"notify_customer\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Daftar tiket",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/tickets?status=open",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "tickets"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "open"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Daftar smart link",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/smart-links",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "smart-links"
+          ]
+        }
+      }
     }
   ]
 }

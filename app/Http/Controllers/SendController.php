@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Services\MediaStorage;
 use App\Services\MessageService;
 use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
@@ -30,8 +31,9 @@ class SendController extends Controller
         $data = $request->validate([
             'device_id' => ['required', 'integer', 'exists:devices,id'],
             'to' => ['required', 'string', 'max:2000'],
-            'message' => ['required', 'string', 'max:'.config('whatsapp.max_text_length')],
-        ], [], ['to' => 'nomor tujuan', 'message' => 'isi pesan', 'device_id' => 'perangkat']);
+            'message' => ['required_without:file', 'nullable', 'string', 'max:'.config('whatsapp.max_text_length')],
+            'file' => ['nullable', 'file', 'mimes:'.MediaStorage::EXTENSIONS, 'max:'.MediaStorage::MAX_KB],
+        ], ['message.required_without' => 'Isi pesan atau lampiran wajib diisi.'], ['to' => 'nomor tujuan', 'message' => 'isi pesan', 'device_id' => 'perangkat', 'file' => 'lampiran']);
 
         $device = Device::where('is_active', true)->findOrFail($data['device_id']);
 
@@ -53,7 +55,8 @@ class SendController extends Controller
             throw ValidationException::withMessages(['to' => 'Maksimal '.self::MAX_RECIPIENTS.' nomor per pengiriman.']);
         }
 
-        $messages = $numbers->map(fn ($n) => $service->queueText($device, $n, $data['message'], $request->user()));
+        $media = $request->hasFile('file') ? app(MediaStorage::class)->storeUpload($request->file('file')) : null;
+        $messages = $numbers->map(fn ($n) => $service->queueText($device, $n, (string) ($data['message'] ?? ''), $request->user(), options: ['media' => $media]));
 
         $sent = $messages->whereIn('status', ['sent', 'delivered', 'read'])->count();
         $failed = $messages->where('status', 'failed')->count();

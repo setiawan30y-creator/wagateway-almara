@@ -32,7 +32,7 @@
                     <td class="mono">{{ $m->maskedTo() }}</td>
                     <td class="hide-sm">{{ $m->device?->name ?? '—' }}</td>
                     <td><span class="badge st-{{ $m->status }}" @if ($m->error) title="{{ $m->error }}" @endif>{{ $m->status }}</span></td>
-                    <td class="msg hide-sm">{{ $m->body }}</td>
+                    <td class="msg hide-sm">{{ $m->preview() }}</td>
                     <td class="hide-sm"><span class="tag">{{ $m->direction === 'in' ? 'Masuk' : ($m->campaign_id ? 'Broadcast' : ($m->api_key_id ? 'API' : 'Panel')) }}</span></td>
                     <td class="right"><a class="btn btn-sm" href="{{ route('messages.show', $m) }}">Detail</a></td>
                 </tr>

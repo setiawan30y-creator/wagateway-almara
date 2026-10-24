@@ -1,5 +1,12 @@
 # Changelog API
 
+## 0.4.0 — 2026-10-24
+- `POST /v1/messages/media` — kirim gambar / dokumen / audio / video (multipart, maks. 16 MB); objek Message punya field `media`
+- Pesan masuk bermedia dari Meta & engine QR disimpan dan tampil di Inbox
+- `GET/POST /v1/tickets` — ticketing dengan SLA & eskalasi
+- `GET /v1/smart-links` — statistik klik / chat / konversi
+- Event webhook baru: `ticket.created`, `ticket.updated`
+
 ## 0.2.0 — 2026-10-24 (Fase MVP)
 - `GET/POST /v1/contacts` (upsert berdasarkan nomor, tag, consent)
 - `GET /v1/templates`

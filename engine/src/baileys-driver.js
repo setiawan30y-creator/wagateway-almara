@@ -10,8 +10,11 @@ export async function createBaileysDriver(ctx) {
   const {
     useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion,
     jidNormalizedUser, isJidGroup, isJidBroadcast, isJidStatusBroadcast, isPnUser,
-    normalizeMessageContent, getContentType,
+    normalizeMessageContent, getContentType, downloadMediaMessage,
   } = baileys;
+
+  const MAX_MEDIA = 16 * 1024 * 1024;
+  const MEDIA_KINDS = { imageMessage: 'image', videoMessage: 'video', audioMessage: 'audio', documentMessage: 'document', stickerMessage: 'image' };
 
   let sock = null;
   let stopped = false;
@@ -60,7 +63,7 @@ export async function createBaileysDriver(ctx) {
       }
     });
 
-    sock.ev.on('messages.upsert', ({ messages, type }) => {
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
 
       for (const m of messages) {
@@ -91,10 +94,27 @@ export async function createBaileysDriver(ctx) {
           stickerMessage: '[stiker]', locationMessage: '[lokasi]', contactMessage: '[kontak]',
         }[kind];
 
-        const body = [label, text].filter(Boolean).join(' ').trim();
-        if (!body) continue;
+        // Unduh media (maks. 16 MB) lalu teruskan sebagai base64 ke gateway
+        let media = null;
+        if (MEDIA_KINDS[kind]) {
+          const info = content[kind] || {};
+          const size = Number(info.fileLength || 0);
+          if (!size || size <= MAX_MEDIA) {
+            try {
+              const buf = await downloadMediaMessage(m, 'buffer', {}, { logger: ctx.logger, reuploadRequest: sock.updateMediaMessage });
+              if (buf && buf.length <= MAX_MEDIA) {
+                media = { type: MEDIA_KINDS[kind], mime: info.mimetype || 'application/octet-stream', name: info.fileName || null, data: Buffer.from(buf).toString('base64') };
+              }
+            } catch (e) {
+              ctx.logger.warn({ err: e?.message }, 'gagal mengunduh media masuk');
+            }
+          }
+        }
 
-        ctx.onMessage({ from: digits(jidNormalizedUser(pnJid)), message: body, id: m.key.id, name: m.pushName || null });
+        const body = (media ? text : [label, text].filter(Boolean).join(' ')).trim();
+        if (!body && !media) continue;
+
+        ctx.onMessage({ from: digits(jidNormalizedUser(pnJid)), message: body, id: m.key.id, name: m.pushName || null, media });
       }
     });
 
@@ -122,6 +142,23 @@ export async function createBaileysDriver(ctx) {
         throw err;
       }
       const sent = await sock.sendMessage(check?.jid || jid, { text });
+      return { id: sent?.key?.id || null };
+    },
+    async sendMedia(to, { type, mime, name, caption, buffer }) {
+      const number = String(to).replace(/\D/g, '');
+      const jid = `${number}@s.whatsapp.net`;
+      const [check] = (await sock.onWhatsApp(jid).catch(() => [])) || [];
+      if (check && check.exists === false) {
+        const err = new Error('Nomor tidak terdaftar di WhatsApp.');
+        err.status = 422;
+        throw err;
+      }
+      const content =
+        type === 'image' ? { image: buffer, caption: caption || undefined, mimetype: mime } :
+        type === 'video' ? { video: buffer, caption: caption || undefined, mimetype: mime } :
+        type === 'audio' ? { audio: buffer, mimetype: mime, ptt: /ogg|opus/.test(mime || '') } :
+        { document: buffer, mimetype: mime || 'application/octet-stream', fileName: name || 'berkas', caption: caption || undefined };
+      const sent = await sock.sendMessage(check?.jid || jid, content);
       return { id: sent?.key?.id || null };
     },
     async logout() {

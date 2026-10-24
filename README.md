@@ -5,6 +5,15 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 > Connect. Automate. Sell. Grow.  
 > Developer: **@2026-Alifiandra**
 
+## Baru di versi 0.4.0
+
+| Area | Isi |
+|---|---|
+| **Pesan media** | Kirim gambar, dokumen (PDF/Office/CSV/ZIP), audio, video — dari Kirim Pesan, Inbox (📎 Lampiran), dan API `POST /api/v1/messages/media`. Media masuk dari Meta & Scan QR tersimpan dan tampil di Inbox. Maks. 16 MB, disimpan privat. |
+| **Ticketing / Helpdesk** | Tiket dari chat atau manual, nomor otomatis `TCK-000001`, kategori, prioritas + SLA (atur di Pengaturan), penugasan, catatan & timeline, eskalasi otomatis bila lewat SLA, info ke pelanggan via WhatsApp, API. |
+| **Smart Link** | Link klik-ke-chat `/l/slug` dengan pesan otomatis, QR siap unduh, UTM, tag otomatis untuk lead, kedaluwarsa, statistik klik → chat → konversi. |
+| **Auto-Reply** | Balasan otomatis berdasarkan kata kunci (mengandung / sama persis / diawali), sambutan kontak baru, di luar jam kerja; cooldown per kontak, prioritas, tag otomatis, uji kata kunci. |
+
 ## Fitur versi 0.2.0 (Fase MVP blueprint)
 
 | Area | Isi |
@@ -22,7 +31,7 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 | Gateway (v0.1) | Multi perangkat, adapter Simulasi / Meta Cloud API / QR engine, kredensial terenkripsi, kirim pesan, riwayat, API key, PWA, 3 tema |
 | REST API `/api/v1` | messages, contacts, devices, templates, campaigns, webhooks, analytics — lihat `docs/api` |
 
-**Belum termasuk** (fase blueprint berikutnya, butuh layanan/keputusan tambahan): portal lisensi Free/Pro & pembayaran, AI Agent / RAG / Copilot (OpenRouter), Smart Voice, Smart Link, Ticketing, Workflow builder, Commerce, Flutter, SaaS multi-tenant. Pesan media (gambar/dokumen) & template resmi Meta juga belum.
+**Belum termasuk** (fase blueprint berikutnya, butuh layanan/keputusan tambahan): portal lisensi Free/Pro & pembayaran, AI Agent / RAG / Copilot (OpenRouter), Smart Voice, Workflow builder visual, Commerce, Flutter, SaaS multi-tenant. Template resmi Meta & broadcast bermedia juga belum.
 
 ## Kebutuhan
 

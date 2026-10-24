@@ -34,7 +34,7 @@ class Contact extends Model
 
     protected $fillable = [
         'name', 'phone', 'email', 'stage', 'source', 'consent', 'consent_at',
-        'assigned_to', 'notes', 'last_message_at',
+        'assigned_to', 'notes', 'last_message_at', 'smart_link_id',
     ];
 
     protected $attributes = [
@@ -68,6 +68,11 @@ class Contact extends Model
     public function conversation(): HasOne
     {
         return $this->hasOne(Conversation::class);
+    }
+
+    public function smartLink(): BelongsTo
+    {
+        return $this->belongsTo(SmartLink::class);
     }
 
     public function consentEvents(): HasMany

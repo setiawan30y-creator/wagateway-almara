@@ -44,7 +44,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with('navCounts', $user ? [
                 'notifications' => AppNotification::where('user_id', $user->id)->whereNull('read_at')->count(),
                 'inbox' => Conversation::where('unread_count', '>', 0)->count(),
-            ] : ['notifications' => 0, 'inbox' => 0]);
+                'tickets' => \App\Models\Ticket::overdue()->count(),
+            ] : ['notifications' => 0, 'inbox' => 0, 'tickets' => 0]);
         });
     }
 }

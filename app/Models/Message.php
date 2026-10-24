@@ -16,6 +16,7 @@ class Message extends Model
 
     protected $fillable = [
         'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'campaign_id', 'direction', 'to', 'body',
+        'media_type', 'media_path', 'media_name', 'media_mime', 'media_size',
         'status', 'provider_message_id', 'error', 'attempts', 'idempotency_key', 'sent_at',
     ];
 
@@ -47,6 +48,31 @@ class Message extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function hasMedia(): bool
+    {
+        return $this->media_type !== null && $this->media_path !== null;
+    }
+
+    public function mediaFile(): ?\App\Support\MediaFile
+    {
+        return $this->hasMedia()
+            ? new \App\Support\MediaFile($this->media_type, $this->media_path, (string) $this->media_name, (string) $this->media_mime, (int) $this->media_size)
+            : null;
+    }
+
+    public function mediaUrl(): ?string
+    {
+        return $this->hasMedia() ? route('media.show', $this) : null;
+    }
+
+    /** Teks ringkas untuk pratinjau (mis. "[gambar] keterangan"). */
+    public function preview(): string
+    {
+        $label = $this->hasMedia() ? '['.(\App\Support\MediaFile::LABELS[$this->media_type] ?? 'media').'] ' : '';
+
+        return trim($label.($this->hasMedia() && str_starts_with($this->body, '[') ? '' : $this->body));
     }
 
     public function contact(): BelongsTo
@@ -86,6 +112,12 @@ class Message extends Model
             'contact_id' => $this->contact_id,
             'campaign_id' => $this->campaign_id,
             'body' => $this->body,
+            'media' => $this->hasMedia() ? [
+                'type' => $this->media_type,
+                'name' => $this->media_name,
+                'mime' => $this->media_mime,
+                'size' => $this->media_size,
+            ] : null,
             'status' => $this->status,
             'device_id' => $this->device_id,
             'provider_message_id' => $this->provider_message_id,

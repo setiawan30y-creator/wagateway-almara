@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\Device;
 use App\Models\Message;
 use App\Models\User;
+use App\Support\MediaFile;
 use App\Support\PhoneNumber;
 
 /**
@@ -18,7 +19,7 @@ use App\Support\PhoneNumber;
 class MessageService
 {
     /**
-     * @param  array{user?: ?User, api_key?: ?ApiKey, idempotency_key?: ?string, campaign_id?: ?int, contact?: ?Contact, source?: string}  $options
+     * @param  array{campaign_id?: ?int, contact?: ?Contact, source?: string, media?: ?MediaFile}  $options
      */
     public function queueText(Device $device, string $to, string $body, ?User $user = null, ?ApiKey $apiKey = null, ?string $idempotencyKey = null, array $options = []): Message
     {
@@ -37,6 +38,11 @@ class MessageService
             'direction' => 'out',
             'to' => $phone,
             'body' => $body,
+            'media_type' => ($m = $options['media'] ?? null)?->type,
+            'media_path' => $m?->path,
+            'media_name' => $m?->name,
+            'media_mime' => $m?->mime,
+            'media_size' => $m?->size,
             'status' => 'queued',
             'idempotency_key' => $idempotencyKey,
         ]);

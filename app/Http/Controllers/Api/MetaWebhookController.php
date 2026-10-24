@@ -61,7 +61,9 @@ class MetaWebhookController extends Controller
                         }
 
                         $from = (string) data_get($msg, 'from');
-                        $inbound->receive($device, $from, $this->extractText((array) $msg), data_get($msg, 'id'), $names[$from] ?? null);
+                        $media = $this->fetchMedia($device, (array) $msg);
+                        $text = $media ? (string) data_get($msg, ($msg['type'] ?? '').'.caption', '') : $this->extractText((array) $msg);
+                        $inbound->receive($device, $from, $text, data_get($msg, 'id'), $names[$from] ?? null, $media);
                     }
                 }
             }
@@ -75,6 +77,21 @@ class MetaWebhookController extends Controller
         return Device::where('provider', 'meta')->where('is_active', true)->get()
             ->first(fn (Device $d) => (string) $d->credential('phone_number_id') === $phoneNumberId)
             ?? Device::where('provider', 'meta')->where('is_active', true)->orderByDesc('is_default')->first();
+    }
+
+    /** Unduh media masuk (gambar/video/audio/dokumen/stiker) dari Meta bila ada. */
+    private function fetchMedia(Device $device, array $msg): ?\App\Support\MediaFile
+    {
+        $type = $msg['type'] ?? null;
+
+        if (! in_array($type, ['image', 'video', 'audio', 'document', 'sticker'], true) || ! ($id = data_get($msg, $type.'.id'))) {
+            return null;
+        }
+
+        $provider = app(\App\WhatsApp\ProviderManager::class)->for($device);
+        $file = $provider instanceof \App\WhatsApp\Providers\MetaCloudProvider ? $provider->downloadMedia($device, (string) $id) : null;
+
+        return $file ? app(\App\Services\MediaStorage::class)->storeBinary($file[0], $file[1] ?: (string) data_get($msg, $type.'.mime_type', 'application/octet-stream'), data_get($msg, 'document.filename')) : null;
     }
 
     private function extractText(array $msg): string

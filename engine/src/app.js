@@ -5,6 +5,7 @@
  *   GET  /status?session=
  *   GET  /qr?session=      -> {qr: "data:image/png;base64,..."} atau connected
  *   POST /send-message     {session, to, message}
+ *   POST /send-media       {session, to, type, mime, name, caption, data(base64)}
  *   POST /sessions/logout  {session}
  * Semua kecuali /health wajib header: Authorization: Bearer <ENGINE_TOKEN>
  * @2026-Alifiandra
@@ -65,7 +66,7 @@ export function createApp({ manager, token, toDataUrl }) {
         return json(res, 401, { success: false, message: 'Token engine tidak valid.' });
       }
 
-      const body = req.method === 'POST' ? await readBody(req) : {};
+      const body = req.method === 'POST' ? await readBody(req, path === '/send-media' ? 24 * 1024 * 1024 : 64 * 1024) : {};
       const session = String(body.session ?? url.searchParams.get('session') ?? 'default');
 
       if (!SessionManager.validName(session)) {
@@ -97,6 +98,17 @@ export function createApp({ manager, token, toDataUrl }) {
           return json(res, 422, { success: false, message: 'Field to dan message wajib diisi.' });
         }
         const result = await manager.sendText(session, to, message);
+        return json(res, 200, { success: true, id: result.id });
+      }
+
+      if (req.method === 'POST' && path === '/send-media') {
+        const to = String(body.to || '').replace(/\D/g, '');
+        const type = ['image', 'video', 'audio', 'document'].includes(body.type) ? body.type : 'document';
+        const buffer = Buffer.from(String(body.data || ''), 'base64');
+        if (to.length < 8 || !buffer.length) {
+          return json(res, 422, { success: false, message: 'Field to dan data (base64) wajib diisi.' });
+        }
+        const result = await manager.sendMedia(session, to, { type, mime: body.mime, name: body.name, caption: body.caption, buffer });
         return json(res, 200, { success: true, id: result.id });
       }
 

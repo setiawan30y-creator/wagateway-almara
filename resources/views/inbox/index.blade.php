@@ -79,7 +79,7 @@
                 @forelse ($thread as $m)
                     @php $day = $m->created_at->format('d M Y'); @endphp
                     @if ($day !== $lastDay)<span class="day-sep">{{ $m->created_at->isToday() ? 'Hari ini' : $day }}</span>@php $lastDay = $day; @endphp @endif
-                    <div class="bubble {{ $m->direction === 'in' ? 'in' : 'out' }}">{{ $m->body }}<span class="meta">
+                    <div class="bubble {{ $m->direction === 'in' ? 'in' : 'out' }}">@include('partials.media', ['m' => $m])<span class="txt">{{ $m->hasMedia() && preg_match('/^\[[a-z]+\]$/', $m->body) ? '' : $m->body }}</span><span class="meta">
                         @if ($m->campaign_id)<span class="tag">broadcast</span>@endif
                         @if ($m->direction === 'out' && $m->user)<span>{{ $m->user->name }} ·</span>@endif
                         {{ $m->created_at->format('H:i') }}
@@ -99,11 +99,13 @@
                 <div class="window-warn">Kontak ini sudah berhenti berlangganan (opt-out). Balas hanya untuk keperluan layanan.</div>
             @endif
 
-            <form class="composer" method="POST" action="{{ route('inbox.reply', $conversation) }}">
+            <form class="composer" method="POST" action="{{ route('inbox.reply', $conversation) }}" enctype="multipart/form-data">
                 @csrf
                 <div style="display:flex;flex-direction:column;gap:4px;flex:1">
-                    <textarea class="input" id="reply-body" name="body" placeholder="Tulis balasan… (Enter kirim, Shift+Enter baris baru)" data-enter-submit required maxlength="{{ config('whatsapp.max_text_length') }}"></textarea>
-                    <div style="display:flex;gap:4px;flex-wrap:wrap">
+                    <textarea class="input" id="reply-body" name="body" placeholder="Tulis balasan… (Enter kirim, Shift+Enter baris baru)" data-enter-submit maxlength="{{ config('whatsapp.max_text_length') }}"></textarea>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+                        <label class="btn btn-sm attach" title="Lampirkan gambar / dokumen / audio / video">📎 <span data-file-label>Lampiran</span>
+                            <input type="file" name="file" hidden data-file-input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.mp3,.ogg,.m4a,.aac,.amr,.opus,.mp4,.3gp"></label>
                         @if ($templates->isNotEmpty())
                             <select class="input" style="width:auto;height:24px;font-size:11.5px" data-quick-reply="#reply-body">
                                 <option value="">Balasan cepat…</option>
@@ -136,7 +138,14 @@
                 @if ($contact->email)<div class="muted" style="font-size:12px">{{ $contact->email }}</div>@endif
                 <div style="margin-top:5px"><span class="tag">{{ $contact->stageLabel() }}</span></div>
                 <div style="margin-top:5px">@foreach ($contact->tags as $tg)<span class="chip">{{ $tg->name }}</span>@endforeach</div>
-                <a class="btn btn-sm" style="margin-top:6px" href="{{ route('contacts.edit', $contact) }}">Ubah kontak</a>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
+                    <a class="btn btn-sm" href="{{ route('contacts.edit', $contact) }}">Ubah kontak</a>
+                    <a class="btn btn-sm" href="{{ route('tickets.create', ['conversation' => $conversation->id]) }}">+ Tiket</a>
+                </div>
+                @php $openTickets = \App\Models\Ticket::where('contact_id', $contact->id)->open()->latest('id')->limit(3)->get(); @endphp
+                @foreach ($openTickets as $tk)
+                    <div style="margin-top:5px;font-size:12px"><a class="mono" href="{{ route('tickets.show', $tk) }}">{{ $tk->number }}</a> {{ \Illuminate\Support\Str::limit($tk->subject, 28) }} @if ($tk->isOverdue())<span style="color:var(--err)">• lewat SLA</span>@endif</div>
+                @endforeach
             </div>
             <div class="side-sec">
                 <h4>Ditugaskan ke</h4>
@@ -156,7 +165,7 @@
                     <button class="btn btn-sm" style="margin-top:4px">Simpan catatan</button>
                 </form>
                 @foreach ($conversation->notes as $note)
-                    <div class="note">{{ $note->body }}<small>{{ $note->user?->name ?? 'Sistem' }} · {{ $note->created_at->format('d/m H:i') }}</small></div>
+                    <div class="note"><span class="txt">{{ $note->body }}</span><small>{{ $note->user?->name ?? 'Sistem' }} · {{ $note->created_at->format('d/m H:i') }}</small></div>
                 @endforeach
             </div>
             @if ($contact->notes)
