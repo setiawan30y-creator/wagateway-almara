@@ -132,6 +132,254 @@
           ]
         }
       }
+    },
+    {
+      "name": "Daftar kontak",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/contacts?tag=vip&per_page=20",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "contacts"
+          ],
+          "query": [
+            {
+              "key": "tag",
+              "value": "vip"
+            },
+            {
+              "key": "per_page",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Upsert kontak",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/contacts",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "contacts"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"081234567890\",\n  \"name\": \"Nama Pelanggan\",\n  \"tags\": [\n    \"vip\"\n  ],\n  \"consent\": \"opted_in\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Daftar template",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/templates",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "templates"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Buat campaign",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/campaigns",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "campaigns"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Promo bulanan\",\n  \"template_id\": 1,\n  \"tags\": [\n    \"vip\"\n  ],\n  \"start\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Daftar campaign",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/campaigns",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "campaigns"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Daftar webhook",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Buat webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sistem saya\",\n  \"url\": \"https://domain-anda.com/webhook/wa\",\n  \"events\": [\n    \"message.received\",\n    \"message.status\"\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Analitik",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/analytics?days=7",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "analytics"
+          ],
+          "query": [
+            {
+              "key": "days",
+              "value": "7"
+            }
+          ]
+        }
+      }
     }
   ]
 }

@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Http;
  *   GET  {base_url}{qr_path}?session=...      -> {"qr": "<string QR atau data:image/png;base64,...>"}
  * Header: Authorization: Bearer {api_token} (bila diisi)
  *
+ * Pesan masuk: engine meneruskan ke POST {APP_URL}/api/webhooks/qr/{device_id}
+ *   header X-Webhook-Token: {webhook_token}
+ *   body: {"from": "628...", "message": "...", "id": "...", "name": "..."}
+ *
  * @2026-Alifiandra
  */
 class QrEngineProvider implements WhatsAppProvider
@@ -103,6 +107,7 @@ class QrEngineProvider implements WhatsAppProvider
             'send_path' => ['label' => 'Path Kirim', 'type' => 'text', 'required' => false, 'placeholder' => '/send-message'],
             'status_path' => ['label' => 'Path Status', 'type' => 'text', 'required' => false, 'placeholder' => '/status'],
             'qr_path' => ['label' => 'Path QR', 'type' => 'text', 'required' => false, 'placeholder' => '/qr'],
+            'webhook_token' => ['label' => 'Token Webhook Masuk', 'type' => 'password', 'required' => false, 'placeholder' => 'Token yang dikirim engine saat meneruskan pesan masuk'],
         ];
     }
 

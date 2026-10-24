@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => env('ADMIN_NAME', 'Administrator'),
                 'password' => env('ADMIN_PASSWORD', 'ubah-password-ini'),
+                'role' => 'owner',
             ],
         );
 

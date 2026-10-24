@@ -12,10 +12,10 @@ use Illuminate\Support\Str;
  */
 class Message extends Model
 {
-    public const STATUSES = ['queued', 'sent', 'delivered', 'read', 'failed'];
+    public const STATUSES = ['queued', 'sent', 'delivered', 'read', 'failed', 'received'];
 
     protected $fillable = [
-        'public_id', 'device_id', 'user_id', 'api_key_id', 'direction', 'to', 'body',
+        'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'campaign_id', 'direction', 'to', 'body',
         'status', 'provider_message_id', 'error', 'attempts', 'idempotency_key', 'sent_at',
     ];
 
@@ -49,6 +49,21 @@ class Message extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
+    }
+
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
+    }
+
     public function apiKey(): BelongsTo
     {
         return $this->belongsTo(ApiKey::class);
@@ -66,7 +81,10 @@ class Message extends Model
     {
         return [
             'id' => $this->public_id,
+            'direction' => $this->direction,
             'to' => $this->to,
+            'contact_id' => $this->contact_id,
+            'campaign_id' => $this->campaign_id,
             'body' => $this->body,
             'status' => $this->status,
             'device_id' => $this->device_id,

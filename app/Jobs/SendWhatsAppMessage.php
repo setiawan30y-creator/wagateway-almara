@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\CampaignRecipient;
 use App\Models\Message;
+use App\Services\WebhookDispatcher;
 use App\WhatsApp\ProviderManager;
 use App\WhatsApp\SendResult;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,19 +27,19 @@ class SendWhatsAppMessage implements ShouldQueue
 
     public function __construct(public int $messageId) {}
 
-    public function handle(ProviderManager $providers): void
+    public function handle(ProviderManager $providers, WebhookDispatcher $webhooks): void
     {
         $message = Message::with('device')->find($this->messageId);
 
-        // Idempotency: jangan kirim ulang pesan yang sudah terkirim.
-        if (! $message || $message->status !== 'queued') {
+        // Idempotency: jangan kirim ulang pesan yang sudah diproses.
+        if (! $message || $message->status !== 'queued' || $message->direction !== 'out') {
             return;
         }
 
         $device = $message->device;
 
         if (! $device || ! $device->is_active) {
-            $this->markFailed($message, 'Perangkat tidak ditemukan atau nonaktif.');
+            $this->markFailed($message, 'Perangkat tidak ditemukan atau nonaktif.', $webhooks);
 
             return;
         }
@@ -60,11 +62,12 @@ class SendWhatsAppMessage implements ShouldQueue
             ])->save();
 
             $device->forceFill(['status' => 'connected', 'last_seen_at' => now()])->save();
+            $webhooks->dispatch('message.status', ['message' => $message->toApiArray()]);
 
             return;
         }
 
-        $isSync = $this->job?->getConnectionName() === 'sync' || $this->job === null;
+        $isSync = $this->job === null || $this->job->getConnectionName() === 'sync';
 
         if ($result->retryable && ! $isSync && $this->attempts() < $this->tries) {
             $message->forceFill(['error' => $result->error])->save();
@@ -73,7 +76,7 @@ class SendWhatsAppMessage implements ShouldQueue
             return;
         }
 
-        $this->markFailed($message, (string) $result->error);
+        $this->markFailed($message, (string) $result->error, $webhooks);
     }
 
     public function failed(?Throwable $exception): void
@@ -81,12 +84,18 @@ class SendWhatsAppMessage implements ShouldQueue
         $message = Message::find($this->messageId);
 
         if ($message && $message->status === 'queued') {
-            $this->markFailed($message, 'Job gagal: '.($exception?->getMessage() ?? 'tidak diketahui'));
+            $this->markFailed($message, 'Job gagal: '.($exception?->getMessage() ?? 'tidak diketahui'), app(WebhookDispatcher::class));
         }
     }
 
-    protected function markFailed(Message $message, string $error): void
+    protected function markFailed(Message $message, string $error, WebhookDispatcher $webhooks): void
     {
         $message->forceFill(['status' => 'failed', 'error' => mb_substr($error, 0, 1000)])->save();
+
+        if ($message->campaign_id) {
+            CampaignRecipient::where('message_id', $message->id)->update(['status' => 'failed']);
+        }
+
+        $webhooks->dispatch('message.status', ['message' => $message->toApiArray()]);
     }
 }

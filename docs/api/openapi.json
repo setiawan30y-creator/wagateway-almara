@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "ALMARA Gateway WA API",
-    "version": "0.1.0",
-    "description": "REST API sederhana untuk mengirim pesan WhatsApp melalui instalasi ALMARA Gateway WA (self-hosted).\nSemua respons memakai envelope `success` / `data` / `error` / `meta`.\nStatus: **versi awal (0.1.0)** — hanya endpoint di dokumen ini yang sudah diimplementasikan.\n\n@2026-Alifiandra\n"
+    "version": "0.2.0",
+    "description": "REST API sederhana untuk mengirim pesan WhatsApp melalui instalasi ALMARA Gateway WA (self-hosted).\nSemua respons memakai envelope `success` / `data` / `error` / `meta`.\nStatus: **versi 0.2.0 (fase MVP)** — hanya endpoint di dokumen ini yang sudah diimplementasikan.\n\n@2026-Alifiandra\n"
   },
   "servers": [
     {
@@ -32,6 +32,18 @@
     },
     {
       "name": "Webhooks"
+    },
+    {
+      "name": "Contacts"
+    },
+    {
+      "name": "Templates"
+    },
+    {
+      "name": "Campaigns"
+    },
+    {
+      "name": "Analytics"
     }
   ],
   "paths": {
@@ -307,7 +319,7 @@
         "tags": [
           "Webhooks"
         ],
-        "summary": "Terima event Meta (status pesan)",
+        "summary": "Terima event Meta (pesan masuk & status pesan)",
         "description": "Divalidasi dengan header `X-Hub-Signature-256` bila `META_APP_SECRET` diisi. Status tidak pernah mundur (callback duplikat/out-of-order diabaikan).",
         "security": [],
         "requestBody": {
@@ -325,6 +337,612 @@
           },
           "401": {
             "description": "Signature tidak valid"
+          }
+        }
+      }
+    },
+    "/v1/contacts": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Daftar kontak",
+        "operationId": "listContacts",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "contacted",
+                "interested",
+                "negotiation",
+                "payment",
+                "customer",
+                "inactive"
+              ]
+            }
+          },
+          {
+            "name": "consent",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "opted_in",
+                "unknown",
+                "opted_out"
+              ]
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Contact"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Buat / perbarui kontak (upsert berdasarkan nomor)",
+        "operationId": "upsertContact",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactInput"
+              },
+              "example": {
+                "phone": "081234567890",
+                "name": "Nama Pelanggan",
+                "tags": [
+                  "vip"
+                ],
+                "consent": "opted_in"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Contact"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Diperbarui",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Contact"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/templates": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Daftar template aktif + varian",
+        "operationId": "listTemplates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Template"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          }
+        }
+      }
+    },
+    "/v1/campaigns": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Daftar campaign",
+        "operationId": "listCampaigns",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Campaign"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Buat campaign broadcast",
+        "description": "Hanya kontak opt-in yang dikirimi. Proteksi (frequency cap, quiet hours, rate limit, auto-pause) mengikuti pengaturan gateway. `meta.audience_preview` berisi perkiraan jumlah penerima.",
+        "operationId": "createCampaign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignInput"
+              },
+              "example": {
+                "name": "Promo bulanan",
+                "template_id": 1,
+                "tags": [
+                  "vip"
+                ],
+                "start": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Campaign"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/campaigns/{id}": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Detail & statistik campaign",
+        "operationId": "getCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Campaign"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Daftar webhook keluar",
+        "operationId": "listWebhooks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Webhook"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Daftarkan webhook keluar",
+        "description": "`secret` hanya dikembalikan sekali pada respons ini.",
+        "operationId": "createWebhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "url",
+                  "events"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "message.received",
+                        "message.status",
+                        "contact.opted_out",
+                        "campaign.finished"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/Webhook"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "secret": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "delete": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Hapus webhook",
+        "operationId": "deleteWebhook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dihapus"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/analytics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Ringkasan analitik",
+        "operationId": "getAnalytics",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 90,
+              "default": 7
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/EnvelopeBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/qr/{device}": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Pesan masuk dari engine QR",
+        "security": [],
+        "parameters": [
+          {
+            "name": "device",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-Webhook-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "message"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima"
+          },
+          "401": {
+            "description": "Token tidak valid"
           }
         }
       }
@@ -400,7 +1018,8 @@
               "sent",
               "delivered",
               "read",
-              "failed"
+              "failed",
+              "received"
             ]
           },
           "device_id": {
@@ -427,6 +1046,21 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "out",
+              "in"
+            ]
+          },
+          "contact_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "campaign_id": {
+            "type": "integer",
+            "nullable": true
           }
         }
       },
@@ -573,6 +1207,246 @@
           },
           "meta": {
             "$ref": "#/components/schemas/Meta"
+          }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "stage": {
+            "type": "string"
+          },
+          "consent": {
+            "type": "string",
+            "enum": [
+              "opted_in",
+              "unknown",
+              "opted_out"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "last_message_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ContactInput": {
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "consent": {
+            "type": "string",
+            "enum": [
+              "opted_in",
+              "opted_out"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Template": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Variabel: {{name}} {{first_name}} {{phone}} {{email}}"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "running",
+              "paused",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "device_id": {
+            "type": "integer"
+          },
+          "template_id": {
+            "type": "integer"
+          },
+          "audience": {
+            "type": "object"
+          },
+          "rate_per_minute": {
+            "type": "integer"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pause_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "stats": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "CampaignInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "template_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "template_id": {
+            "type": "integer"
+          },
+          "device_id": {
+            "type": "integer"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rate_per_minute": {
+            "type": "integer",
+            "maximum": 120
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "last_status": {
+            "type": "integer",
+            "nullable": true
+          },
+          "last_called_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       }

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Device;
 use App\Models\Message;
+use App\Services\InboundService;
+use App\Services\WebhookDispatcher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
- * Webhook Meta Cloud API: verifikasi + pembaruan status pesan (sent/delivered/read/failed).
+ * Webhook Meta Cloud API: verifikasi, pesan masuk, dan pembaruan status pesan.
  * URL: {APP_URL}/api/webhooks/meta
  * @2026-Alifiandra
  */
@@ -27,7 +29,7 @@ class MetaWebhookController extends Controller
         return response('Forbidden', 403);
     }
 
-    public function receive(Request $request)
+    public function receive(Request $request, InboundService $inbound, WebhookDispatcher $webhooks)
     {
         $secret = config('whatsapp.meta.app_secret');
 
@@ -41,13 +43,26 @@ class MetaWebhookController extends Controller
 
         foreach ((array) $request->input('entry', []) as $entry) {
             foreach ((array) ($entry['changes'] ?? []) as $change) {
-                foreach ((array) data_get($change, 'value.statuses', []) as $status) {
-                    $this->applyStatus($status);
+                $value = (array) ($change['value'] ?? []);
+
+                foreach ((array) ($value['statuses'] ?? []) as $status) {
+                    $this->applyStatus((array) $status, $webhooks);
                 }
 
-                if ($count = count((array) data_get($change, 'value.messages', []))) {
-                    // Inbox belum termasuk versi sederhana ini; cukup dicatat.
-                    Log::info('[WA-META] Pesan masuk diterima', ['count' => $count]);
+                $messages = (array) ($value['messages'] ?? []);
+
+                if ($messages) {
+                    $device = $this->resolveDevice((string) data_get($value, 'metadata.phone_number_id'));
+                    $names = collect((array) ($value['contacts'] ?? []))->mapWithKeys(fn ($c) => [(string) data_get($c, 'wa_id') => data_get($c, 'profile.name')]);
+
+                    foreach ($messages as $msg) {
+                        if (! $device) {
+                            break;
+                        }
+
+                        $from = (string) data_get($msg, 'from');
+                        $inbound->receive($device, $from, $this->extractText((array) $msg), data_get($msg, 'id'), $names[$from] ?? null);
+                    }
                 }
             }
         }
@@ -55,7 +70,26 @@ class MetaWebhookController extends Controller
         return response()->json(['received' => true]);
     }
 
-    private function applyStatus(array $status): void
+    private function resolveDevice(string $phoneNumberId): ?Device
+    {
+        return Device::where('provider', 'meta')->where('is_active', true)->get()
+            ->first(fn (Device $d) => (string) $d->credential('phone_number_id') === $phoneNumberId)
+            ?? Device::where('provider', 'meta')->where('is_active', true)->orderByDesc('is_default')->first();
+    }
+
+    private function extractText(array $msg): string
+    {
+        return match ($msg['type'] ?? 'text') {
+            'text' => (string) data_get($msg, 'text.body', ''),
+            'button' => (string) data_get($msg, 'button.text', ''),
+            'interactive' => (string) (data_get($msg, 'interactive.button_reply.title') ?? data_get($msg, 'interactive.list_reply.title') ?? '[interactive]'),
+            'image', 'video', 'document', 'audio', 'sticker' => '['.$msg['type'].'] '.(string) data_get($msg, $msg['type'].'.caption', ''),
+            'location' => '[lokasi] '.data_get($msg, 'location.latitude').','.data_get($msg, 'location.longitude'),
+            default => '['.($msg['type'] ?? 'unknown').']',
+        };
+    }
+
+    private function applyStatus(array $status, WebhookDispatcher $webhooks): void
     {
         $id = $status['id'] ?? null;
         $new = $status['status'] ?? null;
@@ -64,7 +98,7 @@ class MetaWebhookController extends Controller
             return;
         }
 
-        $message = Message::where('provider_message_id', $id)->first();
+        $message = Message::where('provider_message_id', $id)->where('direction', 'out')->first();
 
         // Abaikan callback duplikat / out-of-order (status tidak boleh mundur).
         if (! $message || self::RANK[$new] <= (self::RANK[$message->status] ?? 0)) {
@@ -78,5 +112,6 @@ class MetaWebhookController extends Controller
         }
 
         $message->save();
+        $webhooks->dispatch('message.status', ['message' => $message->toApiArray()]);
     }
 }

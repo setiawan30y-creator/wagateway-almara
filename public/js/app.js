@@ -78,3 +78,99 @@
     });
   }
 })();
+
+/* ---- Fase MVP: menu mobile, pilih semua, pratinjau, polling inbox ---- @2026-Alifiandra */
+(function () {
+  'use strict';
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-nav-toggle]');
+    if (t) { e.preventDefault(); document.body.classList.toggle('nav-open'); return; }
+    if (document.body.classList.contains('nav-open') && !e.target.closest('.sidebar')) document.body.classList.remove('nav-open');
+  });
+
+  // Pilih semua (checkbox tabel)
+  document.querySelectorAll('[data-check-all]').forEach(function (all) {
+    all.addEventListener('change', function () {
+      document.querySelectorAll(all.getAttribute('data-check-all')).forEach(function (c) { c.checked = all.checked; });
+    });
+  });
+
+  var csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content;
+  function post(url, data) {
+    return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(data) }).then(function (r) { return r.json(); });
+  }
+
+  // Pratinjau template (variabel {{name}} dll.)
+  document.querySelectorAll('[data-preview-src]').forEach(function (src) {
+    var out = document.querySelector(src.getAttribute('data-preview-src'));
+    var url = src.getAttribute('data-preview-url');
+    var t;
+    function run() { post(url, { body: src.value }).then(function (d) { out.textContent = d.text || ''; }).catch(function () {}); }
+    src.addEventListener('input', function () { clearTimeout(t); t = setTimeout(run, 350); });
+    if (src.value) run();
+  });
+
+  // Sisipkan variabel ke textarea aktif
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-insert]');
+    if (!b) return;
+    var ta = document.querySelector(b.getAttribute('data-target'));
+    if (!ta) return;
+    var v = b.getAttribute('data-insert'), s = ta.selectionStart || ta.value.length;
+    ta.value = ta.value.slice(0, s) + v + ta.value.slice(ta.selectionEnd || s);
+    ta.focus(); ta.dispatchEvent(new Event('input'));
+  });
+
+  // Isi balasan cepat dari template
+  document.querySelectorAll('[data-quick-reply]').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      var ta = document.querySelector(sel.getAttribute('data-quick-reply'));
+      if (ta && sel.value) { ta.value = sel.value; ta.focus(); }
+      sel.selectedIndex = 0;
+    });
+  });
+
+  // Pratinjau audience broadcast
+  var aud = document.querySelector('[data-audience-form]');
+  if (aud) {
+    var outA = document.querySelector('[data-audience-out]');
+    var runA = function () {
+      var tags = [], stages = [];
+      aud.querySelectorAll('input[name="tags[]"]:checked').forEach(function (i) { tags.push(i.value); });
+      aud.querySelectorAll('input[name="stages[]"]:checked').forEach(function (i) { stages.push(i.value); });
+      post(aud.getAttribute('data-audience-form'), { tags: tags, stages: stages }).then(function (d) {
+        outA.innerHTML = '<b>' + d.eligible + '</b> penerima memenuhi syarat dari ' + d.total + ' kontak · ' +
+          d.no_consent + ' belum opt-in · ' + d.opted_out + ' opt-out' + (d.over_limit ? ' · ' + d.over_limit + ' melebihi batas' : '');
+      });
+    };
+    aud.addEventListener('change', runA); runA();
+  }
+
+  // Enter = kirim, Shift+Enter = baris baru (composer inbox)
+  document.querySelectorAll('[data-enter-submit]').forEach(function (ta) {
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (ta.value.trim()) ta.form.requestSubmit(); }
+    });
+  });
+
+  // Gulir thread ke bawah
+  var th = document.querySelector('.thread');
+  if (th) th.scrollTop = th.scrollHeight;
+
+  // Polling ringan: muat ulang bila ada pesan baru & composer kosong
+  var poll = document.querySelector('[data-poll]');
+  if (poll) {
+    var latest = null;
+    setInterval(function () {
+      if (document.hidden) return;
+      fetch(poll.getAttribute('data-poll'), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (latest === null) { latest = d.latest; return; }
+          var ta = document.querySelector('.composer textarea');
+          if (d.latest !== latest && (!ta || !ta.value.trim())) location.reload();
+          latest = d.latest;
+        }).catch(function () {});
+    }, 8000);
+  }
+})();

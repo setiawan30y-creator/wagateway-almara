@@ -35,14 +35,15 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt($credentials + ['is_active' => true], $request->boolean('remember'))) {
             RateLimiter::hit($throttleKey, 60);
 
-            throw ValidationException::withMessages(['email' => 'Email atau password salah.']);
+            throw ValidationException::withMessages(['email' => 'Email atau password salah, atau akun nonaktif.']);
         }
 
         RateLimiter::clear($throttleKey);
         $request->session()->regenerate();
+        $request->user()->forceFill(['last_login_at' => now()])->save();
         AuditLog::record('auth.login', 'Login berhasil');
 
         return redirect()->intended(route('dashboard'));

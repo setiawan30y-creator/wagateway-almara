@@ -92,6 +92,10 @@ class DeviceController extends Controller
     {
         $status = $this->providers->for($device)->status($device);
 
+        if (! $status->connected && $device->status === 'connected') {
+            \App\Models\AppNotification::notify('device.disconnected', 'Perangkat '.$device->name.' terputus', $status->message, route('devices.index'), 'admins');
+        }
+
         $device->forceFill([
             'status' => $status->connected ? 'connected' : 'disconnected',
             'last_seen_at' => $status->connected ? now() : $device->last_seen_at,

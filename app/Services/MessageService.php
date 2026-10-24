@@ -4,35 +4,45 @@ namespace App\Services;
 
 use App\Jobs\SendWhatsAppMessage;
 use App\Models\ApiKey;
+use App\Models\Contact;
+use App\Models\Conversation;
 use App\Models\Device;
 use App\Models\Message;
 use App\Models\User;
 use App\Support\PhoneNumber;
 
 /**
- * Layanan pengiriman pesan: simpan log -> antrean -> provider.
+ * Layanan pengiriman pesan: kontak + percakapan + log -> antrean -> provider.
  * @2026-Alifiandra
  */
 class MessageService
 {
-    public function queueText(
-        Device $device,
-        string $to,
-        string $body,
-        ?User $user = null,
-        ?ApiKey $apiKey = null,
-        ?string $idempotencyKey = null,
-    ): Message {
+    /**
+     * @param  array{user?: ?User, api_key?: ?ApiKey, idempotency_key?: ?string, campaign_id?: ?int, contact?: ?Contact, source?: string}  $options
+     */
+    public function queueText(Device $device, string $to, string $body, ?User $user = null, ?ApiKey $apiKey = null, ?string $idempotencyKey = null, array $options = []): Message
+    {
+        $phone = PhoneNumber::normalize($to);
+
+        $contact = $options['contact'] ?? Contact::findOrCreateByPhone($phone, ['source' => $options['source'] ?? ($apiKey ? 'api' : 'panel')]);
+        $conversation = Conversation::forContact($contact, $device);
+
         $message = Message::create([
             'device_id' => $device->id,
             'user_id' => $user?->id,
             'api_key_id' => $apiKey?->id,
+            'contact_id' => $contact->id,
+            'conversation_id' => $conversation->id,
+            'campaign_id' => $options['campaign_id'] ?? null,
             'direction' => 'out',
-            'to' => PhoneNumber::normalize($to),
+            'to' => $phone,
             'body' => $body,
             'status' => 'queued',
             'idempotency_key' => $idempotencyKey,
         ]);
+
+        $conversation->touchWith($message);
+        $contact->forceFill(['last_message_at' => now()])->save();
 
         SendWhatsAppMessage::dispatch($message->id);
 

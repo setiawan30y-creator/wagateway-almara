@@ -5,21 +5,24 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 > Connect. Automate. Sell. Grow.  
 > Developer: **@2026-Alifiandra**
 
-## Fitur versi 0.1.0
+## Fitur versi 0.2.0 (Fase MVP blueprint)
 
 | Area | Isi |
 |---|---|
-| Panel admin (PWA) | Login, dashboard, kirim pesan (1–20 nomor), riwayat + filter + export CSV, kirim ulang pesan gagal, akun |
-| Perangkat | Multi perangkat, perangkat utama, cek koneksi, kredensial terenkripsi (APP_KEY) |
-| Provider adapter | **Simulasi (Log)** untuk uji coba · **Meta Cloud API** (resmi) · **QR Multi-Device** (engine HTTP eksternal + halaman pairing QR) |
-| Messaging | Antrean (Laravel Queue), retry untuk error sementara, status `queued/sent/delivered/read/failed` |
-| REST API `/api/v1` | API key (hash SHA-256, tampil sekali, bisa dicabut), rate limit per key, idempotency key, envelope respons konsisten |
-| Webhook | Meta Cloud API: verifikasi token + signature, update status pesan |
-| PWA | `manifest.webmanifest`, ikon, service worker (hanya cache aset statis), halaman offline |
-| UI | Dense Notebook UI, tema Paper / Obsidian / Midnight, responsif (bottom nav di ponsel) |
-| Dokumentasi | `docs/api` (OpenAPI 3 YAML + JSON, contoh JSON) dan `docs/postman` |
+| **Unified Inbox** | Pesan masuk (Meta / QR / simulasi), daftar percakapan + filter (open, belum dibaca, milik saya, belum ditugaskan, pending, closed), balas, balasan cepat dari template, catatan internal, assign agent, status & prioritas, peringatan jendela 24 jam Meta, auto-refresh |
+| **Kontak & CRM dasar** | Kontak otomatis dari chat, tag, tahap pipeline (tampilan daftar + kanban), penanggung jawab, catatan, timeline pesan, riwayat consent, import/export CSV, aksi massal |
+| **Smart Template** | Template dengan varian A/B/C, variabel `{{name}}` `{{first_name}}` `{{phone}}` `{{email}}`, pratinjau, analitik per varian |
+| **Broadcast** | Campaign berdasarkan tag & tahap, draft / mulai sekarang / jadwal, progres, statistik terkirim-dibaca-gagal-balasan-opt-out, jeda / lanjut / batal |
+| **Smart Broadcast Protection** | Hanya kontak opt-in, STOP/MULAI otomatis (opt-out/opt-in + balasan), proteksi duplikat, frequency cap, quiet hours, rate limit per menit, batas penerima, **auto-pause** bila gagal / opt-out melewati batas |
+| **Webhook keluar** | Event `message.received`, `message.status`, `contact.opted_out`, `campaign.finished`, tanda tangan HMAC, retry, tes, kirim ulang, rotasi secret |
+| **Notification Center** | Notifikasi dalam aplikasi: pesan baru, penugasan, opt-out, campaign selesai/dijeda, perangkat terputus |
+| **User / Role** | Owner, Admin, Agent (CS); akses ditegakkan di server; nonaktifkan pengguna; round-robin assignment opsional |
+| **Logs** | Audit log, log request API, log pengiriman webhook |
+| **Dashboard & Analytics** | KPI 7 hari, grafik pesan masuk/keluar, percakapan terbaru, broadcast aktif, `GET /api/v1/analytics` |
+| Gateway (v0.1) | Multi perangkat, adapter Simulasi / Meta Cloud API / QR engine, kredensial terenkripsi, kirim pesan, riwayat, API key, PWA, 3 tema |
+| REST API `/api/v1` | messages, contacts, devices, templates, campaigns, webhooks, analytics — lihat `docs/api` |
 
-Belum termasuk (roadmap blueprint): inbox, CRM, broadcast/campaign, template, portal lisensi Free/Pro, AI, Flutter.
+**Belum termasuk** (fase blueprint berikutnya, butuh layanan/keputusan tambahan): portal lisensi Free/Pro & pembayaran, AI Agent / RAG / Copilot (OpenRouter), Smart Voice, Smart Link, Ticketing, Workflow builder, Commerce, Flutter, SaaS multi-tenant. Pesan media (gambar/dokumen) & template resmi Meta juga belum.
 
 ## Kebutuhan
 
@@ -47,8 +50,21 @@ php artisan key:generate
 # 4. Tabel + akun admin + perangkat simulasi
 php artisan migrate --seed
 
-# 5. Jalankan
+# 5. Jalankan web (jendela PowerShell 1)
 php artisan serve
+
+# 6. Jalankan scheduler untuk broadcast terjadwal (jendela PowerShell 2)
+php artisan schedule:work
+```
+
+Sudah pernah install versi 0.1.0? Cukup ambil update lalu migrasi:
+
+```powershell
+cd C:\laragon\www\wagateway-almara
+git pull
+composer install
+php artisan migrate
+php artisan optimize:clear
 ```
 
 Buka `http://127.0.0.1:8000` (atau `http://wagateway-almara.test` bila virtual host Laragon aktif — klik *Reload* Apache/Nginx di Laragon).
@@ -63,6 +79,7 @@ php artisan test
 
 ## Cara pakai
 
+0. **Inbox → Simulasi pesan masuk** untuk mencoba alur tanpa nomor sungguhan (coba kirim `STOP`).
 1. **Perangkat** → perangkat *Simulasi* sudah ada. Tambah perangkat **Meta Cloud API** (isi Phone Number ID + Access Token) atau **QR Multi-Device** (isi Base URL engine), lalu klik **Cek**.
 2. **Kirim Pesan** → pilih perangkat, isi nomor (08xx / 628xx / +628xx), tulis pesan, kirim.
 3. **Riwayat** → lihat status, detail, kirim ulang, export CSV.

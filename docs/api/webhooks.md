@@ -1,14 +1,44 @@
 # Webhook
 
-## Meta Cloud API → Gateway (masuk)
+## A. Masuk dari provider → Gateway
 
-- Callback URL: `{APP_URL}/api/webhooks/meta`
-- Verify token: nilai `META_WEBHOOK_VERIFY_TOKEN` di `.env`
-- Signature: bila `META_APP_SECRET` diisi, header `X-Hub-Signature-256` divalidasi (HMAC-SHA256 body).
-- Subscribe field **messages** di Meta App Dashboard.
-- Event `statuses` memperbarui status pesan: `sent → delivered → read` (atau `failed`). Callback duplikat/terlambat diabaikan karena status tidak boleh mundur.
-- Pesan masuk (inbox) baru dicatat di log; modul Inbox ada di roadmap.
+### Meta Cloud API
+- Callback URL: `{APP_URL}/api/webhooks/meta` · Verify token: `META_WEBHOOK_VERIFY_TOKEN`
+- Signature `X-Hub-Signature-256` divalidasi bila `META_APP_SECRET` diisi.
+- Subscribe field **messages**. Event `messages` → masuk ke Inbox; event `statuses` → update status pesan (`sent → delivered → read` / `failed`, tidak pernah mundur; callback duplikat diabaikan).
 
-## Gateway → aplikasi Anda (keluar)
+### Engine QR Multi-Device
+- `POST {APP_URL}/api/webhooks/qr/{device_id}` · header `X-Webhook-Token: <Token Webhook Masuk perangkat>`
+- Body: `{"from":"628…","message":"…","id":"opsional","name":"opsional"}`
 
-Belum tersedia di versi 0.1.0 (roadmap: event `message.status`, signature, retry).
+## B. Keluar dari Gateway → sistem Anda
+
+Kelola di menu **Webhook** atau `POST /api/v1/webhooks`.
+
+| Event | Kapan |
+|---|---|
+| `message.received` | Pesan masuk baru |
+| `message.status` | Status pesan keluar berubah (sent/delivered/read/failed) |
+| `contact.opted_out` | Kontak membalas kata kunci STOP |
+| `campaign.finished` | Campaign selesai atau dijeda otomatis |
+
+Header setiap request:
+
+```
+Content-Type: application/json
+X-Almara-Event: message.received
+X-Almara-Delivery: evt_01j...        (unik — gunakan untuk idempotensi)
+X-Almara-Timestamp: 1792731600
+X-Almara-Signature: sha256=<HMAC_SHA256(secret, timestamp + "." + body)>
+```
+
+Verifikasi (PHP):
+
+```php
+$expected = 'sha256='.hash_hmac('sha256', $_SERVER['HTTP_X_ALMARA_TIMESTAMP'].'.'.file_get_contents('php://input'), $secret);
+$valid = hash_equals($expected, $_SERVER['HTTP_X_ALMARA_SIGNATURE']) && abs(time() - (int) $_SERVER['HTTP_X_ALMARA_TIMESTAMP']) < 300;
+```
+
+- Balas HTTP 2xx dalam 10 detik. Selain itu dianggap gagal dan dicoba ulang (30 dtk, 2 mnt, 10 mnt) bila queue worker aktif.
+- Event bisa datang lebih dari sekali — simpan `X-Almara-Delivery` untuk menolak duplikat.
+- Signing secret ditampilkan sekali; bisa dirotasi dari panel.

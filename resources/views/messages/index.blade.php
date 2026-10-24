@@ -24,7 +24,7 @@
     </form>
     <div class="table-wrap">
         <table class="dense">
-            <thead><tr><th>Waktu</th><th>Tujuan</th><th class="hide-sm">Perangkat</th><th>Status</th><th class="hide-sm">Pesan</th><th class="hide-sm">Sumber</th><th></th></tr></thead>
+            <thead><tr><th>Waktu</th><th>Nomor</th><th class="hide-sm">Perangkat</th><th>Status</th><th class="hide-sm">Pesan</th><th class="hide-sm">Sumber</th><th></th></tr></thead>
             <tbody>
             @forelse ($messages as $m)
                 <tr>
@@ -33,7 +33,7 @@
                     <td class="hide-sm">{{ $m->device?->name ?? '—' }}</td>
                     <td><span class="badge st-{{ $m->status }}" @if ($m->error) title="{{ $m->error }}" @endif>{{ $m->status }}</span></td>
                     <td class="msg hide-sm">{{ $m->body }}</td>
-                    <td class="hide-sm"><span class="tag">{{ $m->api_key_id ? 'API' : 'Panel' }}</span></td>
+                    <td class="hide-sm"><span class="tag">{{ $m->direction === 'in' ? 'Masuk' : ($m->campaign_id ? 'Broadcast' : ($m->api_key_id ? 'API' : 'Panel')) }}</span></td>
                     <td class="right"><a class="btn btn-sm" href="{{ route('messages.show', $m) }}">Detail</a></td>
                 </tr>
             @empty
