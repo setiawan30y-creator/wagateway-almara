@@ -9,7 +9,7 @@
 
 return [
 
-    'version' => '0.2.0',
+    'version' => '0.3.0',
 
     // Kode negara default untuk normalisasi nomor lokal (08xx -> 628xx)
     'default_country_code' => env('WA_DEFAULT_COUNTRY_CODE', '62'),
@@ -30,7 +30,7 @@ return [
             'class' => App\WhatsApp\Providers\MetaCloudProvider::class,
         ],
         'qr' => [
-            'label' => 'QR Multi-Device Engine (HTTP)',
+            'label' => 'WhatsApp (Scan QR)',
             'class' => App\WhatsApp\Providers\QrEngineProvider::class,
         ],
     ],
@@ -43,4 +43,10 @@ return [
     ],
 
     'http_timeout' => (int) env('WA_HTTP_TIMEOUT', 20),
+
+    // Engine QR bawaan (folder engine/, Node.js) untuk tambah perangkat via scan barcode
+    'engine' => [
+        'url' => env('WA_ENGINE_URL', 'http://127.0.0.1:3000'),
+        'token' => env('WA_ENGINE_TOKEN'),
+    ],
 ];

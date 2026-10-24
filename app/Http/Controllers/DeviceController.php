@@ -7,6 +7,7 @@ use App\Models\Device;
 use App\WhatsApp\ProviderManager;
 use App\WhatsApp\Providers\QrEngineProvider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -75,6 +76,10 @@ class DeviceController extends Controller
 
     public function destroy(Device $device)
     {
+        if ($device->provider === 'qr') {
+            $this->providers->for($device)->logout($device);
+        }
+
         AuditLog::record('device.delete', 'Hapus perangkat '.$device->name);
         $device->delete();
 
@@ -104,30 +109,76 @@ class DeviceController extends Controller
         return back()->with($status->connected ? 'success' : 'warning', $device->name.': '.$status->message);
     }
 
-    public function qr(Device $device)
+    /** Tambah perangkat cepat: cukup nama, lalu langsung ke halaman scan QR. */
+    public function scan(Request $request)
     {
-        abort_unless($device->provider === 'qr', 404);
+        $data = $request->validate(['name' => ['required', 'string', 'max:100']], [], ['name' => 'nama perangkat']);
 
-        $provider = $this->providers->for($device);
-        $status = $provider->status($device);
+        $device = Device::create([
+            'name' => $data['name'],
+            'provider' => 'qr',
+            'credentials' => ['webhook_token' => Str::random(40)],
+            'status' => 'unknown',
+            'is_active' => true,
+            'is_default' => false,
+        ]);
 
-        if ($status->connected) {
-            $device->forceFill(['status' => 'connected', 'last_seen_at' => now()])->save();
+        $device->forceFill(['credentials' => $device->credentials + ['session' => 'device-'.$device->id.'-'.Str::lower(Str::random(6))]])->save();
 
-            return response()->json(['connected' => true, 'message' => $status->message, 'qr' => null]);
+        if (Device::where('is_active', true)->count() === 1 || ! Device::where('is_default', true)->exists()) {
+            $device->makeDefault();
         }
 
-        /** @var QrEngineProvider $provider */
-        $pairing = $provider->pairingQr($device);
+        AuditLog::record('device.create', 'Tambah perangkat (scan QR) '.$device->name, ['provider' => 'qr']);
 
-        return response()->json(['connected' => false, 'message' => $pairing->message, 'qr' => $pairing->qr]);
+        return redirect()->route('devices.pair', $device);
     }
 
     public function pair(Device $device)
     {
         abort_unless($device->provider === 'qr', 404);
 
-        return view('devices.pair', compact('device'));
+        // Pastikan token webhook ada (perangkat lama / dibuat manual)
+        if (! $device->credential('webhook_token')) {
+            $device->forceFill(['credentials' => ($device->credentials ?? []) + ['webhook_token' => Str::random(40)]])->save();
+        }
+
+        /** @var QrEngineProvider $provider */
+        $provider = $this->providers->for($device);
+        $start = $provider->startSession($device, url('/api/webhooks/qr/'.$device->id));
+
+        return view('devices.pair', ['device' => $device, 'engineError' => $start->connected || ! str_contains($start->message, 'tidak dapat dihubungi') ? null : $start->message]);
+    }
+
+    public function qr(Device $device)
+    {
+        abort_unless($device->provider === 'qr', 404);
+
+        /** @var QrEngineProvider $provider */
+        $provider = $this->providers->for($device);
+        $pairing = $provider->pairingQr($device);
+
+        if ($pairing->connected) {
+            $status = $provider->status($device); // menyimpan nomor telepon
+            $device->refresh()->forceFill(['status' => 'connected', 'last_seen_at' => now()])->save();
+
+            return response()->json(['connected' => true, 'message' => $status->message, 'phone' => $device->phone_number, 'qr' => null]);
+        }
+
+        return response()->json(['connected' => false, 'message' => $pairing->message, 'qr' => $pairing->qr]);
+    }
+
+    public function logout(Device $device)
+    {
+        abort_unless($device->provider === 'qr', 404);
+
+        /** @var QrEngineProvider $provider */
+        $provider = $this->providers->for($device);
+        $ok = $provider->logout($device);
+        $device->forceFill(['status' => 'disconnected'])->save();
+        AuditLog::record('device.logout', 'Logout perangkat '.$device->name);
+
+        return back()->with($ok ? 'success' : 'warning', $ok ? 'Perangkat '.$device->name.' dikeluarkan dari WhatsApp. Scan QR lagi untuk menghubungkan.' : 'Engine tidak dapat dihubungi; status ditandai terputus.');
     }
 
     private function validated(Request $request, ?Device $device = null): array

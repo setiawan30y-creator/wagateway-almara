@@ -95,6 +95,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/perangkat', [DeviceController::class, 'index'])->name('devices.index');
         Route::get('/perangkat/tambah', [DeviceController::class, 'create'])->name('devices.create');
         Route::post('/perangkat', [DeviceController::class, 'store'])->name('devices.store');
+        Route::post('/perangkat/scan', [DeviceController::class, 'scan'])->name('devices.scan');
         Route::get('/perangkat/{device}/ubah', [DeviceController::class, 'edit'])->name('devices.edit');
         Route::put('/perangkat/{device}', [DeviceController::class, 'update'])->name('devices.update');
         Route::delete('/perangkat/{device}', [DeviceController::class, 'destroy'])->name('devices.destroy');
@@ -102,6 +103,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/perangkat/{device}/cek', [DeviceController::class, 'check'])->name('devices.check');
         Route::get('/perangkat/{device}/pairing', [DeviceController::class, 'pair'])->name('devices.pair');
         Route::get('/perangkat/{device}/qr', [DeviceController::class, 'qr'])->name('devices.qr');
+        Route::post('/perangkat/{device}/logout', [DeviceController::class, 'logout'])->name('devices.logout');
 
         Route::get('/api-key', [ApiKeyController::class, 'index'])->name('api-keys.index');
         Route::post('/api-key', [ApiKeyController::class, 'store'])->name('api-keys.store');

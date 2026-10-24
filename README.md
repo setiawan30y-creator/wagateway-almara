@@ -55,7 +55,15 @@ php artisan serve
 
 # 6. Jalankan scheduler untuk broadcast terjadwal (jendela PowerShell 2)
 php artisan schedule:work
+
+# 7. Engine scan QR untuk menautkan nomor WhatsApp (jendela PowerShell 3, butuh Node.js 20+)
+cd C:\laragon\www\wagateway-almara\engine
+npm install
+Copy-Item .env.example .env   # isi ENGINE_TOKEN, samakan dengan WA_ENGINE_TOKEN di .env Laravel
+npm start
 ```
+
+Tambah nomor: **Perangkat → Tambah nomor — Scan QR** → isi nama → scan QR dari HP (WhatsApp → Perangkat tertaut → Tautkan perangkat). Detail: [`engine/README.md`](engine/README.md).
 
 Sudah pernah install versi 0.1.0? Cukup ambil update lalu migrasi:
 
@@ -100,8 +108,8 @@ Detail endpoint: [`docs/api/README.md`](docs/api/README.md).
 - Webhook URL di Meta App Dashboard: `https://domain-anda/api/webhooks/meta` (wajib HTTPS publik — gunakan domain/tunnel).
 - Pesan teks bebas hanya untuk kontak yang menghubungi Anda dalam 24 jam terakhir; di luar itu wajib template yang disetujui Meta (roadmap).
 
-### QR Multi-Device (engine eksternal)
-Gateway tidak menyertakan engine QR; jalankan engine terpisah (sebaiknya di jaringan privat) yang menyediakan:
+### WhatsApp (Scan QR) — engine bawaan
+Folder `engine/` berisi engine Node.js (Baileys) untuk menautkan nomor dengan scan QR. Jalan di `127.0.0.1:3000`, diamankan `WA_ENGINE_TOKEN`. Engine lain yang kompatibel juga bisa dipakai dengan mengisi Base URL/path per perangkat. Kontrak minimal:
 
 | Method | Path default | Request | Respons |
 |---|---|---|---|
