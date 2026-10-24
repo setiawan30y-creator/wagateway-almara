@@ -327,3 +327,107 @@ dl.kv dt { color: var(--muted); font-size: 12px; }
   .inbox .thread { height: calc(100vh - 380px); min-height: 220px; }
   .inbox .thread-head form { width: 100%; }
 }
+
+/* ===================== Responsif v0.3.1 — @2026-Alifiandra ===================== */
+/* Track grid tidak boleh melebar mengikuti isi (penyebab halaman bergeser ke samping) */
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid > *, .inbox > div, .main, .card, .card-b { min-width: 0; }
+pre, .secret code { max-width: 100%; }
+img, svg, canvas { max-width: 100%; }
+.page-head > div:first-child { min-width: 0; }
+.page-head h1 { overflow-wrap: anywhere; }
+.filters .input { flex: 1 1 140px; }
+.filters .grow { flex: 3 1 200px; }
+.table-wrap { -webkit-overflow-scrolling: touch; }
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .shell { grid-template-columns: 168px minmax(0, 1fr); }
+  .grid-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .main { padding: 10px 12px 24px; }
+}
+@media (max-width: 860px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: minmax(0, 1fr); }
+  .grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  dl.kv { grid-template-columns: 130px minmax(0, 1fr); }
+}
+
+/* Tabel -> kartu untuk tablet kecil & ponsel */
+@media (max-width: 860px) {
+  /* Tabel -> kartu (label kolom diisi otomatis oleh app.js) */
+  table.dense.rcards, table.dense.rcards tbody, table.dense.rcards tr, table.dense.rcards td { display: block; width: 100%; }
+  table.dense.rcards thead { display: none; }
+  table.dense.rcards tr { border-bottom: 1px solid var(--border); padding: 7px 10px; }
+  table.dense.rcards tbody tr:hover { background: transparent; }
+  table.dense.rcards td { border: 0; padding: 2px 0; height: auto; display: flex; gap: 10px; align-items: baseline; text-align: left !important; }
+  table.dense.rcards td::before { content: attr(data-label); flex: 0 0 38%; max-width: 140px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  table.dense.rcards td:not([data-label])::before, table.dense.rcards td[data-label=""]::before { display: none; }
+  table.dense.rcards td.msg { max-width: none; white-space: normal; }
+  table.dense.rcards td.hide-sm { display: none; }
+  table.dense.rcards td.r-actions { flex-wrap: wrap; justify-content: flex-start; gap: 4px; padding-top: 6px; white-space: normal; }
+  table.dense.rcards td.r-actions::before { display: none; }
+  table.dense.rcards td.r-check { position: absolute; right: 10px; width: auto; }
+  table.dense.rcards td.r-check::before { display: none; }
+  table.dense.rcards tr { position: relative; }
+  table.dense.rcards td.empty { display: block; }
+  table.dense.rcards td.empty::before { display: none; }
+
+}
+
+/* Ponsel */
+@media (max-width: 720px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  body { font-size: 14px; }
+  .main { padding: 10px 10px 84px; }
+  .page-head { gap: 6px; }
+  .page-head .actions { margin-left: 0; width: 100%; }
+  .page-head .actions > .btn, .page-head .actions > form > .btn, .page-head .actions > details > summary { flex: 1 1 auto; justify-content: center; }
+  .page-head .actions > form, .page-head .actions > details { flex: 1 1 auto; display: flex; }
+  .page-head .actions details > .card { left: 0; right: 0; width: auto !important; position: fixed !important; top: 96px !important; margin: 0 10px; z-index: 50; }
+  .grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi .v { font-size: 18px; }
+  .card-h { flex-wrap: wrap; }
+
+  /* sentuh: target lebih besar, input 16px agar iOS tidak zoom */
+  .btn { min-height: 34px; padding: 0 12px; }
+  .btn-sm { min-height: 30px; }
+  .input, select.input, textarea.input { font-size: 16px; min-height: 38px; }
+  .bulkbar .input, .filters .input { height: auto; }
+  .check, .checks label { min-height: 30px; }
+  .tabs a { padding: 9px 10px; }
+
+  /* Inbox */
+  .inbox { grid-template-columns: minmax(0, 1fr); }
+  .inbox .thread { height: calc(100dvh - 360px); }
+  .composer { position: sticky; bottom: 60px; }
+  .composer .btn { align-self: stretch; }
+
+  /* Pipeline: kolom bisa digeser horizontal, kartu tetap terbaca */
+  .kanban { grid-auto-columns: 82%; scroll-snap-type: x mandatory; }
+  .kanban .colk { scroll-snap-align: start; max-height: none; }
+
+  .qr-box .qr { min-width: 0; width: 100%; max-width: 300px; min-height: 0; aspect-ratio: 1; }
+  .qr-box .qr img { width: 100%; height: auto; }
+  .qr-box .progress { width: 100% !important; max-width: 300px; }
+
+  .footer { padding-bottom: 6px; }
+}
+
+/* Ponsel kecil */
+@media (max-width: 380px) {
+  .grid-5 { grid-template-columns: minmax(0, 1fr); }
+  .topbar { gap: 6px; padding: 0 8px; }
+  .brand span { display: none; }
+}
+
+/* Layar lebar: batasi lebar agar tetap nyaman dibaca */
+@media (min-width: 1600px) {
+  .main { max-width: 1480px; }
+}
+
+@media (hover: none) {
+  .conv, .sidebar a { padding-top: 9px; padding-bottom: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; }
+}

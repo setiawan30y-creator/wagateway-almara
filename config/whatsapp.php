@@ -9,7 +9,7 @@
 
 return [
 
-    'version' => '0.3.0',
+    'version' => '0.3.1',
 
     // Kode negara default untuk normalisasi nomor lokal (08xx -> 628xx)
     'default_country_code' => env('WA_DEFAULT_COUNTRY_CODE', '62'),

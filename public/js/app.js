@@ -174,3 +174,26 @@
     }, 8000);
   }
 })();
+
+/* ---- Responsif: tabel jadi kartu di ponsel ---- @2026-Alifiandra */
+(function () {
+  'use strict';
+  document.querySelectorAll('table.dense').forEach(function (table) {
+    var head = table.querySelector('thead tr');
+    if (!head || table.classList.contains('no-cards')) return;
+    var labels = Array.prototype.map.call(head.children, function (th) { return th.textContent.trim(); });
+    table.classList.add('rcards');
+    table.querySelectorAll('tbody tr').forEach(function (tr) {
+      var i = 0;
+      Array.prototype.forEach.call(tr.children, function (td) {
+        var span = parseInt(td.getAttribute('colspan') || '1', 10);
+        var label = labels[i] || '';
+        if (td.querySelector('input[type=checkbox]') && td.children.length === 1) td.classList.add('r-check');
+        else if (!label && (td.querySelector('.btn, form') )) td.classList.add('r-actions');
+        else if (label === 'Aksi' || label === 'AKSI') td.classList.add('r-actions');
+        if (label && span === 1) td.setAttribute('data-label', label);
+        i += span;
+      });
+    });
+  });
+})();
