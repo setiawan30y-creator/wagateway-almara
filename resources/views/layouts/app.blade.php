@@ -86,7 +86,12 @@
                 <div class="crumb">ALMARA / @yield('crumb', 'Dashboard')</div>
                 <h1>@yield('title', 'Dashboard')</h1>
             </div>
-            <div class="actions">@yield('actions')</div>
+            <div class="actions">
+                <button type="button" class="btn help-btn" data-help-open aria-haspopup="dialog" aria-controls="help-drawer" title="Fungsi & cara pakai halaman ini (tekan ?)">
+                    <span class="help-q">?</span><span class="help-label">Bantuan</span>
+                </button>
+                @yield('actions')
+            </div>
         </div>
 
         @include('partials.flash')
@@ -98,6 +103,33 @@
         </footer>
     </main>
 </div>
+
+@php $help = \App\Support\PageHelp::for(request()->route()?->getName()); @endphp
+<div class="help-backdrop" data-help-close hidden></div>
+<aside class="help-drawer" id="help-drawer" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+    <div class="help-head">
+        <div><div class="crumb">Bantuan halaman</div><h2 id="help-title">{{ $help['judul'] }}</h2></div>
+        <button type="button" class="btn btn-sm" data-help-close aria-label="Tutup">✕</button>
+    </div>
+    <div class="help-body">
+        @if ($help['fungsi'])
+            <h3>Fungsi</h3>
+            <p>{{ $help['fungsi'] }}</p>
+        @endif
+        @if ($help['langkah'])
+            <h3>Cara pakai</h3>
+            <ol>@foreach ($help['langkah'] as $step)<li>{{ $step }}</li>@endforeach</ol>
+        @endif
+        @if ($help['tips'])
+            <h3>Perlu diketahui</h3>
+            <ul class="help-tips">@foreach ($help['tips'] as $tip)<li>{{ $tip }}</li>@endforeach</ul>
+        @endif
+    </div>
+    <div class="help-foot">
+        <a class="btn btn-primary btn-sm" href="{{ route('docs.show', $help['doc']) }}">📖 Buka Panduan lengkap</a>
+        <a class="btn btn-sm" href="{{ route('docs.show', 'instalasi') }}#10-pemecahan-masalah">Pemecahan masalah</a>
+    </div>
+</aside>
 
 <nav class="bottom-nav" aria-label="Menu bawah">
     @foreach ($bottom as [$route, $label, $icon, $pattern])

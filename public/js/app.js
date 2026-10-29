@@ -226,3 +226,33 @@
       .finally(function () { b.disabled = false; b.textContent = old; });
   });
 })();
+
+/* ---- Bantuan per halaman (tombol ? / tekan tombol ?) ---- @2026-Alifiandra */
+(function () {
+  var drawer = document.getElementById('help-drawer');
+  var backdrop = document.querySelector('.help-backdrop');
+  if (!drawer) return;
+  var lastFocus = null;
+
+  function open() {
+    lastFocus = document.activeElement;
+    drawer.hidden = false; backdrop.hidden = false;
+    requestAnimationFrame(function () { drawer.classList.add('open'); });
+    var c = drawer.querySelector('[data-help-close]'); if (c) c.focus();
+  }
+  function close() {
+    drawer.classList.remove('open');
+    setTimeout(function () { drawer.hidden = true; backdrop.hidden = true; }, 180);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-help-open]')) { e.preventDefault(); open(); }
+    else if (e.target.closest('[data-help-close]')) { e.preventDefault(); close(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    var typing = /INPUT|TEXTAREA|SELECT/.test((e.target.tagName || '')) || e.target.isContentEditable;
+    if (e.key === 'Escape' && !drawer.hidden) close();
+    else if (e.key === '?' && !typing) { e.preventDefault(); drawer.hidden ? open() : close(); }
+  });
+})();

@@ -40,7 +40,7 @@ class QrScanTest extends TestCase
         $this->assertNotEmpty($device->credential('webhook_token'));
         $this->assertTrue($device->is_default);
 
-        $this->actingAs($admin)->get("/perangkat/{$device->id}/pairing")->assertOk()->assertDontSee('tidak dapat dihubungi');
+        $this->actingAs($admin)->get("/perangkat/{$device->id}/pairing")->assertOk()->assertDontSee('class="alert alert-error"', false);
         Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/sessions/start')
             && $r['webhook_url'] === url('/api/webhooks/qr/'.$device->id)
             && $r['webhook_token'] === $device->credential('webhook_token')
