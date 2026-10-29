@@ -7,7 +7,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
-<link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ config('whatsapp.version') }}">
+<link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ @filemtime(public_path('css/app.css')) }}">
 <script>
     (function () { try { var t = localStorage.getItem('almara-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
 </script>

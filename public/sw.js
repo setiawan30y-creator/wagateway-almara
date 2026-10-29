@@ -4,7 +4,7 @@
  * dan isi pesan TIDAK pernah di-cache. Navigasi offline -> /offline.html.
  * @2026-Alifiandra
  */
-const VERSION = 'almara-wa-v0.5.0';
+const VERSION = 'almara-wa-v0.5.1';
 const STATIC_ASSETS = [
   '/offline.html',
   '/css/app.css',
@@ -39,9 +39,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aset statis yang terdaftar: cache-first.
+  // Aset statis: ambil versi terbaru dari server dulu, pakai cache hanya bila offline.
   if (STATIC_ASSETS.includes(url.pathname)) {
-    event.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
+    event.respondWith(fetch(req).catch(() => caches.match(req, { ignoreSearch: true })));
   }
   // Selain itu (API, data) tidak disentuh service worker.
 });

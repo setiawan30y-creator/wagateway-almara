@@ -232,7 +232,7 @@
   var box = document.getElementById('help-drawer');
   if (!box) return;
   var head = box.querySelector('[data-help-drag]');
-  var KEY = 'almara-help-pos';
+  try { localStorage.removeItem('almara-help-pos'); } catch (e) {} // posisi lama tidak dipakai lagi
   var lastFocus = null;
 
   function clamp(x, y) {
@@ -248,18 +248,12 @@
   }
   function center() {
     box.classList.remove('moved'); box.style.left = ''; box.style.top = '';
-    try { localStorage.removeItem(KEY); } catch (e) {}
-  }
-  function restore() {
-    var saved = null;
-    try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-    if (saved && window.innerWidth > 720) place(saved[0], saved[1]); else center();
   }
 
   function open() {
     lastFocus = document.activeElement;
     box.hidden = false;
-    restore();
+    center(); // selalu muncul di tengah layar
     requestAnimationFrame(function () { box.classList.add('open'); });
     var c = box.querySelector('[data-help-close]'); if (c) c.focus();
   }
@@ -287,7 +281,6 @@
   function endDrag() {
     if (!start) return;
     start = null; box.classList.remove('dragging');
-    try { localStorage.setItem(KEY, JSON.stringify([parseInt(box.style.left, 10), parseInt(box.style.top, 10)])); } catch (e) {}
   }
   head.addEventListener('pointerup', endDrag);
   head.addEventListener('pointercancel', endDrag);

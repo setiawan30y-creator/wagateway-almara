@@ -140,7 +140,7 @@
     <a href="#" data-nav-toggle>@include('partials.icon', ['n' => 'menu']) Menu</a>
 </nav>
 
-<script src="{{ asset('js/app.js') }}?v={{ config('whatsapp.version') }}"></script>
+<script src="{{ asset('js/app.js') }}?v={{ @filemtime(public_path('js/app.js')) }}"></script>
 @stack('scripts')
 </body>
 </html>
