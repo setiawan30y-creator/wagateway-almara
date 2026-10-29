@@ -22,6 +22,7 @@
             ['templates.index', 'Template', 'template', 'templates.*', true],
             ['smart-links.index', 'Smart Link', 'link', 'smart-links.*', true],
             ['auto-replies.index', 'Auto-Reply', 'bot', 'auto-replies.*', true],
+            ['ai.index', 'AI Agent', 'ai', 'ai.*', true],
         ],
         'Gateway' => [
             ['devices.index', 'Perangkat', 'device', 'devices.*', true],

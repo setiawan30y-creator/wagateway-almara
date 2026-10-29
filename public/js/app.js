@@ -211,3 +211,18 @@
     });
   });
 })();
+
+/* ---- Copilot: saran balasan AI di inbox ---- @2026-Alifiandra */
+(function () {
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ai-suggest]');
+    if (!b) return;
+    var ta = document.querySelector('#reply-body');
+    var old = b.textContent; b.disabled = true; b.textContent = '✨ Menyusun…';
+    fetch(b.getAttribute('data-ai-suggest'), { method: 'POST', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') || {}).content } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d.ok && ta) { ta.value = d.text; ta.focus(); } else { alert(d.text || 'Gagal membuat saran.'); } })
+      .catch(function () { alert('Gagal menghubungi server.'); })
+      .finally(function () { b.disabled = false; b.textContent = old; });
+  });
+})();

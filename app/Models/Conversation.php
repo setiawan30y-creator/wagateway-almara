@@ -17,7 +17,7 @@ class Conversation extends Model
     public const PRIORITIES = ['low' => 'Rendah', 'normal' => 'Normal', 'high' => 'Tinggi', 'urgent' => 'Urgent'];
 
     protected $fillable = [
-        'contact_id', 'device_id', 'status', 'priority', 'assigned_to', 'unread_count',
+        'contact_id', 'device_id', 'status', 'priority', 'assigned_to', 'ai_enabled', 'ai_paused_until', 'unread_count',
         'last_message_preview', 'last_direction', 'last_message_at', 'last_inbound_at',
     ];
 
@@ -32,6 +32,8 @@ class Conversation extends Model
         return [
             'last_message_at' => 'datetime',
             'last_inbound_at' => 'datetime',
+            'ai_enabled' => 'boolean',
+            'ai_paused_until' => 'datetime',
             'unread_count' => 'integer',
         ];
     }
@@ -59,6 +61,11 @@ class Conversation extends Model
     public function notes(): HasMany
     {
         return $this->hasMany(ConversationNote::class)->latest('id');
+    }
+
+    public function aiPaused(): bool
+    {
+        return $this->ai_paused_until !== null && $this->ai_paused_until->isFuture();
     }
 
     /** Jendela layanan 24 jam (aturan Meta untuk pesan teks bebas). */

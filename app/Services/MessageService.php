@@ -19,7 +19,7 @@ use App\Support\PhoneNumber;
 class MessageService
 {
     /**
-     * @param  array{campaign_id?: ?int, contact?: ?Contact, source?: string, media?: ?MediaFile}  $options
+     * @param  array{campaign_id?: ?int, contact?: ?Contact, source?: string, media?: ?MediaFile, ai?: bool}  $options
      */
     public function queueText(Device $device, string $to, string $body, ?User $user = null, ?ApiKey $apiKey = null, ?string $idempotencyKey = null, array $options = []): Message
     {
@@ -36,6 +36,7 @@ class MessageService
             'conversation_id' => $conversation->id,
             'campaign_id' => $options['campaign_id'] ?? null,
             'direction' => 'out',
+            'sent_by_ai' => (bool) ($options['ai'] ?? false),
             'to' => $phone,
             'body' => $body,
             'media_type' => ($m = $options['media'] ?? null)?->type,
@@ -49,6 +50,12 @@ class MessageService
 
         $conversation->touchWith($message);
         $contact->forceFill(['last_message_at' => now()])->save();
+
+        // CS manusia membalas -> AI berhenti sementara di percakapan ini
+        $isHuman = $user && empty($options['ai']) && empty($options['campaign_id']) && ! in_array($options['source'] ?? null, ['auto', 'ticket'], true);
+        if ($isHuman) {
+            $conversation->forceFill(['ai_paused_until' => now()->addMinutes((int) \App\Models\Setting::get('ai_pause_minutes'))])->save();
+        }
 
         SendWhatsAppMessage::dispatch($message->id);
 

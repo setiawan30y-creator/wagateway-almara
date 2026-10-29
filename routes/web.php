@@ -62,6 +62,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/kontak/{contact}/tahap', [ContactController::class, 'stage'])->name('contacts.stage');
     Route::delete('/kontak/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy')->middleware('can:admin');
 
+    // AI untuk agent: saran balasan & on/off per percakapan
+    Route::post('/inbox/{conversation}/ai-saran', [\App\Http\Controllers\AiAgentController::class, 'suggest'])->name('ai.suggest');
+    Route::post('/inbox/{conversation}/ai', [\App\Http\Controllers\AiAgentController::class, 'toggleConversation'])->name('ai.conversation');
+
     // Tiket
     Route::get('/tiket', [\App\Http\Controllers\TicketController::class, 'index'])->name('tickets.index');
     Route::get('/tiket/buat', [\App\Http\Controllers\TicketController::class, 'create'])->name('tickets.create');
@@ -112,6 +116,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/smart-link/{smartLink}/ubah', [\App\Http\Controllers\SmartLinkController::class, 'edit'])->name('smart-links.edit');
         Route::put('/smart-link/{smartLink}', [\App\Http\Controllers\SmartLinkController::class, 'update'])->name('smart-links.update');
         Route::delete('/smart-link/{smartLink}', [\App\Http\Controllers\SmartLinkController::class, 'destroy'])->name('smart-links.destroy');
+
+        Route::get('/ai-agent', [\App\Http\Controllers\AiAgentController::class, 'index'])->name('ai.index');
+        Route::put('/ai-agent', [\App\Http\Controllers\AiAgentController::class, 'update'])->name('ai.update');
+        Route::delete('/ai-agent/api-key', [\App\Http\Controllers\AiAgentController::class, 'forgetKey'])->name('ai.forget-key');
+        Route::post('/ai-agent/uji', [\App\Http\Controllers\AiAgentController::class, 'test'])->name('ai.test');
+        Route::post('/ai-agent/pengetahuan', [\App\Http\Controllers\AiAgentController::class, 'storeKnowledge'])->name('ai.knowledge.store');
+        Route::put('/ai-agent/pengetahuan/{item}', [\App\Http\Controllers\AiAgentController::class, 'updateKnowledge'])->name('ai.knowledge.update');
+        Route::delete('/ai-agent/pengetahuan/{item}', [\App\Http\Controllers\AiAgentController::class, 'destroyKnowledge'])->name('ai.knowledge.destroy');
 
         Route::get('/auto-reply', [\App\Http\Controllers\AutoReplyController::class, 'index'])->name('auto-replies.index');
         Route::get('/auto-reply/buat', [\App\Http\Controllers\AutoReplyController::class, 'create'])->name('auto-replies.create');

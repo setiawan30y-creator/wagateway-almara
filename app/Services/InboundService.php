@@ -82,7 +82,14 @@ class InboundService
         $keywordHandled = $this->handleKeywords($device, $contact, trim($body));
 
         if (! $keywordHandled) {
-            app(AutoReplyService::class)->handle($device, $contact->refresh(), $message, $isNewContact);
+            $rule = app(AutoReplyService::class)->handle($device, $contact->refresh(), $message, $isNewContact);
+
+            // Tidak ada auto-reply yang cocok -> biarkan AI Agent menjawab (bila aktif)
+            if (! $rule && app(\App\AI\AiAgent::class)->isConfigured()) {
+                config('queue.default') === 'sync'
+                    ? \App\Jobs\GenerateAiReply::dispatchAfterResponse($conversation->id, $message->id)
+                    : \App\Jobs\GenerateAiReply::dispatch($conversation->id, $message->id)->delay(now()->addSeconds(3));
+            }
         }
 
         AppNotification::notify(

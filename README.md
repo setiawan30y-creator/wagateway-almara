@@ -5,6 +5,22 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 > Connect. Automate. Sell. Grow.  
 > Developer: **@2026-Alifiandra**
 
+## Baru di versi 0.5.0 — AI Agent
+
+AI menjawab chat pelanggan sendiri memakai **OpenRouter** (model gratis `openrouter/free` secara default, bisa diganti model berbayar).
+
+| Fitur | Keterangan |
+|---|---|
+| Balas otomatis | Chat masuk yang tidak cocok dengan Auto-Reply dijawab AI berdasarkan **Basis Pengetahuan** (FAQ, produk, harga, jam buka, ongkir, dll). AI dilarang mengarang di luar data. |
+| Serah ke CS | Bila AI tidak tahu, pelanggan komplain, atau mengetik kata kunci (cs/admin/operator…) → pesan "disambungkan ke CS", percakapan diberi prioritas tinggi, CS mendapat notifikasi, AI berhenti di chat itu 12 jam. |
+| Kendali | AI otomatis berhenti saat CS membalas (default 60 menit), bisa dimatikan per percakapan dari Inbox, mode: selalu / di luar jam kerja / hanya chat belum ditugaskan. |
+| Batas & biaya | Batas pemanggilan per hari & per kontak per jam, log pemakaian (token, durasi, error). Kontak opt-out tidak dijawab. |
+| Copilot | Tombol **✨ Saran AI** di Inbox menyusun draf balasan untuk CS (tidak terkirim otomatis). |
+| Uji AI | Kotak chat uji di menu AI Agent tanpa mengirim WhatsApp. |
+
+Cara aktifkan: daftar di openrouter.ai → **Keys → Create Key** → menu **AI Agent** → tempel key, centang *Aktifkan AI Agent*, simpan → isi **Basis pengetahuan** → coba di **Uji AI**.
+Kuota model gratis OpenRouter: ±50 permintaan/hari tanpa saldo, ±1.000/hari setelah isi saldo sekali $10 (dapat berubah).
+
 ## Baru di versi 0.4.0
 
 | Area | Isi |
@@ -31,7 +47,7 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 | Gateway (v0.1) | Multi perangkat, adapter Simulasi / Meta Cloud API / QR engine, kredensial terenkripsi, kirim pesan, riwayat, API key, PWA, 3 tema |
 | REST API `/api/v1` | messages, contacts, devices, templates, campaigns, webhooks, analytics — lihat `docs/api` |
 
-**Belum termasuk** (fase blueprint berikutnya, butuh layanan/keputusan tambahan): portal lisensi Free/Pro & pembayaran, AI Agent / RAG / Copilot (OpenRouter), Smart Voice, Workflow builder visual, Commerce, Flutter, SaaS multi-tenant. Template resmi Meta & broadcast bermedia juga belum.
+**Belum termasuk** (fase blueprint berikutnya): portal lisensi Free/Pro & pembayaran, Smart Voice, Workflow builder visual, Commerce, Flutter, SaaS multi-tenant, RAG berbasis embedding (saat ini pencarian kata kunci). Template resmi Meta & broadcast bermedia juga belum.
 
 ## Kebutuhan
 

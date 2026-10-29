@@ -81,6 +81,7 @@
                     @if ($day !== $lastDay)<span class="day-sep">{{ $m->created_at->isToday() ? 'Hari ini' : $day }}</span>@php $lastDay = $day; @endphp @endif
                     <div class="bubble {{ $m->direction === 'in' ? 'in' : 'out' }}">@include('partials.media', ['m' => $m])<span class="txt">{{ $m->hasMedia() && preg_match('/^\[[a-z]+\]$/', $m->body) ? '' : $m->body }}</span><span class="meta">
                         @if ($m->campaign_id)<span class="tag">broadcast</span>@endif
+                        @if ($m->sent_by_ai)<span class="tag" style="color:var(--info)">✨ AI</span>@endif
                         @if ($m->direction === 'out' && $m->user)<span>{{ $m->user->name }} ·</span>@endif
                         {{ $m->created_at->format('H:i') }}
                         @if ($m->direction === 'out')
@@ -104,6 +105,7 @@
                 <div style="display:flex;flex-direction:column;gap:4px;flex:1">
                     <textarea class="input" id="reply-body" name="body" placeholder="Tulis balasan… (Enter kirim, Shift+Enter baris baru)" data-enter-submit maxlength="{{ config('whatsapp.max_text_length') }}"></textarea>
                     <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+                        <button type="button" class="btn btn-sm" data-ai-suggest="{{ route('ai.suggest', $conversation) }}" title="Minta AI menyusun draf balasan">✨ Saran AI</button>
                         <label class="btn btn-sm attach" title="Lampirkan gambar / dokumen / audio / video">📎 <span data-file-label>Lampiran</span>
                             <input type="file" name="file" hidden data-file-input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.mp3,.ogg,.m4a,.aac,.amr,.opus,.mp4,.3gp"></label>
                         @if ($templates->isNotEmpty())
@@ -146,6 +148,24 @@
                 @foreach ($openTickets as $tk)
                     <div style="margin-top:5px;font-size:12px"><a class="mono" href="{{ route('tickets.show', $tk) }}">{{ $tk->number }}</a> {{ \Illuminate\Support\Str::limit($tk->subject, 28) }} @if ($tk->isOverdue())<span style="color:var(--err)">• lewat SLA</span>@endif</div>
                 @endforeach
+            </div>
+            @php $aiOn = \App\Models\Setting::get('ai_enabled') === '1'; @endphp
+            <div class="side-sec">
+                <h4>AI Agent</h4>
+                @if (! $aiOn)
+                    <div class="muted" style="font-size:12px">AI Agent nonaktif.@can('admin') <a href="{{ route('ai.index') }}">Atur</a>@endcan</div>
+                @else
+                    <div style="font-size:12px;margin-bottom:5px">
+                        @if (! $conversation->ai_enabled)<span style="color:var(--muted)">○ Dimatikan untuk chat ini</span>
+                        @elseif ($conversation->aiPaused())<span style="color:var(--warn)">⏸ Jeda sampai {{ $conversation->ai_paused_until->format('H:i') }}</span>
+                        @else<span style="color:var(--ok)">● Aktif menjawab</span>@endif
+                    </div>
+                    <form method="POST" action="{{ route('ai.conversation', $conversation) }}" class="inline">
+                        @csrf
+                        <input type="hidden" name="enable" value="{{ $conversation->ai_enabled && ! $conversation->aiPaused() ? 0 : 1 }}">
+                        <button class="btn btn-sm">{{ $conversation->ai_enabled && ! $conversation->aiPaused() ? 'Matikan AI di chat ini' : 'Aktifkan AI lagi' }}</button>
+                    </form>
+                @endif
             </div>
             <div class="side-sec">
                 <h4>Ditugaskan ke</h4>

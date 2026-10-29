@@ -15,7 +15,7 @@ class Message extends Model
     public const STATUSES = ['queued', 'sent', 'delivered', 'read', 'failed', 'received'];
 
     protected $fillable = [
-        'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'campaign_id', 'direction', 'to', 'body',
+        'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'campaign_id', 'direction', 'sent_by_ai', 'to', 'body',
         'media_type', 'media_path', 'media_name', 'media_mime', 'media_size',
         'status', 'provider_message_id', 'error', 'attempts', 'idempotency_key', 'sent_at',
     ];
@@ -25,6 +25,7 @@ class Message extends Model
         return [
             'sent_at' => 'datetime',
             'attempts' => 'integer',
+            'sent_by_ai' => 'boolean',
         ];
     }
 
@@ -108,6 +109,7 @@ class Message extends Model
         return [
             'id' => $this->public_id,
             'direction' => $this->direction,
+            'sent_by_ai' => (bool) $this->sent_by_ai,
             'to' => $this->to,
             'contact_id' => $this->contact_id,
             'campaign_id' => $this->campaign_id,
