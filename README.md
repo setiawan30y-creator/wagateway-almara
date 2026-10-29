@@ -5,6 +5,9 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 > Connect. Automate. Sell. Grow.  
 > Developer: **@2026-Alifiandra**
 
+📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
+📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
+
 ## Baru di versi 0.5.0 — AI Agent
 
 AI menjawab chat pelanggan sendiri memakai **OpenRouter** (model gratis `openrouter/free` secara default, bisa diganti model berbayar).
