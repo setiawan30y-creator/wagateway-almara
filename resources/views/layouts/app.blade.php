@@ -76,6 +76,7 @@
             @endif
         @endforeach
         <div class="sep"></div>
+        <a href="{{ route('docs.show') }}" class="{{ request()->routeIs('docs.*') ? 'active' : '' }}">@include('partials.icon', ['n' => 'book']) Panduan</a>
         <a href="{{ route('account.edit') }}" class="{{ request()->routeIs('account.*') ? 'active' : '' }}">@include('partials.icon', ['n' => 'user']) Akun</a>
     </nav>
 

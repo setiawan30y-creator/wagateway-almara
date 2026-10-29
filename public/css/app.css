@@ -449,3 +449,43 @@ img, svg, canvas { max-width: 100%; }
 .bubble .txt { white-space: pre-wrap; }
 .note { white-space: normal; }
 .note .txt { white-space: pre-wrap; }
+
+/* ===================== Panduan / dokumentasi — @2026-Alifiandra ===================== */
+.docs-wrap { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 10px; align-items: start; }
+.docs-nav { position: sticky; top: 52px; }
+.docs-nav a { display: block; padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text); font-size: 12.5px; }
+.docs-nav a:last-child { border-bottom: 0; }
+.docs-nav a.active { color: var(--primary); font-weight: 600; box-shadow: inset 3px 0 0 var(--primary); background: var(--panel-2); }
+.docs-nav a:hover { text-decoration: none; background: var(--panel-2); }
+.doc { font-size: 14px; line-height: 1.65; max-width: 920px; overflow-wrap: anywhere; }
+.doc h1 { font-size: 20px; margin: 0 0 6px; }
+.doc h2 { font-size: 17px; margin: 26px 0 8px; padding-top: 10px; border-top: 1px dashed var(--border); scroll-margin-top: 56px; }
+.doc h3 { font-size: 15px; margin: 18px 0 6px; scroll-margin-top: 56px; }
+.doc h4 { font-size: 13.5px; margin: 14px 0 4px; }
+.doc p, .doc ul, .doc ol { margin: 6px 0 10px; }
+.doc ul, .doc ol { padding-left: 22px; }
+.doc li { margin: 2px 0; }
+.doc hr { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }
+.doc code { background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 12.5px; }
+.doc pre { position: relative; background: #1b1d21; color: #e8e6e1; border-radius: 6px; padding: 12px 14px; overflow-x: auto; margin: 8px 0 12px; }
+.doc pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 12.5px; white-space: pre; }
+.doc pre .copy-code { position: absolute; top: 6px; right: 6px; height: 24px; min-height: 24px; opacity: .85; background: #2c2f35; color: #e8e6e1; border-color: #3a3d44; }
+.doc blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--info); background: color-mix(in srgb, var(--info) 7%, transparent); border-radius: 0 5px 5px 0; }
+.doc table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 13px; display: block; overflow-x: auto; }
+.doc th, .doc td { border: 1px solid var(--border); padding: 6px 9px; text-align: left; vertical-align: top; }
+.doc th { background: var(--panel-2); font-size: 12px; }
+@media (max-width: 860px) {
+  .docs-wrap { grid-template-columns: minmax(0, 1fr); }
+  .docs-nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; }
+  .docs-nav .card-h { display: none; }
+  .docs-nav a { border: 1px solid var(--border); border-radius: 14px; padding: 4px 10px; }
+  .doc { font-size: 14.5px; }
+}
+@media print {
+  .topbar, .sidebar, .bottom-nav, .docs-nav, .page-head .actions, .footer, .copy-code { display: none !important; }
+  .shell { display: block; }
+  .main::before { display: none; }
+  body { background: #fff; }
+  .doc { border: 0; max-width: none; }
+  .doc pre { background: #f3f3f3; color: #111; }
+}

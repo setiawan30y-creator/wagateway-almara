@@ -84,6 +84,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('/media/{message}', [\App\Http\Controllers\MediaController::class, 'show'])->name('media.show');
 
+    // Panduan / dokumentasi
+    Route::get('/panduan/{slug?}', [\App\Http\Controllers\DocsController::class, 'show'])->name('docs.show');
+
     // Notifikasi & akun
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'readAll'])->name('notifications.readAll');
