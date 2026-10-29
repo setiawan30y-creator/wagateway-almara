@@ -227,32 +227,83 @@
   });
 })();
 
-/* ---- Bantuan per halaman (tombol ? / tekan tombol ?) ---- @2026-Alifiandra */
+/* ---- Bantuan per halaman: jendela di tengah, bisa digeser ---- @2026-Alifiandra */
 (function () {
-  var drawer = document.getElementById('help-drawer');
-  var backdrop = document.querySelector('.help-backdrop');
-  if (!drawer) return;
+  var box = document.getElementById('help-drawer');
+  if (!box) return;
+  var head = box.querySelector('[data-help-drag]');
+  var KEY = 'almara-help-pos';
   var lastFocus = null;
+
+  function clamp(x, y) {
+    var w = box.offsetWidth, h = box.offsetHeight, m = 8;
+    // jendela selalu terlihat utuh di layar
+    return [Math.min(Math.max(m, x), Math.max(m, window.innerWidth - w - m)), Math.min(Math.max(m, y), Math.max(m, window.innerHeight - h - m))];
+  }
+  function place(x, y) {
+    var p = clamp(x, y);
+    box.classList.add('moved');
+    box.style.left = p[0] + 'px'; box.style.top = p[1] + 'px';
+    return p;
+  }
+  function center() {
+    box.classList.remove('moved'); box.style.left = ''; box.style.top = '';
+    try { localStorage.removeItem(KEY); } catch (e) {}
+  }
+  function restore() {
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    if (saved && window.innerWidth > 720) place(saved[0], saved[1]); else center();
+  }
 
   function open() {
     lastFocus = document.activeElement;
-    drawer.hidden = false; backdrop.hidden = false;
-    requestAnimationFrame(function () { drawer.classList.add('open'); });
-    var c = drawer.querySelector('[data-help-close]'); if (c) c.focus();
+    box.hidden = false;
+    restore();
+    requestAnimationFrame(function () { box.classList.add('open'); });
+    var c = box.querySelector('[data-help-close]'); if (c) c.focus();
   }
   function close() {
-    drawer.classList.remove('open');
-    setTimeout(function () { drawer.hidden = true; backdrop.hidden = true; }, 180);
+    box.classList.remove('open');
+    setTimeout(function () { box.hidden = true; }, 150);
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
+  // Geser (mouse & sentuh)
+  var start = null;
+  head.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('button, a')) return;
+    var r = box.getBoundingClientRect();
+    start = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    place(r.left, r.top);
+    box.classList.add('dragging');
+    head.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove', function (e) {
+    if (!start) return;
+    place(e.clientX - start.dx, e.clientY - start.dy);
+  });
+  function endDrag() {
+    if (!start) return;
+    start = null; box.classList.remove('dragging');
+    try { localStorage.setItem(KEY, JSON.stringify([parseInt(box.style.left, 10), parseInt(box.style.top, 10)])); } catch (e) {}
+  }
+  head.addEventListener('pointerup', endDrag);
+  head.addEventListener('pointercancel', endDrag);
+  head.addEventListener('dblclick', function (e) { if (!e.target.closest('button')) center(); });
+
+  window.addEventListener('resize', function () {
+    if (!box.hidden && box.classList.contains('moved')) place(parseInt(box.style.left, 10), parseInt(box.style.top, 10));
+  });
+
   document.addEventListener('click', function (e) {
-    if (e.target.closest('[data-help-open]')) { e.preventDefault(); open(); }
+    if (e.target.closest('[data-help-open]')) { e.preventDefault(); box.hidden ? open() : close(); }
     else if (e.target.closest('[data-help-close]')) { e.preventDefault(); close(); }
   });
   document.addEventListener('keydown', function (e) {
     var typing = /INPUT|TEXTAREA|SELECT/.test((e.target.tagName || '')) || e.target.isContentEditable;
-    if (e.key === 'Escape' && !drawer.hidden) close();
-    else if (e.key === '?' && !typing) { e.preventDefault(); drawer.hidden ? open() : close(); }
+    if (e.key === 'Escape' && !box.hidden) close();
+    else if (e.key === '?' && !typing) { e.preventDefault(); box.hidden ? open() : close(); }
   });
 })();

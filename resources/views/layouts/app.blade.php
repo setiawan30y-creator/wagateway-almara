@@ -105,10 +105,12 @@
 </div>
 
 @php $help = \App\Support\PageHelp::for(request()->route()?->getName()); @endphp
-<div class="help-backdrop" data-help-close hidden></div>
-<aside class="help-drawer" id="help-drawer" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
-    <div class="help-head">
-        <div><div class="crumb">Bantuan halaman</div><h2 id="help-title">{{ $help['judul'] }}</h2></div>
+<aside class="help-drawer" id="help-drawer" role="dialog" aria-modal="false" aria-labelledby="help-title" hidden>
+    <div class="help-head" data-help-drag title="Geser untuk memindahkan · klik dua kali untuk kembali ke tengah">
+        <div class="help-head-title">
+            <span class="help-grip" aria-hidden="true"><i></i><i></i><i></i></span>
+            <div><div class="crumb">Bantuan halaman <span class="help-hint">· geser untuk memindahkan</span></div><h2 id="help-title">{{ $help['judul'] }}</h2></div>
+        </div>
         <button type="button" class="btn btn-sm" data-help-close aria-label="Tutup">✕</button>
     </div>
     <div class="help-body">
