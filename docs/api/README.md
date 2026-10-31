@@ -47,7 +47,7 @@ Token juga diterima di semua endpoint `/api/v1/*` lewat `Authorization: Bearer a
 
 ### Token per perangkat (seperti token device Fonnte)
 
-Setiap nomor di menu **Perangkat** otomatis punya token di kolom **Token API** (👁 lihat, **Salin**). Tombol **🔗 Integrasi** menampilkan token, URL gaya Fonnte / Wablas / REST, link uji GET, dan contoh cURL — semuanya bisa disalin.
+Setiap nomor di menu **Perangkat** otomatis punya token API — kolom **Aksi** → **🔑 Salin token**. Tombol **🔗 Integrasi** (juga di kolom Aksi) menampilkan token, URL gaya Fonnte / Wablas / REST, link uji GET, dan contoh cURL — semuanya bisa disalin.
 
 - Pesan yang dikirim dengan token sebuah nomor **otomatis keluar dari nomor itu** (tidak perlu `device_id`). Urutan pemilihan nomor: `device_id` di request → nomor milik token → nomor utama.
 - **Buat ulang token** di panel Integrasi mencabut token lama seketika. Menghapus perangkat juga mencabut tokennya.

@@ -21,7 +21,7 @@ class DeviceTokenTest extends TestCase
         $cs = Device::create(['name' => 'WA CS', 'provider' => 'log', 'is_active' => true]);
 
         $this->actingAs($admin)->get('/perangkat')->assertOk()
-            ->assertSee('Token API')->assertSee('data-copy="#tok-'.$cs->id.'"', false)->assertSee(url('/api/send'));
+            ->assertSee('Salin token')->assertSee('data-copy="#tok-'.$cs->id.'"', false)->assertSee(url('/api/send'));
 
         $token = ApiKey::active()->where('device_id', $cs->id)->first();
         $plain = $token->plainKey();

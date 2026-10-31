@@ -9,13 +9,13 @@
         <div class="card-h">API key baru</div>
         <div class="card-b">
             <div class="secret"><code id="plain-key">{{ session('plain_key') }}</code><button type="button" class="btn btn-sm" data-copy="#plain-key">Salin</button></div>
-            <div class="hint">Key bisa dilihat & disalin lagi kapan saja dari tabel di bawah. Token per nomor juga ada di menu <a href="{{ route('devices.index') }}">Perangkat</a> → 🔗 Integrasi.</div>
+            <div class="hint">Key bisa dilihat & disalin lagi kapan saja dari tabel di bawah. Token per nomor juga ada di menu <a href="{{ route('devices.index') }}">Perangkat</a> → kolom Aksi → 🔗 Integrasi.</div>
         </div>
     </div>
 @endif
 
 <div class="alert alert-success" style="margin-bottom:10px">
-    Cara termudah: buka <a href="{{ route('devices.index') }}"><b>Perangkat</b></a> → kolom <b>Token API</b> → <b>Salin</b> (satu token per nomor WhatsApp, seperti Fonnte). Halaman ini untuk key tambahan, mis. satu key per aplikasi.
+    Cara termudah: buka <a href="{{ route('devices.index') }}"><b>Perangkat</b></a> → kolom <b>Aksi</b> → <b>🔑 Salin token</b> (satu token per nomor WhatsApp, seperti Fonnte). Halaman ini untuk key tambahan, mis. satu key per aplikasi.
 </div>
 
 <div class="card" style="margin-bottom:10px">

@@ -22,7 +22,7 @@
 <div class="card">
     <div class="table-wrap">
         <table class="dense">
-            <thead><tr><th>Nama</th><th>Provider</th><th class="hide-sm">Nomor</th><th>Status</th><th>Token API</th><th class="hide-sm">Terakhir aktif</th><th class="hide-sm right">Pesan</th><th class="right">Aksi</th></tr></thead>
+            <thead><tr><th>Nama</th><th>Provider</th><th class="hide-sm">Nomor</th><th>Status</th><th class="hide-sm">Terakhir aktif</th><th class="hide-sm right">Pesan</th><th class="right">Aksi</th></tr></thead>
             <tbody>
             @forelse ($devices as $d)
                 <tr>
@@ -38,17 +38,14 @@
                         @if ($dq)<div class="quota {{ $dq['remaining'] === 0 ? 'full' : '' }}" title="Broadcast hari ini / batas harian{{ $dq['warmup'] ? ' (pemanasan nomor baru)' : '' }}"><span class="bar"><i style="width:{{ min(100, round($dq['sent'] * 100 / max(1, $dq['limit']))) }}%"></i></span>{{ $dq['sent'] }}/{{ $dq['limit'] }}{{ $dq['warmup'] ? ' · warm-up hari '.$dq['age'] : '' }}</div>@endif
                     </td>
                     @php $tok = $tokens[$d->id] ?? null; $plain = $tok?->plainKey(); @endphp
-                    <td class="nowrap">
-                        @if ($plain)
-                            <span class="token-cell"><code id="tok-{{ $d->id }}" class="tok is-masked" title="Token API perangkat ini">{{ $plain }}</code>
-                            <button type="button" class="btn btn-sm btn-icon" data-reveal="#tok-{{ $d->id }}" title="Lihat / sembunyikan">👁</button>
-                            <button type="button" class="btn btn-sm" data-copy="#tok-{{ $d->id }}">Salin</button></span>
-                        @endif
-                        <button type="button" class="btn btn-sm" data-toggle-row="#integ-{{ $d->id }}" aria-expanded="{{ session('open_device') == $d->id ? 'true' : 'false' }}">🔗 Integrasi</button>
-                    </td>
                     <td class="hide-sm muted">{{ $d->last_seen_at?->diffForHumans() ?? '—' }}</td>
                     <td class="hide-sm right">{{ number_format($d->messages_count, 0, ',', '.') }}</td>
                     <td class="right td-actions">
+                        @if ($plain)
+                            <code id="tok-{{ $d->id }}" hidden>{{ $plain }}</code>
+                            <button type="button" class="btn btn-sm btn-primary" data-copy="#tok-{{ $d->id }}" title="Salin token API perangkat ini untuk aplikasi lain (billing, kasir, toko online)">🔑 Salin token</button>
+                            <button type="button" class="btn btn-sm" data-toggle-row="#integ-{{ $d->id }}" aria-expanded="{{ session('open_device') == $d->id ? 'true' : 'false' }}" title="Token, URL API & contoh untuk aplikasi lain">🔗 Integrasi</button>
+                        @endif
                         <form method="POST" action="{{ route('devices.check', $d) }}" class="inline">@csrf<button class="btn btn-sm" data-once>Cek</button></form>
                         @if ($d->provider === 'qr')
                             <a class="btn btn-sm {{ $d->status === 'connected' ? '' : 'btn-primary' }}" href="{{ route('devices.pair', $d) }}">{{ $d->status === 'connected' ? 'QR' : 'Scan QR' }}</a>
@@ -70,7 +67,7 @@
                 </tr>
                 @if ($plain)
                 <tr class="integ-row" id="integ-{{ $d->id }}" @if (session('open_device') != $d->id) hidden @endif>
-                    <td colspan="8">
+                    <td colspan="7">
                         <div class="integ">
                             <div class="integ-h"><b>Integrasi aplikasi lain — {{ $d->name }}</b>
                                 <span class="muted">Pesan yang dikirim dengan token ini otomatis keluar dari nomor <b>{{ $d->phone_number ?? $d->name }}</b>.@if ($d->provider === 'log') <span class="warn-text">Perangkat Simulasi — pesan tidak benar-benar terkirim ke WhatsApp.</span>@endif</span></div>
@@ -110,7 +107,7 @@
                 </tr>
                 @endif
             @empty
-                <tr><td colspan="8" class="empty">Belum ada perangkat. Klik <b>Tambah nomor — Scan QR</b> untuk menghubungkan nomor WhatsApp.</td></tr>
+                <tr><td colspan="7" class="empty">Belum ada perangkat. Klik <b>Tambah nomor — Scan QR</b> untuk menghubungkan nomor WhatsApp.</td></tr>
             @endforelse
             </tbody>
         </table>

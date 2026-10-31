@@ -266,8 +266,8 @@ return [
             'Jadikan utama: nomor default untuk pengiriman. Logout: melepas nomor dari WhatsApp (perlu scan ulang).',
             'Sinkron kontak / Sinkron grup (Scan QR yang terhubung): mengambil kontak HP ke menu Kontak dan grup ke menu Grup WA.',
             'Kolom Status menampilkan kuota broadcast hari ini (mis. 12/60 · warm-up hari 3).',
-            'Kolom Token API: tiap nomor otomatis punya token (seperti Fonnte). Klik 👁 untuk melihat, Salin untuk menyalin, lalu tempel di aplikasi lain (billing, kasir, toko online).',
-            'Tombol 🔗 Integrasi: membuka semua data yang dibutuhkan aplikasi lain — token, URL gaya Fonnte (/api/send), URL gaya Wablas (/api/send-message), URL REST, link uji GET, contoh cURL — masing-masing dengan tombol Salin.',
+            'Tombol 🔑 Salin token (kolom Aksi): tiap nomor otomatis punya token API (seperti Fonnte) — klik untuk menyalin, lalu tempel di aplikasi lain (billing, kasir, toko online).',
+            'Tombol 🔗 Integrasi (kolom Aksi): membuka semua data yang dibutuhkan aplikasi lain — token, URL gaya Fonnte (/api/send), URL gaya Wablas (/api/send-message), URL REST, link uji GET, contoh cURL — masing-masing dengan tombol Salin.',
         ],
         'tips' => [
             'Nomor baru dipanaskan bertahap: hari 1–3 maks 30, 4–7 maks 60, 8–14 maks 120, 15–21 maks 200 broadcast/hari.',
@@ -301,7 +301,7 @@ return [
         'judul' => 'API Key',
         'fungsi' => 'Kunci akses agar aplikasi lain (mis. aplikasi kasir) bisa mengirim pesan lewat REST API gateway ini.',
         'langkah' => [
-            'Cara termudah: menu Perangkat → kolom Token API → Salin (satu token per nomor). Halaman ini untuk key tambahan.',
+            'Cara termudah: menu Perangkat → kolom Aksi → 🔑 Salin token (satu token per nomor). Halaman ini untuk key tambahan.',
             'Isi label (mis. Aplikasi Kasir), pilih "Kirim dari" (nomor pengirim; kosong = nomor utama) → Buat API key.',
             'Key tampil di tabel: klik 👁 untuk melihat penuh, Salin untuk menyalin — bisa dilihat lagi kapan saja.',
             'Gunakan di header Authorization (boleh dengan / tanpa "Bearer") atau parameter token. Alamat API & contoh PowerShell / cURL ada di halaman ini.',
