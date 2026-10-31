@@ -110,6 +110,22 @@ class RecipientListController extends Controller
         return back()->with('success', $msg);
     }
 
+    /** Tandai anggota yang "belum ada izin" sebagai opt-in (hanya bila mereka memang sudah setuju). */
+    public function optIn(Request $request, RecipientList $list)
+    {
+        $request->validate(['confirm' => ['accepted']], ['confirm.accepted' => 'Centang pernyataan bahwa anggota sudah setuju menerima pesan.']);
+
+        $count = 0;
+        $list->contacts()->where('consent', 'unknown')->get()->each(function (Contact $c) use ($request, $list, &$count) {
+            $c->setConsent('opted_in', 'manual', 'Ditandai dari rombongan '.$list->name.' oleh '.$request->user()->name);
+            $count++;
+        });
+
+        AuditLog::record('list.opt_in', "Tandai {$count} anggota rombongan {$list->name} sebagai opt-in");
+
+        return back()->with('success', "{$count} anggota ditandai opt-in. Anggota yang opt-out tidak diubah.");
+    }
+
     public function removeMembers(Request $request, RecipientList $list)
     {
         $data = $request->validate(['ids' => ['required', 'array', 'max:500'], 'ids.*' => ['integer']]);

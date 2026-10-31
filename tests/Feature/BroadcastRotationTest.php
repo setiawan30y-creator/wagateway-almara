@@ -172,4 +172,18 @@ class BroadcastRotationTest extends TestCase
         $sent = Message::where('campaign_id', \App\Models\Campaign::where('name', 'Longgar')->value('id'))->pluck('to')->all();
         $this->assertSame(['6281300000101'], $sent);
     }
+
+    public function test_mark_list_members_opt_in(): void
+    {
+        $list = RecipientList::create(['name' => 'Uji']);
+        $a = Contact::create(['phone' => '6281300000201', 'consent' => 'unknown']);
+        $b = Contact::create(['phone' => '6281300000202', 'consent' => 'opted_out']);
+        $list->addContacts([$a->id, $b->id]);
+
+        $this->actingAs($this->admin)->get("/rombongan/{$list->id}")->assertSee('1 anggota belum memberi izin');
+        $this->actingAs($this->admin)->post("/rombongan/{$list->id}/opt-in")->assertSessionHasErrors('confirm');
+        $this->actingAs($this->admin)->post("/rombongan/{$list->id}/opt-in", ['confirm' => 1])->assertSessionHas('success');
+        $this->assertSame('opted_in', $a->refresh()->consent);
+        $this->assertSame('opted_out', $b->refresh()->consent);
+    }
 }

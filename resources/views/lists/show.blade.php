@@ -16,6 +16,19 @@
     <div class="card kpi"><div class="l">Belum izin · opt-out</div><div class="v">{{ $counts['total'] - $counts['opted_in'] - $counts['opted_out'] }} <small class="muted" style="font-size:12px">· {{ $counts['opted_out'] }}</small></div></div>
 </div>
 
+@php $unknown = $counts['total'] - $counts['opted_in'] - $counts['opted_out']; @endphp
+@if ($unknown > 0)
+    <div class="alert alert-warning" style="margin-bottom:10px">
+        <b>{{ $unknown }} anggota belum memberi izin (opt-in)</b> — mereka tidak akan menerima broadcast.
+        <form method="POST" action="{{ route('lists.opt-in', $list) }}" style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            @csrf
+            <label class="check" style="margin:0"><input type="checkbox" name="confirm" value="1" required> Saya pastikan anggota ini sudah setuju menerima pesan dari kami</label>
+            <button class="btn btn-sm btn-primary" data-once>Tandai {{ $unknown }} anggota opt-in</button>
+        </form>
+        @error('confirm')<div class="error-text">{{ $message }}</div>@enderror
+    </div>
+@endif
+
 <div class="card" style="margin-bottom:10px">
     <div class="card-h">Tambah anggota</div>
     <div class="card-b">

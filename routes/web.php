@@ -63,6 +63,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::put('/rombongan/{list}', [\App\Http\Controllers\RecipientListController::class, 'update'])->name('lists.update');
     Route::delete('/rombongan/{list}', [\App\Http\Controllers\RecipientListController::class, 'destroy'])->name('lists.destroy');
     Route::post('/rombongan/{list}/anggota', [\App\Http\Controllers\RecipientListController::class, 'addMembers'])->name('lists.add');
+    Route::post('/rombongan/{list}/opt-in', [\App\Http\Controllers\RecipientListController::class, 'optIn'])->name('lists.opt-in');
     Route::post('/rombongan/{list}/keluarkan', [\App\Http\Controllers\RecipientListController::class, 'removeMembers'])->name('lists.remove');
 
     // Grup WhatsApp & sinkron kontak HP (perangkat Scan QR)
