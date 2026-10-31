@@ -17,7 +17,7 @@ function setup() {
     createDriver: async (ctx) => {
       ctxRef = ctx;
       setTimeout(() => ctx.onQr('QR-STRING'), 0);
-      return { sendText: async (to, text) => ({ id: 'MSG-' + to }), sendMedia: async (to, m) => ({ id: 'MED-' + m.type + '-' + m.buffer.length }), logout: async () => {}, close: async () => {} };
+      return { groups: async () => [{ jid: '120363000000000001@g.us', subject: 'Tim Sales', size: 2, participants: [{ phone: '6281111111111', admin: 'admin' }, { phone: '6282222222222', admin: null }] }], sendText: async (to, text) => ({ id: 'MSG-' + to }), sendMedia: async (to, m) => ({ id: 'MED-' + m.type + '-' + m.buffer.length }), logout: async () => {}, close: async () => {} };
     },
   });
   const app = createApp({ manager, token: 'tok', toDataUrl: async (qr) => 'data:image/png;base64,' + Buffer.from(qr).toString('base64') });
@@ -66,6 +66,53 @@ test('alur pairing, kirim pesan, pesan masuk, logout', async () => {
   assert.equal(r.status, 200);
   r = await (await fetch(base + '/status?session=dev1', { headers: h })).json();
   assert.equal(r.state, 'idle');
+
+  app.close();
+});
+
+test('sinkron kontak, riwayat, grup, kirim ke grup', async () => {
+  const { app, events, base, ctx } = await setup();
+  await fetch(base + '/sessions/start', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev2', webhook_url: 'http://gw/q/2', webhook_token: 'wt' }) });
+  await new Promise((s) => setTimeout(s, 10));
+
+  let r = await fetch(base + '/groups?session=dev2', { headers: h });
+  assert.equal(r.status, 409); // belum terhubung
+
+  ctx().onOpen({ phone: '6281200000000' });
+
+  // 1.200 kontak -> dikirim per 500
+  const list = Array.from({ length: 1200 }, (_, i) => ({ phone: '6281' + String(30000000 + i), name: 'K' + i }));
+  ctx().onContacts(list);
+  ctx().onContacts([{ phone: '628130000000', name: 'K0' }, { phone: '12', name: 'x' }]); // tidak berubah / tidak valid
+  await new Promise((s) => setTimeout(s, 5));
+  const cEvents = events.filter((e) => e.payload.type === 'contacts');
+  assert.deepEqual(cEvents.map((e) => e.payload.contacts.length), [500, 500, 200]);
+
+  r = await (await fetch(base + '/contacts?session=dev2', { headers: h })).json();
+  assert.equal(r.count, 1200);
+
+  r = await (await fetch(base + '/contacts/sync', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev2' }) })).json();
+  assert.equal(r.count, 1200);
+
+  // riwayat per 200
+  ctx().onHistory(Array.from({ length: 250 }, (_, i) => ({ id: 'H' + i, from: '6281300000000', message: 'm' + i, from_me: i % 2 === 0, timestamp: 1700000000 + i })));
+  await new Promise((s) => setTimeout(s, 5));
+  assert.deepEqual(events.filter((e) => e.payload.type === 'history').map((e) => e.payload.messages.length), [200, 50]);
+
+  r = await (await fetch(base + '/groups?session=dev2', { headers: h })).json();
+  assert.equal(r.count, 1);
+  assert.equal(r.groups[0].participants.length, 2);
+
+  r = await (await fetch(base + '/send-message', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev2', to: '120363000000000001@g.us', message: 'Halo grup' }) })).json();
+  assert.deepEqual(r, { success: true, id: 'MSG-120363000000000001@g.us' });
+
+  r = await fetch(base + '/send-message', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev2', to: 'abc@g.us', message: 'x' }) });
+  assert.equal(r.status, 422);
+
+  ctx().onGroups([{ jid: 'g@g.us', subject: 'A', participants: [] }]);
+  await new Promise((s) => setTimeout(s, 5));
+  const g = events.filter((e) => e.payload.type === 'groups').at(-1).payload;
+  assert.equal(g.groups[0].participants, undefined);
 
   app.close();
 });

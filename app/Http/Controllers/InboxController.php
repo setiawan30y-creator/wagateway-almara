@@ -26,7 +26,7 @@ class InboxController extends Controller
 
     public function show(Request $request, Conversation $conversation)
     {
-        $conversation->load(['contact.tags', 'device', 'assignee', 'notes.user']);
+        $conversation->load(['contact.tags', 'group', 'device', 'assignee', 'notes.user']);
 
         if ($conversation->unread_count > 0) {
             $conversation->forceFill(['unread_count' => 0])->save();
@@ -57,8 +57,16 @@ class InboxController extends Controller
 
         abort_unless($device, 422, 'Belum ada perangkat aktif.');
 
-        $contact = $conversation->contact;
         $media = $request->hasFile('file') ? app(\App\Services\MediaStorage::class)->storeUpload($request->file('file')) : null;
+
+        if ($conversation->isGroup()) {
+            $message = $service->queueGroup($conversation->group, (string) ($data['body'] ?? ''), $request->user(), options: ['media' => $media]);
+
+            return redirect()->route('inbox.show', $conversation)
+                ->with($message->status === 'failed' ? 'warning' : 'success', $message->status === 'failed' ? 'Gagal mengirim: '.$message->error : null);
+        }
+
+        $contact = $conversation->contact;
         $message = $service->queueText($device, $contact->phone, (string) ($data['body'] ?? ''), $request->user(), options: ['contact' => $contact, 'media' => $media]);
 
         if (! $conversation->assigned_to) {
@@ -87,7 +95,7 @@ class InboxController extends Controller
 
             if ($changes['assigned_to'] && $changes['assigned_to'] !== $conversation->assigned_to) {
                 \App\Models\AppNotification::notify('conversation.assigned', 'Percakapan ditugaskan ke Anda',
-                    $conversation->contact->displayName(), route('inbox.show', $conversation), (int) $changes['assigned_to']);
+                    $conversation->title(), route('inbox.show', $conversation), (int) $changes['assigned_to']);
             }
         }
 
@@ -151,14 +159,16 @@ class InboxController extends Controller
         $q = trim((string) $request->query('q'));
         $user = $request->user();
 
-        $conversations = Conversation::with(['contact', 'assignee'])
+        $conversations = Conversation::with(['contact', 'group', 'assignee'])
             ->when($filter === 'open', fn ($w) => $w->where('status', 'open'))
             ->when($filter === 'pending', fn ($w) => $w->where('status', 'pending'))
             ->when($filter === 'closed', fn ($w) => $w->where('status', 'closed'))
             ->when($filter === 'unread', fn ($w) => $w->where('unread_count', '>', 0))
             ->when($filter === 'mine', fn ($w) => $w->where('assigned_to', $user->id))
             ->when($filter === 'unassigned', fn ($w) => $w->whereNull('assigned_to')->where('status', '!=', 'closed'))
-            ->when($q !== '', fn ($w) => $w->whereHas('contact', fn ($c) => $c->search($q)))
+            ->when($filter === 'groups', fn ($w) => $w->whereNotNull('group_id'))
+            ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->whereHas('contact', fn ($c) => $c->search($q))
+                ->orWhereHas('group', fn ($g) => $g->where('subject', 'like', '%'.$q.'%'))))
             ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->paginate(40)

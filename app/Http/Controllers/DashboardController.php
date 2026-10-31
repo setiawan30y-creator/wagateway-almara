@@ -18,7 +18,7 @@ class DashboardController extends Controller
         return view('dashboard', [
             'a' => Analytics::summary(7),
             'devices' => Device::orderByDesc('is_default')->orderBy('id')->get(),
-            'conversations' => Conversation::with('contact')->where('status', '!=', 'closed')->orderByDesc('last_message_at')->limit(8)->get(),
+            'conversations' => Conversation::with(['contact', 'group'])->where('status', '!=', 'closed')->orderByDesc('last_message_at')->limit(8)->get(),
             'campaigns' => Campaign::whereIn('status', ['running', 'scheduled', 'paused'])->latest('id')->limit(5)->get(),
         ]);
     }

@@ -27,7 +27,7 @@
             <input class="input" type="search" name="q" value="{{ request('q') }}" placeholder="Cari nama / nomor…">
         </form>
         <div class="tabs">
-            @foreach (['open' => 'Open ('.$counts['open'].')', 'unread' => 'Belum dibaca ('.$counts['unread'].')', 'mine' => 'Milik saya ('.$counts['mine'].')', 'unassigned' => 'Belum ditugaskan', 'pending' => 'Pending', 'closed' => 'Closed', 'all' => 'Semua'] as $k => $label)
+            @foreach (['open' => 'Open ('.$counts['open'].')', 'unread' => 'Belum dibaca ('.$counts['unread'].')', 'mine' => 'Milik saya ('.$counts['mine'].')', 'unassigned' => 'Belum ditugaskan', 'groups' => 'Grup', 'pending' => 'Pending', 'closed' => 'Closed', 'all' => 'Semua'] as $k => $label)
                 <a href="{{ route('inbox.index', ['filter' => $k, 'q' => request('q')]) }}" class="{{ $filter === $k ? 'active' : '' }}">{{ $label }}</a>
             @endforeach
         </div>
@@ -35,7 +35,7 @@
             @forelse ($conversations as $c)
                 <a class="conv {{ $conversation && $conversation->id === $c->id ? 'active' : '' }} {{ $c->unread_count ? 'unread' : '' }}" href="{{ route('inbox.show', ['conversation' => $c, 'filter' => $filter, 'q' => request('q')]) }}">
                     <div class="top">
-                        <span class="nm">{{ $c->contact->displayName() }}</span>
+                        <span class="nm">@if ($c->group_id)<span class="grp-ico" title="Grup">👥</span> @endif{{ $c->title() }}</span>
                         <span class="tm">{{ $c->last_message_at?->isToday() ? $c->last_message_at->format('H:i') : $c->last_message_at?->format('d/m') }}</span>
                     </div>
                     <div class="pv">
@@ -55,12 +55,16 @@
     {{-- Kolom 2: thread --}}
     <div class="col-main">
         @if ($conversation)
-            @php $contact = $conversation->contact; @endphp
+            @php $contact = $conversation->contact; $group = $conversation->group; @endphp
             <div class="thread-head">
                 <a class="btn btn-sm menu-toggle" href="{{ route('inbox.index', ['filter' => $filter]) }}">‹</a>
                 <div>
-                    <div class="nm">{{ $contact->displayName() }}</div>
-                    <div class="muted mono" style="font-size:11.5px">+{{ $contact->phone }} · <span class="consent-{{ $contact->consent }}">{{ \App\Models\Contact::CONSENTS[$contact->consent] }}</span></div>
+                    <div class="nm">@if ($group)👥 @endif{{ $conversation->title() }}</div>
+                    @if ($group)
+                        <div class="muted" style="font-size:11.5px">Grup · {{ $group->participants_count ?: '?' }} anggota · <a href="{{ route('groups.show', $group) }}">detail</a></div>
+                    @else
+                        <div class="muted mono" style="font-size:11.5px">+{{ $contact->phone }} · <span class="consent-{{ $contact->consent }}">{{ \App\Models\Contact::CONSENTS[$contact->consent] }}</span></div>
+                    @endif
                 </div>
                 <span class="spacer" style="flex:1"></span>
                 <form method="POST" action="{{ route('inbox.update', $conversation) }}" class="inline" style="display:flex;gap:4px;flex-wrap:wrap">
@@ -79,7 +83,7 @@
                 @forelse ($thread as $m)
                     @php $day = $m->created_at->format('d M Y'); @endphp
                     @if ($day !== $lastDay)<span class="day-sep">{{ $m->created_at->isToday() ? 'Hari ini' : $day }}</span>@php $lastDay = $day; @endphp @endif
-                    <div class="bubble {{ $m->direction === 'in' ? 'in' : 'out' }}">@include('partials.media', ['m' => $m])<span class="txt">{{ $m->hasMedia() && preg_match('/^\[[a-z]+\]$/', $m->body) ? '' : $m->body }}</span><span class="meta">
+                    <div class="bubble {{ $m->direction === 'in' ? 'in' : 'out' }}">@if ($group && $m->direction === 'in')<span class="sender">{{ $m->participant_name ?: ($m->participant ? '+'.$m->participant : 'Anggota') }}@if ($m->participant_name && $m->participant) <span class="mono">+{{ $m->participant }}</span>@endif</span>@endif @include('partials.media', ['m' => $m])<span class="txt">{{ $m->hasMedia() && preg_match('/^\[[a-z]+\]$/', $m->body) ? '' : $m->body }}</span><span class="meta">
                         @if ($m->campaign_id)<span class="tag">broadcast</span>@endif
                         @if ($m->sent_by_ai)<span class="tag" style="color:var(--info)">✨ AI</span>@endif
                         @if ($m->direction === 'out' && $m->user)<span>{{ $m->user->name }} ·</span>@endif
@@ -96,7 +100,10 @@
             @if ($conversation->device?->provider === 'meta' && ! $conversation->withinServiceWindow())
                 <div class="window-warn">Di luar jendela 24 jam Meta: pesan teks bebas kemungkinan ditolak. Gunakan template yang disetujui Meta.</div>
             @endif
-            @if ($contact->consent === 'opted_out')
+            @if ($group && ! $group->canSend())
+                <div class="window-warn">Grup ini hanya mengizinkan admin mengirim pesan.</div>
+            @endif
+            @if ($contact && $contact->consent === 'opted_out')
                 <div class="window-warn">Kontak ini sudah berhenti berlangganan (opt-out). Balas hanya untuk keperluan layanan.</div>
             @endif
 
@@ -105,10 +112,10 @@
                 <div style="display:flex;flex-direction:column;gap:4px;flex:1">
                     <textarea class="input" id="reply-body" name="body" placeholder="Tulis balasan… (Enter kirim, Shift+Enter baris baru)" data-enter-submit maxlength="{{ config('whatsapp.max_text_length') }}"></textarea>
                     <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-                        <button type="button" class="btn btn-sm" data-ai-suggest="{{ route('ai.suggest', $conversation) }}" title="Minta AI menyusun draf balasan">✨ Saran AI</button>
+                        @unless ($group)<button type="button" class="btn btn-sm" data-ai-suggest="{{ route('ai.suggest', $conversation) }}" title="Minta AI menyusun draf balasan">✨ Saran AI</button>@endunless
                         <label class="btn btn-sm attach" title="Lampirkan gambar / dokumen / audio / video">📎 <span data-file-label>Lampiran</span>
                             <input type="file" name="file" hidden data-file-input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.mp3,.ogg,.m4a,.aac,.amr,.opus,.mp4,.3gp"></label>
-                        @if ($templates->isNotEmpty())
+                        @if ($templates->isNotEmpty() && $contact)
                             <select class="input" style="width:auto;height:24px;font-size:11.5px" data-quick-reply="#reply-body">
                                 <option value="">Balasan cepat…</option>
                                 @foreach ($templates as $t)
@@ -116,7 +123,7 @@
                                 @endforeach
                             </select>
                         @endif
-                        @if ($devices->count() > 1)
+                        @if ($devices->count() > 1 && ! $group)
                             <select class="input" name="device_id" style="width:auto;height:24px;font-size:11.5px" title="Kirim melalui">
                                 @foreach ($devices as $d)<option value="{{ $d->id }}" @selected(($conversation->device_id ?? 0) === $d->id)>{{ $d->name }}</option>@endforeach
                             </select>
@@ -132,7 +139,16 @@
 
     {{-- Kolom 3: profil customer --}}
     <div class="col-side">
-        @if ($conversation)
+        @if ($conversation && $conversation->group)
+            <div class="side-sec">
+                <h4>Grup</h4>
+                <div><a href="{{ route('groups.show', $group) }}"><b>{{ $group->subject }}</b></a></div>
+                <div class="muted" style="font-size:12px">{{ $group->participants_count ?: '?' }} anggota · via {{ $conversation->device?->name }}</div>
+                <div style="margin-top:5px">@if ($group->is_admin)<span class="tag">Anda admin</span>@endif @if ($group->announce)<span class="tag">khusus admin</span>@endif</div>
+                <div class="hint" style="margin-top:6px">Auto-reply & AI Agent tidak aktif di grup agar tidak mengganggu anggota.</div>
+            </div>
+        @endif
+        @if ($conversation && ! $conversation->group)
             <div class="side-sec">
                 <h4>Customer</h4>
                 <div><a href="{{ route('contacts.show', $contact) }}"><b>{{ $contact->displayName() }}</b></a></div>
@@ -167,6 +183,8 @@
                     </form>
                 @endif
             </div>
+        @endif
+        @if ($conversation)
             <div class="side-sec">
                 <h4>Ditugaskan ke</h4>
                 <form method="POST" action="{{ route('inbox.update', $conversation) }}">
@@ -188,7 +206,7 @@
                     <div class="note"><span class="txt">{{ $note->body }}</span><small>{{ $note->user?->name ?? 'Sistem' }} · {{ $note->created_at->format('d/m H:i') }}</small></div>
                 @endforeach
             </div>
-            @if ($contact->notes)
+            @if ($contact?->notes)
                 <div class="side-sec"><h4>Catatan kontak</h4><div style="font-size:12px;white-space:pre-wrap">{{ $contact->notes }}</div></div>
             @endif
         @endif

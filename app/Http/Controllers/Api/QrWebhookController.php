@@ -17,6 +17,10 @@ use Illuminate\Validation\Rule;
  *   {"type":"message","from":"628…","message":"…","id":"…","name":"…"}   pesan masuk
  *   {"type":"status","id":"…","status":"delivered|read|failed"}          status pesan keluar
  *   {"type":"session","status":"connected|reconnecting|logged_out","phone":"628…"}
+ *   {"type":"message", …, "group":{"jid":"…@g.us","subject":"…"}}       pesan masuk dari grup (from = pengirim)
+ *   {"type":"contacts","contacts":[{"phone":"628…","name":"…"}]}           sinkron kontak HP (maks 1000 / request)
+ *   {"type":"history","messages":[{id, from, from_me, message, timestamp, name, group?}]}  riwayat chat
+ *   {"type":"groups","groups":[{jid, subject, desc, size, is_admin, announce}]}             daftar grup
  * @2026-Alifiandra
  */
 class QrWebhookController extends Controller
@@ -46,6 +50,25 @@ class QrWebhookController extends Controller
             return response()->json(['received' => true]);
         }
 
+        if ($type === 'contacts') {
+            $data = $request->validate(['contacts' => ['present', 'array', 'max:1000']]);
+            $result = app(\App\Services\WaSyncService::class)->importContacts($data['contacts']);
+
+            return response()->json(['received' => true] + $result);
+        }
+
+        if ($type === 'history') {
+            $data = $request->validate(['messages' => ['present', 'array', 'max:500']]);
+
+            return response()->json(['received' => true, 'saved' => app(\App\Services\WaSyncService::class)->importHistory($device, $data['messages'])]);
+        }
+
+        if ($type === 'groups') {
+            $data = $request->validate(['groups' => ['present', 'array', 'max:2000']]);
+
+            return response()->json(['received' => true, 'groups' => app(\App\Services\WaSyncService::class)->importGroups($device, $data['groups'], false)]);
+        }
+
         if ($type === 'session') {
             $data = $request->validate(['status' => ['required', 'string', 'max:30'], 'phone' => ['nullable', 'string', 'max:30']]);
             $wasConnected = $device->status === 'connected';
@@ -65,7 +88,10 @@ class QrWebhookController extends Controller
         }
 
         $data = $request->validate([
-            'from' => ['required', 'string', 'max:40'],
+            'from' => ['required_without:group', 'nullable', 'string', 'max:40'],
+            'group' => ['nullable', 'array'],
+            'group.jid' => ['required_with:group', 'string', 'max:64'],
+            'group.subject' => ['nullable', 'string', 'max:191'],
             'message' => ['required_without:media', 'nullable', 'string', 'max:10000'],
             'id' => ['nullable', 'string', 'max:191'],
             'name' => ['nullable', 'string', 'max:150'],
@@ -83,7 +109,9 @@ class QrWebhookController extends Controller
             }
         }
 
-        $message = $inbound->receive($device, $data['from'], (string) ($data['message'] ?? ''), $data['id'] ?? null, $data['name'] ?? null, $media);
+        $message = ! empty($data['group'])
+            ? $inbound->receiveGroup($device, $data['group'], $data['from'] ?? null, (string) ($data['message'] ?? ''), $data['id'] ?? null, $data['name'] ?? null, $media)
+            : $inbound->receive($device, (string) $data['from'], (string) ($data['message'] ?? ''), $data['id'] ?? null, $data['name'] ?? null, $media);
 
         return response()->json(['received' => true, 'message_id' => $message?->public_id]);
     }

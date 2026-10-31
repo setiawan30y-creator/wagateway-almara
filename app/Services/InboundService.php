@@ -108,6 +108,56 @@ class InboundService
         return $message;
     }
 
+    /**
+     * Pesan masuk dari grup. Tidak memicu STOP/START, auto-reply maupun AI (agar bot tidak ramai di grup).
+     *
+     * @param  array{jid: string, subject?: ?string}  $groupData
+     */
+    public function receiveGroup(Device $device, array $groupData, ?string $from, string $body, ?string $providerMessageId = null, ?string $senderName = null, ?MediaFile $media = null): ?Message
+    {
+        if ($media && trim($body) === '') {
+            $body = '['.$media->label().']';
+        }
+
+        if (! \App\Models\WaGroup::isJid($groupData['jid'] ?? null) || trim($body) === '') {
+            return null;
+        }
+
+        if ($providerMessageId && Message::where('provider_message_id', $providerMessageId)->where('direction', 'in')->where('device_id', $device->id)->exists()) {
+            return null;
+        }
+
+        $group = app(WaSyncService::class)->groupFor($device, $groupData);
+        $conversation = Conversation::forGroup($group);
+        $phone = $from ? PhoneNumber::normalize($from) : null;
+
+        $message = Message::create([
+            'device_id' => $device->id,
+            'conversation_id' => $conversation->id,
+            'group_id' => $group->id,
+            'participant' => $phone && PhoneNumber::isValid($phone) ? $phone : null,
+            'participant_name' => $senderName ? mb_substr($senderName, 0, 150) : null,
+            'direction' => 'in',
+            'to' => $group->jid,
+            'body' => mb_substr($body, 0, 10000),
+            'media_type' => $media?->type,
+            'media_path' => $media?->path,
+            'media_name' => $media?->name,
+            'media_mime' => $media?->mime,
+            'media_size' => $media?->size,
+            'status' => 'received',
+            'provider_message_id' => $providerMessageId,
+            'sent_at' => now(),
+        ]);
+
+        $conversation->touchWith($message);
+        $device->forceFill(['status' => 'connected', 'last_seen_at' => now()])->save();
+
+        $this->webhooks->dispatch('message.received', ['message' => $message->toApiArray(), 'contact' => null]);
+
+        return $message;
+    }
+
     /** Atribusi chat ke Smart Link lewat kode [#slug] di pesan pertama. */
     private function attributeSmartLink(Contact $contact, string $body): ?\App\Models\SmartLink
     {

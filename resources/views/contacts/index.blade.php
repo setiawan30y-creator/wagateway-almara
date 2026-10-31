@@ -4,6 +4,7 @@
 @section('crumb', 'Kontak')
 @section('actions')
     <a class="btn" href="{{ route('contacts.index', ['view' => 'pipeline']) }}">Pipeline</a>
+    <form method="POST" action="{{ route('contacts.sync') }}" class="inline" title="Ambil kontak yang tersimpan di HP dari perangkat Scan QR yang terhubung">@csrf<button class="btn" data-once>@include('partials.icon', ['n' => 'device']) Sinkron dari HP</button></form>
     <details style="position:relative">
         <summary class="btn">Import CSV</summary>
         <div class="card" style="position:absolute;right:0;top:32px;z-index:15;width:320px">

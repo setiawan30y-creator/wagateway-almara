@@ -8,7 +8,20 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
 📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
 
-## Baru di versi 0.5.0 — AI Agent
+## Baru di versi 0.6.0 — Kontak HP, riwayat chat, grup, broadcast berlampiran
+
+Khusus perangkat **Scan QR**:
+
+| Fitur | Keterangan |
+|---|---|
+| Sinkron kontak HP | Tombol **Kontak → Sinkron dari HP** / **Perangkat → Sinkron kontak**. Kontak baru bersumber `wa-sync`, izin tetap "belum ada izin"; nama yang sudah diisi tim tidak ditimpa. |
+| Riwayat chat | Saat scan QR, chat terbaru dari HP ikut masuk ke Inbox (tanpa memicu auto-reply, AI, notifikasi). |
+| Grup WA | Menu **Grup WA**: daftar grup & anggota, buka chat grup di Inbox (tab *Grup*), balas / kirim teks & lampiran ke grup, simpan anggota ke Kontak (+tag). API: `to` = ID grup `…@g.us`. |
+| Broadcast berlampiran | Form campaign punya **Lampiran** (gambar / PDF / dokumen / audio / video, maks 16 MB); isi template menjadi keterangan. Berlaku untuk semua provider. |
+
+Auto-reply, AI Agent, dan STOP/START sengaja tidak aktif di chat grup.
+
+## Versi 0.5.0 — AI Agent
 
 AI menjawab chat pelanggan sendiri memakai **OpenRouter** (model gratis `openrouter/free` secara default, bisa diganti model berbayar).
 

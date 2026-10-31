@@ -7,6 +7,13 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node
 import { join } from 'node:path';
 
 const SAFE_NAME = /^[a-zA-Z0-9_-]{1,64}$/;
+export const BATCH = { contacts: 500, history: 200 };
+
+function chunk(list, size) {
+  const out = [];
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
+}
 
 export class SessionManager {
   /**
@@ -69,6 +76,7 @@ export class SessionManager {
       pushName: null,
       lastError: null,
       driver: null,
+      groups: null,
     };
     this.sessions.set(name, session);
 
@@ -103,6 +111,14 @@ export class SessionManager {
       },
       onMessage: (msg) => this.emit(name, { type: 'message', ...msg }),
       onStatus: (st) => this.emit(name, { type: 'status', ...st }),
+      onContacts: (list) => this.mergeContacts(name, list),
+      onHistory: (items) => {
+        for (const part of chunk(items, BATCH.history)) this.emit(name, { type: 'history', messages: part });
+      },
+      onGroups: (groups) => {
+        session.groups = groups;
+        this.emit(name, { type: 'groups', groups: groups.map(({ participants, ...g }) => g) });
+      },
     });
 
     return session;
@@ -114,6 +130,68 @@ export class SessionManager {
     this.notify(cfg.webhookUrl, cfg.webhookToken || '', { session: name, ...payload }).catch((e) =>
       this.logger.warn({ err: e?.message, name }, 'gagal meneruskan event ke gateway'),
     );
+  }
+
+  contactsPath(name) {
+    return join(this.storageDir, `${name}.contacts.json`);
+  }
+
+  /** Kontak tersimpan (cache file) — {phone: name|null}. */
+  loadContacts(name) {
+    const p = this.contactsPath(name);
+    if (!existsSync(p)) return {};
+    try {
+      return JSON.parse(readFileSync(p, 'utf8') || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  /** Gabungkan kontak baru ke cache lalu teruskan yang berubah ke gateway (per batch). */
+  mergeContacts(name, list) {
+    const cache = this.loadContacts(name);
+    const changed = [];
+    for (const c of list || []) {
+      const phone = String(c.phone || '').replace(/\D/g, '');
+      if (phone.length < 8) continue;
+      const nm = c.name ? String(c.name).slice(0, 120) : null;
+      if (!(phone in cache) || (nm && cache[phone] !== nm)) {
+        cache[phone] = nm || cache[phone] || null;
+        changed.push({ phone, name: cache[phone] });
+      }
+    }
+    if (!changed.length) return 0;
+    writeFileSync(this.contactsPath(name), JSON.stringify(cache));
+    for (const part of chunk(changed, BATCH.contacts)) this.emit(name, { type: 'contacts', contacts: part });
+    return changed.length;
+  }
+
+  contacts(name) {
+    return Object.entries(this.loadContacts(name)).map(([phone, nm]) => ({ phone, name: nm }));
+  }
+
+  /** Kirim ulang seluruh kontak dari cache ke gateway (tombol "Sinkron kontak"). */
+  resendContacts(name) {
+    const list = this.contacts(name);
+    for (const part of chunk(list, BATCH.contacts)) this.emit(name, { type: 'contacts', contacts: part });
+    return list.length;
+  }
+
+  async groups(name) {
+    const s = this.connected(name);
+    const groups = await s.driver.groups();
+    s.groups = groups;
+    return groups;
+  }
+
+  connected(name) {
+    const s = this.get(name);
+    if (!s || s.state !== 'connected') {
+      const err = new Error('Sesi belum terhubung. Scan QR terlebih dahulu.');
+      err.status = 409;
+      throw err;
+    }
+    return s;
   }
 
   get(name) {
@@ -143,23 +221,11 @@ export class SessionManager {
   }
 
   async sendText(name, to, text) {
-    const s = this.get(name);
-    if (!s || s.state !== 'connected') {
-      const err = new Error('Sesi belum terhubung. Scan QR terlebih dahulu.');
-      err.status = 409;
-      throw err;
-    }
-    return s.driver.sendText(to, text);
+    return this.connected(name).driver.sendText(to, text);
   }
 
   async sendMedia(name, to, media) {
-    const s = this.get(name);
-    if (!s || s.state !== 'connected') {
-      const err = new Error('Sesi belum terhubung. Scan QR terlebih dahulu.');
-      err.status = 409;
-      throw err;
-    }
-    return s.driver.sendMedia(to, media);
+    return this.connected(name).driver.sendMedia(to, media);
   }
 
   async logout(name) {
@@ -168,6 +234,7 @@ export class SessionManager {
       await s.driver.logout().catch(() => {});
     }
     rmSync(join(this.storageDir, name), { recursive: true, force: true });
+    rmSync(this.contactsPath(name), { force: true });
     this.sessions.delete(name);
     delete this.config[name];
     this.saveConfig();

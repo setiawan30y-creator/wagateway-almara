@@ -42,7 +42,7 @@
                 <tbody>
                 @forelse ($conversations as $c)
                     <tr>
-                        <td><a href="{{ route('inbox.show', $c) }}">{{ $c->contact->displayName() }}</a> @if ($c->unread_count)<span class="count" style="display:inline-flex">{{ $c->unread_count }}</span>@endif</td>
+                        <td><a href="{{ route('inbox.show', $c) }}">{{ $c->title() }}</a> @if ($c->unread_count)<span class="count" style="display:inline-flex">{{ $c->unread_count }}</span>@endif</td>
                         <td class="msg muted hide-sm">{{ $c->last_direction === 'out' ? 'Anda: ' : '' }}{{ $c->last_message_preview }}</td>
                         <td class="right muted nowrap">{{ $c->last_message_at?->diffForHumans(short: true) }}</td>
                     </tr>

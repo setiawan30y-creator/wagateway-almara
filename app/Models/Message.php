@@ -15,7 +15,7 @@ class Message extends Model
     public const STATUSES = ['queued', 'sent', 'delivered', 'read', 'failed', 'received'];
 
     protected $fillable = [
-        'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'campaign_id', 'direction', 'sent_by_ai', 'to', 'body',
+        'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'group_id', 'participant', 'participant_name', 'campaign_id', 'direction', 'sent_by_ai', 'to', 'body',
         'media_type', 'media_path', 'media_name', 'media_mime', 'media_size',
         'status', 'provider_message_id', 'error', 'attempts', 'idempotency_key', 'sent_at',
     ];
@@ -44,6 +44,11 @@ class Message extends Model
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(WaGroup::class, 'group_id');
     }
 
     public function user(): BelongsTo
@@ -112,6 +117,7 @@ class Message extends Model
             'sent_by_ai' => (bool) $this->sent_by_ai,
             'to' => $this->to,
             'contact_id' => $this->contact_id,
+            'group' => $this->group_id ? ['jid' => $this->to, 'participant' => $this->participant, 'participant_name' => $this->participant_name] : null,
             'campaign_id' => $this->campaign_id,
             'body' => $this->body,
             'media' => $this->hasMedia() ? [

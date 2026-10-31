@@ -13,6 +13,7 @@
             ['dashboard', 'Dashboard', 'home', 'dashboard', false],
             ['inbox.index', 'Inbox', 'inbox', 'inbox.*', false, $navCounts['inbox'] ?? 0],
             ['contacts.index', 'Kontak & CRM', 'contacts', 'contacts.*', false],
+            ['groups.index', 'Grup WA', 'group', 'groups.*', false],
             ['tickets.index', 'Tiket', 'ticket', 'tickets.*', false, $navCounts['tickets'] ?? 0],
             ['send.create', 'Kirim Pesan', 'send', 'send.*', false],
             ['messages.index', 'Riwayat', 'list', 'messages.*', false],

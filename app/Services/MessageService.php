@@ -61,4 +61,38 @@ class MessageService
 
         return $message->refresh();
     }
+
+    /**
+     * Kirim pesan ke grup WhatsApp (khusus perangkat Scan QR).
+     *
+     * @param  array{media?: ?MediaFile, source?: string}  $options
+     */
+    public function queueGroup(\App\Models\WaGroup $group, string $body, ?User $user = null, ?ApiKey $apiKey = null, array $options = []): Message
+    {
+        $device = $group->device;
+        $conversation = Conversation::forGroup($group);
+
+        $message = Message::create([
+            'device_id' => $device->id,
+            'user_id' => $user?->id,
+            'api_key_id' => $apiKey?->id,
+            'conversation_id' => $conversation->id,
+            'group_id' => $group->id,
+            'direction' => 'out',
+            'to' => $group->jid,
+            'body' => $body,
+            'media_type' => ($m = $options['media'] ?? null)?->type,
+            'media_path' => $m?->path,
+            'media_name' => $m?->name,
+            'media_mime' => $m?->mime,
+            'media_size' => $m?->size,
+            'status' => 'queued',
+        ]);
+
+        $conversation->touchWith($message);
+
+        SendWhatsAppMessage::dispatch($message->id);
+
+        return $message->refresh();
+    }
 }

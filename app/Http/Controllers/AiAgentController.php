@@ -150,6 +150,10 @@ class AiAgentController extends Controller
     /** Copilot: saran balasan di inbox (boleh dipakai agent). */
     public function suggest(Conversation $conversation, AiAgent $agent)
     {
+        if ($conversation->isGroup()) {
+            return response()->json(['ok' => false, 'text' => 'Saran AI belum tersedia untuk chat grup.'], 422);
+        }
+
         if (Setting::secret('ai_api_key') === '') {
             return response()->json(['ok' => false, 'text' => 'AI belum diatur. Minta admin mengisi API key di menu AI Agent.'], 422);
         }

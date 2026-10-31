@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Http;
  *   POST {base}/send-message    {"session","to","message"} -> {"success", "id"}
  *   POST {base}/send-media      {"session","to","type","mime","name","caption","data"(base64)}
  *   POST {base}/sessions/logout {"session"}
+ *   GET  {base}/groups?session=   -> {"groups": [{jid, subject, desc, size, is_admin, announce, participants:[{phone, admin}]}]}
+ *   GET  {base}/contacts?session= -> {"contacts": [{phone, name}]}  kontak hasil sinkron dari HP
  * Event engine -> gateway: POST {APP_URL}/api/webhooks/qr/{device_id} (header X-Webhook-Token)
  *
  * @2026-Alifiandra
@@ -136,6 +138,38 @@ class QrEngineProvider implements WhatsAppProvider
         $qr = $response->json('qr') ?? $response->json('data.qr');
 
         return new ConnectionStatus(false, $qr ? 'Scan QR dengan WhatsApp > Perangkat tertaut > Tautkan perangkat.' : (string) ($response->json('message') ?? 'QR belum tersedia, tunggu sebentar…'), $qr);
+    }
+
+    /** Daftar grup + anggota dari engine. */
+    public function groups(Device $device): array
+    {
+        try {
+            $response = $this->client($device)->timeout(60)->get('/groups', ['session' => $this->session($device)]);
+        } catch (ConnectionException $e) {
+            throw new \RuntimeException('Engine QR tidak dapat dihubungi. Jalankan: cd engine; npm start');
+        }
+
+        if (! $response->successful()) {
+            throw new \RuntimeException('Engine QR: '.($response->json('message') ?? 'HTTP '.$response->status()));
+        }
+
+        return (array) $response->json('groups', []);
+    }
+
+    /** Kontak yang sudah disinkron engine dari HP: [{phone, name}]. */
+    public function contacts(Device $device): array
+    {
+        try {
+            $response = $this->client($device)->timeout(60)->get('/contacts', ['session' => $this->session($device)]);
+        } catch (ConnectionException $e) {
+            throw new \RuntimeException('Engine QR tidak dapat dihubungi. Jalankan: cd engine; npm start');
+        }
+
+        if (! $response->successful()) {
+            throw new \RuntimeException('Engine QR: '.($response->json('message') ?? 'HTTP '.$response->status()));
+        }
+
+        return (array) $response->json('contacts', []);
     }
 
     public function logout(Device $device): bool

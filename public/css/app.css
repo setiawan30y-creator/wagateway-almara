@@ -535,3 +535,8 @@ img, svg, canvas { max-width: 100%; }
   .help-hint { display: none; }
 }
 @media print { .help-btn, .help-drawer, .help-backdrop { display: none !important; } }
+
+/* v0.6 — chat grup */
+.bubble .sender { display: block; font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
+.bubble .sender .mono { font-weight: 400; color: var(--muted); font-size: 10.5px; }
+.conv .grp-ico { font-size: 11px; }

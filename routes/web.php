@@ -50,6 +50,15 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/inbox/{conversation}', [InboxController::class, 'update'])->name('inbox.update');
 
     // Kontak & CRM
+    // Grup WhatsApp & sinkron kontak HP (perangkat Scan QR)
+    Route::get('/grup', [\App\Http\Controllers\GroupController::class, 'index'])->name('groups.index');
+    Route::post('/grup/sinkron', [\App\Http\Controllers\GroupController::class, 'sync'])->name('groups.sync');
+    Route::post('/kontak/sinkron-hp', [\App\Http\Controllers\GroupController::class, 'syncContacts'])->name('contacts.sync');
+    Route::get('/grup/{group}', [\App\Http\Controllers\GroupController::class, 'show'])->name('groups.show');
+    Route::get('/grup/{group}/chat', [\App\Http\Controllers\GroupController::class, 'chat'])->name('groups.chat');
+    Route::post('/grup/{group}/kirim', [\App\Http\Controllers\GroupController::class, 'send'])->name('groups.send');
+    Route::post('/grup/{group}/impor', [\App\Http\Controllers\GroupController::class, 'importMembers'])->name('groups.import');
+
     Route::get('/kontak', [ContactController::class, 'index'])->name('contacts.index');
     Route::get('/kontak/tambah', [ContactController::class, 'create'])->name('contacts.create');
     Route::get('/kontak/export', [ContactController::class, 'export'])->name('contacts.export');

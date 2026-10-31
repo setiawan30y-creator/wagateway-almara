@@ -1,5 +1,10 @@
 # Changelog API
 
+## 0.6.0 — 2026-10-31
+- `POST /v1/messages/send` menerima `to` berupa ID grup (`…@g.us`, khusus perangkat Scan QR); error `GROUP_NOT_FOUND` bila grup belum disinkron
+- Objek Message punya field `group` (`jid`, `participant`, `participant_name`) untuk pesan grup; event `message.received` dari grup mengirim `contact: null`
+- Webhook engine QR: event baru `contacts`, `history`, `groups`, dan pesan grup
+
 ## 0.4.0 — 2026-10-24
 - `POST /v1/messages/media` — kirim gambar / dokumen / audio / video (multipart, maks. 16 MB); objek Message punya field `media`
 - Pesan masuk bermedia dari Meta & engine QR disimpan dan tampil di Inbox

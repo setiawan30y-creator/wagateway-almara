@@ -25,13 +25,29 @@ class MessageController extends Controller
         $apiKey = $request->attributes->get('api_key');
 
         $data = $request->validate([
-            'to' => ['required', 'string', 'max:30'],
+            'to' => ['required', 'string', 'max:64'],
             'message' => ['required', 'string', 'max:'.config('whatsapp.max_text_length')],
             'device_id' => ['nullable', 'integer'],
         ], [
             'to.required' => 'Field tujuan wajib diisi.',
             'message.required' => 'Isi pesan wajib diisi.',
         ]);
+
+        // Kirim ke grup: to = ID grup "…@g.us" (lihat menu Grup WA; khusus perangkat Scan QR)
+        if (\App\Models\WaGroup::isJid($data['to'])) {
+            $group = \App\Models\WaGroup::where('jid', $data['to'])
+                ->when(isset($data['device_id']), fn ($w) => $w->where('device_id', $data['device_id']))
+                ->whereHas('device', fn ($d) => $d->where('is_active', true))
+                ->first();
+
+            if (! $group) {
+                return ApiResponse::error('GROUP_NOT_FOUND', 'Grup tidak ditemukan. Sinkron grup di menu Grup WA terlebih dahulu.', 404);
+            }
+
+            $message = $service->queueGroup($group, $data['message'], $apiKey->user, $apiKey);
+
+            return ApiResponse::success($message->toApiArray(), 202);
+        }
 
         $to = PhoneNumber::normalize($data['to']);
 

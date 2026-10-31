@@ -23,7 +23,7 @@ class Campaign extends Model
     ];
 
     protected $fillable = [
-        'name', 'device_id', 'template_id', 'status', 'audience', 'rate_per_minute',
+        'name', 'device_id', 'template_id', 'media_type', 'media_path', 'media_name', 'media_mime', 'media_size', 'status', 'audience', 'rate_per_minute',
         'scheduled_at', 'started_at', 'finished_at', 'pause_reason', 'created_by',
     ];
 
@@ -140,5 +140,12 @@ class Campaign extends Model
             'pause_reason' => $this->pause_reason,
             'stats' => $this->stats(),
         ];
+    }
+
+    public function mediaFile(): ?\App\Support\MediaFile
+    {
+        return $this->media_type && $this->media_path
+            ? new \App\Support\MediaFile($this->media_type, $this->media_path, (string) $this->media_name, (string) $this->media_mime, (int) $this->media_size)
+            : null;
     }
 }

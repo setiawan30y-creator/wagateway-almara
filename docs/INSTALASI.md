@@ -158,6 +158,10 @@ php artisan tinker --execute="App\Models\User::where('email','admin@example.com'
 3. Di HP: **WhatsApp → ⋮ / Pengaturan → Perangkat tertaut → Tautkan perangkat** → scan QR di layar.
 4. Setelah terhubung, nomor tampil otomatis dan status **connected**.
 
+5. Beberapa saat setelah terhubung, chat terbaru dari HP ikut masuk ke **Inbox**. Untuk kontak & grup:
+   - **Kontak → Sinkron dari HP** (atau tombol **Sinkron kontak** di Perangkat) — menyalin kontak HP ke menu Kontak. Bila hasilnya 0, tunggu beberapa menit (WhatsApp mengirim kontak bertahap) lalu ulangi.
+   - **Grup WA → Sinkron grup dari HP** — daftar grup & anggota; chat grup tampil di Inbox tab *Grup*.
+
 Catatan: jalur Scan QR memakai WhatsApp Web (tidak resmi). Kirim hanya ke kontak yang memberi izin agar nomor tidak dibatasi WhatsApp.
 
 ### 4.2 Meta Cloud API (resmi)
@@ -369,6 +373,8 @@ cd engine; npm install; cd ..
 ```
 
 Tutup lalu jalankan ulang jendela `schedule:work` dan `npm start`. Di browser tekan **Ctrl+F5**.
+
+> **Dari versi 0.5 ke 0.6:** agar kontak & riwayat chat HP ikut masuk, perangkat Scan QR yang sudah terhubung perlu **Logout lalu Scan QR ulang** sekali (WhatsApp hanya mengirim kontak & riwayat saat perangkat baru ditautkan). Daftar grup bisa langsung diambil lewat **Grup WA → Sinkron grup dari HP** tanpa scan ulang.
 
 ### Server (Ubuntu)
 

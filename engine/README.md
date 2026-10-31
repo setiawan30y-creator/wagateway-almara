@@ -40,9 +40,15 @@ Biarkan jendela `npm start` tetap terbuka. Sesi tersimpan di `engine/storage/` s
 | POST | `/send-message` | Kirim teks `{session, to, message}` |
 | POST | `/send-media` | Kirim media `{session, to, type, mime, name, caption, data(base64)}` (maks. 16 MB) |
 | POST | `/sessions/logout` | Keluarkan nomor & hapus sesi |
+| GET | `/contacts?session=` | Kontak hasil sinkron dari HP `[{phone, name}]` |
+| POST | `/contacts/sync` | Kirim ulang semua kontak ke gateway (event `contacts`) |
+| GET | `/groups?session=` | Daftar grup + anggota `[{jid, subject, size, is_admin, announce, participants}]` |
+
+`to` pada `/send-message` & `/send-media` boleh nomor atau ID grup `…@g.us`.
 
 Header: `Authorization: Bearer <ENGINE_TOKEN>`.
-Event ke gateway: `POST {APP_URL}/api/webhooks/qr/{device}` dengan `X-Webhook-Token` (pesan masuk, status terkirim/dibaca, status sesi).
+Event ke gateway: `POST {APP_URL}/api/webhooks/qr/{device}` dengan `X-Webhook-Token` (pesan masuk pribadi & grup, status terkirim/dibaca, status sesi, kontak HP per 500, riwayat chat per 200, daftar grup).
+Kontak hasil sinkron disimpan di `storage/<sesi>.contacts.json` (dihapus saat logout).
 
 ## Penting
 - Jalur QR memakai protokol WhatsApp Web lewat library **Baileys** (tidak resmi, bukan Meta Cloud API). WhatsApp bisa membatasi/memblokir nomor yang dipakai untuk spam. Kirim hanya ke kontak yang memberi izin; gunakan proteksi broadcast di panel.

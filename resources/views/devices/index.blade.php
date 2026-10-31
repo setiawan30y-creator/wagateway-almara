@@ -41,6 +41,8 @@
                         @if ($d->provider === 'qr')
                             <a class="btn btn-sm {{ $d->status === 'connected' ? '' : 'btn-primary' }}" href="{{ route('devices.pair', $d) }}">{{ $d->status === 'connected' ? 'QR' : 'Scan QR' }}</a>
                             @if ($d->status === 'connected')
+                                <form method="POST" action="{{ route('contacts.sync', ['device' => $d->id]) }}" class="inline">@csrf<button class="btn btn-sm" data-once title="Ambil kontak dari HP ke menu Kontak">Sinkron kontak</button></form>
+                                <form method="POST" action="{{ route('groups.sync', ['device' => $d->id]) }}" class="inline">@csrf<button class="btn btn-sm" data-once title="Ambil daftar grup & anggota">Sinkron grup</button></form>
                                 <form method="POST" action="{{ route('devices.logout', $d) }}" class="inline" data-confirm="Keluarkan {{ $d->name }} dari WhatsApp? Anda perlu scan QR lagi untuk menghubungkan.">@csrf<button class="btn btn-sm">Logout</button></form>
                             @endif
                         @endif

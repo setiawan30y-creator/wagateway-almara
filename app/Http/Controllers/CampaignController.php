@@ -53,12 +53,20 @@ class CampaignController extends Controller
             'rate_per_minute' => ['required', 'integer', 'min:1', 'max:120'],
             'mode' => ['required', Rule::in(['draft', 'now', 'schedule'])],
             'scheduled_at' => ['nullable', 'required_if:mode,schedule', 'date', 'after:now'],
-        ], [], ['template_id' => 'template', 'device_id' => 'perangkat', 'scheduled_at' => 'jadwal']);
+            'file' => ['nullable', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
+        ], [], ['template_id' => 'template', 'device_id' => 'perangkat', 'scheduled_at' => 'jadwal', 'file' => 'lampiran']);
+
+        $media = $request->hasFile('file') ? app(\App\Services\MediaStorage::class)->storeUpload($request->file('file')) : null;
 
         $campaign = Campaign::create([
             'name' => $data['name'],
             'device_id' => $data['device_id'],
             'template_id' => $data['template_id'],
+            'media_type' => $media?->type,
+            'media_path' => $media?->path,
+            'media_name' => $media?->name,
+            'media_mime' => $media?->mime,
+            'media_size' => $media?->size,
             'audience' => ['tags' => array_values($data['tags'] ?? []), 'stages' => array_values($data['stages'] ?? [])],
             'rate_per_minute' => $data['rate_per_minute'],
             'status' => $data['mode'] === 'schedule' ? 'scheduled' : 'draft',

@@ -36,6 +36,7 @@
         <div class="card-b">
             <dl class="kv">
                 <dt>Template</dt><dd>{{ $campaign->template?->name ?? '—' }}</dd>
+                <dt>Lampiran</dt><dd>@if ($campaign->media_type)📎 {{ $campaign->media_name ?: \App\Support\MediaFile::LABELS[$campaign->media_type] ?? 'media' }} <span class="muted">({{ \App\Support\MediaFile::LABELS[$campaign->media_type] ?? $campaign->media_type }}, {{ number_format(($campaign->media_size ?? 0) / 1024, 0, ',', '.') }} KB)</span>@else — @endif</dd>
                 <dt>Perangkat</dt><dd>{{ $campaign->device?->name ?? '—' }}</dd>
                 <dt>Kecepatan</dt><dd>{{ $campaign->rate_per_minute }} pesan/menit</dd>
                 <dt>Audience</dt><dd>

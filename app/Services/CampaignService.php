@@ -147,6 +147,7 @@ class CampaignService
 
         $capHours = (int) Setting::get('frequency_cap_hours');
         $variants = $template->variants->values();
+        $media = $campaign->mediaFile();
         $sent = 0;
 
         $pending = $campaign->recipients()->with('contact')->where('status', 'pending')->orderBy('id')->limit($quota)->get();
@@ -176,6 +177,7 @@ class CampaignService
             $message = $this->messages->queueText($device, $contact->phone, $body, $campaign->creator, options: [
                 'contact' => $contact,
                 'campaign_id' => $campaign->id,
+                'media' => $media, // lampiran campaign; teks template menjadi keterangan
             ]);
 
             $recipient->forceFill([

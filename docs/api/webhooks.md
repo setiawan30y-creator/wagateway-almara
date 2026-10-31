@@ -12,6 +12,10 @@
 - Pesan masuk: `{"type":"message","from":"628…","message":"…","id":"…","name":"…","media":{"type":"image","mime":"image/jpeg","name":null,"data":"<base64>"}}` (media opsional, maks. 16 MB)
 - Status pesan: `{"type":"status","id":"…","status":"delivered|read|failed"}`
 - Status sesi: `{"type":"session","status":"connected|reconnecting|logged_out","phone":"628…"}`
+- Pesan grup: sama seperti pesan masuk + `"group":{"jid":"1203…@g.us","subject":"Nama grup"}` (`from` = nomor pengirim di grup)
+- Sinkron kontak HP: `{"type":"contacts","contacts":[{"phone":"628…","name":"…"}]}` (maks. 1.000 per request)
+- Riwayat chat saat scan: `{"type":"history","messages":[{"id","from","from_me","message","timestamp","name","group"?}]}` (maks. 500 per request; hanya disimpan, tidak memicu auto-reply / AI / webhook keluar)
+- Daftar grup: `{"type":"groups","groups":[{"jid","subject","desc","size","is_admin","announce"}]}`
 
 ## B. Keluar dari Gateway → sistem Anda
 

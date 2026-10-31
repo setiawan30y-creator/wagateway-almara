@@ -21,6 +21,10 @@ class MetaCloudProvider implements WhatsAppProvider
 {
     public function sendText(Device $device, string $to, string $body): SendResult
     {
+        if (str_contains($to, '@g.us')) {
+            return SendResult::failure('Kirim ke grup hanya didukung perangkat Scan QR (Meta Cloud API tidak mendukung grup).');
+        }
+
         $phoneNumberId = $device->credential('phone_number_id');
 
         if (! $phoneNumberId || ! $device->credential('access_token')) {
@@ -51,6 +55,10 @@ class MetaCloudProvider implements WhatsAppProvider
     /** Upload media ke Meta lalu kirim memakai media id (tidak perlu URL publik). */
     public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult
     {
+        if (str_contains($to, '@g.us')) {
+            return SendResult::failure('Kirim ke grup hanya didukung perangkat Scan QR (Meta Cloud API tidak mendukung grup).');
+        }
+
         $phoneNumberId = $device->credential('phone_number_id');
 
         if (! $phoneNumberId || ! $device->credential('access_token')) {

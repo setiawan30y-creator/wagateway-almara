@@ -39,8 +39,11 @@ return [
             'Pakai "Balasan cepat" untuk mengisi teks dari Template.',
             'Panel kanan: tugaskan ke CS, tulis catatan internal (tidak terlihat pelanggan), buat Tiket, atau matikan AI untuk chat ini.',
             'Ubah status Open / Pending / Closed dan prioritas di bagian atas percakapan.',
+            'Tab "Grup" menampilkan chat grup WhatsApp (👥). Nama pengirim tampil di atas tiap pesan; balasan Anda terkirim ke grup.',
         ],
         'tips' => [
+            'Chat lama dari HP ikut muncul setelah scan QR (riwayat terbaru yang dikirim WhatsApp) — tidak memicu auto-reply / AI.',
+            'Di chat grup, auto-reply, AI Agent, dan kata kunci STOP tidak aktif agar tidak mengganggu anggota.',
             'Belum punya nomor tersambung? Gunakan tombol "Simulasi pesan masuk" untuk mencoba.',
             'Saat CS membalas, AI otomatis berhenti di chat itu selama waktu yang diatur di AI Agent.',
             'Lewat Meta API, pesan teks bebas hanya bisa dikirim ≤24 jam sejak pelanggan terakhir chat.',
@@ -56,8 +59,11 @@ return [
             'Centang beberapa kontak lalu pilih Aksi massal: tambah/hapus tag, tandai opt-in/opt-out, ubah tahap.',
             'Klik nama untuk melihat profil, riwayat chat, dan riwayat izin.',
             'Tombol Pipeline menampilkan kontak per tahap penjualan (kanban).',
+            'Sinkron dari HP: mengambil kontak yang tersimpan di HP (perangkat Scan QR). Nama yang sudah Anda isi tidak ditimpa.',
         ],
         'tips' => [
+            'Kontak hasil sinkron berstatus "belum ada izin" — tandai opt-in hanya untuk yang memang setuju menerima broadcast.',
+            'WhatsApp mengirim daftar kontak beberapa saat setelah scan QR. Bila hasil sinkron masih 0, tunggu beberapa menit lalu coba lagi.',
             'Broadcast hanya dikirim ke kontak berstatus "Izin (opt-in)". Centang "sudah memberi izin" saat import bila memang benar.',
             'Kontak yang membalas STOP otomatis menjadi opt-out.',
         ],
@@ -127,6 +133,7 @@ return [
             'Buat Template terlebih dahulu (bisa beberapa varian A/B/C).',
             '+ Campaign → isi nama, pilih template, perangkat, dan kecepatan (pesan per menit).',
             'Pilih audience lewat tag / tahap; kotak hijau menunjukkan jumlah penerima yang memenuhi syarat.',
+            'Opsional: lampirkan gambar / PDF / video (maks 16 MB) — dikirim ke setiap penerima dengan isi template sebagai keterangan.',
             'Pilih Simpan draft, Mulai sekarang, atau Jadwalkan.',
             'Pantau progres, tingkat gagal, balasan, dan opt-out di halaman detail. Jeda / Lanjutkan / Batalkan bila perlu.',
         ],
@@ -221,10 +228,28 @@ return [
             '+ Manual: untuk Meta Cloud API (resmi) — isi Phone Number ID & Access Token.',
             'Cek: memeriksa koneksi. Jadikan utama: nomor default untuk pengiriman.',
             'Logout: melepas nomor dari WhatsApp (perlu scan ulang untuk menyambung).',
+            'Sinkron kontak / Sinkron grup (perangkat Scan QR yang terhubung): mengambil kontak HP ke menu Kontak dan grup ke menu Grup WA.',
         ],
         'tips' => [
             'Perangkat "Simulasi" tidak mengirim sungguhan — untuk uji coba saja.',
             'Kredensial disimpan terenkripsi.',
+        ],
+    ],
+
+    'groups.*' => [
+        'judul' => 'Grup WhatsApp',
+        'fungsi' => 'Melihat grup yang diikuti nomor Scan QR beserta anggotanya, membuka chat grup, dan mengirim pesan / lampiran ke grup.',
+        'langkah' => [
+            'Klik "Sinkron grup dari HP" untuk mengambil daftar grup & anggota terbaru.',
+            'Buka chat: percakapan grup terbuka di Inbox — baca & balas seperti chat biasa.',
+            'Anggota: lihat daftar nomor & admin, kirim pesan / lampiran ke grup, atau simpan anggota ke Kontak (opsional dengan tag).',
+            'Lewat API: kirim ke grup dengan "to" berisi ID grup (…@g.us) yang tertera di halaman detail grup.',
+        ],
+        'tips' => [
+            'Hanya untuk perangkat Scan QR — Meta Cloud API tidak mendukung grup.',
+            'Grup "khusus admin" hanya bisa dikirimi bila nomor Anda admin grup tersebut.',
+            'Anggota yang disimpan ke Kontak tetap "belum ada izin"; jangan broadcast ke mereka tanpa persetujuan.',
+            'Sebagian nomor anggota bisa tersembunyi (fitur privasi WhatsApp) dan tampil "(nomor disembunyikan)".',
         ],
     ],
 

@@ -17,7 +17,7 @@ class Conversation extends Model
     public const PRIORITIES = ['low' => 'Rendah', 'normal' => 'Normal', 'high' => 'Tinggi', 'urgent' => 'Urgent'];
 
     protected $fillable = [
-        'contact_id', 'device_id', 'status', 'priority', 'assigned_to', 'ai_enabled', 'ai_paused_until', 'unread_count',
+        'contact_id', 'group_id', 'device_id', 'status', 'priority', 'assigned_to', 'ai_enabled', 'ai_paused_until', 'unread_count',
         'last_message_preview', 'last_direction', 'last_message_at', 'last_inbound_at',
     ];
 
@@ -41,6 +41,29 @@ class Conversation extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(WaGroup::class, 'group_id');
+    }
+
+    public function isGroup(): bool
+    {
+        return $this->group_id !== null;
+    }
+
+    /** Judul percakapan: nama kontak atau nama grup. */
+    public function title(): string
+    {
+        return $this->isGroup()
+            ? ($this->group?->subject ?? 'Grup')
+            : ($this->contact?->displayName() ?? 'Tanpa kontak');
+    }
+
+    public static function forGroup(WaGroup $group): self
+    {
+        return static::firstOrCreate(['group_id' => $group->id], ['device_id' => $group->device_id, 'ai_enabled' => false]);
     }
 
     public function device(): BelongsTo
@@ -85,18 +108,24 @@ class Conversation extends Model
         return $conversation;
     }
 
-    public function touchWith(Message $message): void
+    public function touchWith(Message $message, bool $countUnread = true): void
     {
         $inbound = $message->direction === 'in';
+        $at = $message->sent_at ?? $message->created_at ?? now();
+
+        // pesan riwayat yang lebih tua tidak boleh menimpa pratinjau terbaru
+        if ($this->last_message_at && $at->lt($this->last_message_at)) {
+            return;
+        }
 
         $this->forceFill([
             'last_message_preview' => mb_substr($message->preview(), 0, 250),
             'last_direction' => $message->direction,
-            'last_message_at' => $message->created_at ?? now(),
-            'last_inbound_at' => $inbound ? now() : $this->last_inbound_at,
-            'unread_count' => $inbound ? $this->unread_count + 1 : $this->unread_count,
+            'last_message_at' => $at,
+            'last_inbound_at' => $inbound ? $at : $this->last_inbound_at,
+            'unread_count' => $inbound && $countUnread ? $this->unread_count + 1 : $this->unread_count,
             // pesan masuk membuka kembali percakapan yang ditutup
-            'status' => $inbound && $this->status === 'closed' ? 'open' : $this->status,
+            'status' => $inbound && $countUnread && $this->status === 'closed' ? 'open' : $this->status,
         ])->save();
     }
 }

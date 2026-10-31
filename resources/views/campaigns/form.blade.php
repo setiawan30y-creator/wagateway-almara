@@ -7,7 +7,7 @@
 @if ($templates->isEmpty() || $devices->isEmpty())
     <div class="alert alert-warning">Buat minimal satu <a href="{{ route('templates.create') }}">template</a> dan satu <a href="{{ route('devices.create') }}">perangkat aktif</a> terlebih dahulu.</div>
 @endif
-<form method="POST" action="{{ route('campaigns.store') }}" data-audience-form="{{ route('campaigns.preview') }}">
+<form method="POST" action="{{ route('campaigns.store') }}" enctype="multipart/form-data" data-audience-form="{{ route('campaigns.preview') }}">
 @csrf
 <div class="grid grid-2">
     <div class="card">
@@ -18,6 +18,9 @@
                 <select class="input" id="template_id" name="template_id" required>
                     @foreach ($templates as $t)<option value="{{ $t->id }}" @selected(old('template_id') == $t->id)>{{ $t->name }} ({{ $t->variants->count() }} varian)</option>@endforeach
                 </select></div>
+            <div class="field"><label for="file">Lampiran (opsional)</label>
+                <input class="input" id="file" type="file" name="file" style="height:auto;padding:4px" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.mp3,.ogg,.m4a,.aac,.amr,.opus,.mp4,.3gp">
+                <div class="hint">Gambar, PDF/dokumen, audio, atau video (maks 16 MB) dikirim ke setiap penerima; isi template menjadi keterangannya.</div></div>
             <div class="field"><label for="device_id">Kirim melalui</label>
                 <select class="input" id="device_id" name="device_id" required>
                     @foreach ($devices as $d)<option value="{{ $d->id }}" @selected(old('device_id') == $d->id)>{{ $d->name }} — {{ $d->providerLabel() }}</option>@endforeach

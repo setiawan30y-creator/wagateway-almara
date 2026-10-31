@@ -7,6 +7,10 @@
  *   POST /send-message     {session, to, message}
  *   POST /send-media       {session, to, type, mime, name, caption, data(base64)}
  *   POST /sessions/logout  {session}
+ *   GET  /contacts?session=      kontak hasil sinkron dari HP
+ *   POST /contacts/sync {session} kirim ulang semua kontak ke gateway (webhook "contacts")
+ *   GET  /groups?session=        daftar grup + anggota
+ *   (to boleh nomor atau JID grup "…@g.us")
  * Semua kecuali /health wajib header: Authorization: Bearer <ENGINE_TOKEN>
  * @2026-Alifiandra
  */
@@ -42,6 +46,14 @@ function readBody(req, limit = 64 * 1024) {
     });
     req.on('error', reject);
   });
+}
+
+/** Tujuan kirim: JID grup dipertahankan, selain itu hanya digit. */
+export function normalizeTarget(raw) {
+  const v = String(raw || '').trim();
+  if (/^[0-9]+(-[0-9]+)?@g\.us$/.test(v)) return v;
+  const d = v.replace(/\D/g, '');
+  return d.length >= 8 ? d : null;
 }
 
 function authorized(req, token) {
@@ -92,9 +104,9 @@ export function createApp({ manager, token, toDataUrl }) {
       }
 
       if (req.method === 'POST' && path === '/send-message') {
-        const to = String(body.to || '').replace(/\D/g, '');
+        const to = normalizeTarget(body.to);
         const message = String(body.message || '');
-        if (to.length < 8 || !message.trim()) {
+        if (!to || !message.trim()) {
           return json(res, 422, { success: false, message: 'Field to dan message wajib diisi.' });
         }
         const result = await manager.sendText(session, to, message);
@@ -102,14 +114,29 @@ export function createApp({ manager, token, toDataUrl }) {
       }
 
       if (req.method === 'POST' && path === '/send-media') {
-        const to = String(body.to || '').replace(/\D/g, '');
+        const to = normalizeTarget(body.to);
         const type = ['image', 'video', 'audio', 'document'].includes(body.type) ? body.type : 'document';
         const buffer = Buffer.from(String(body.data || ''), 'base64');
-        if (to.length < 8 || !buffer.length) {
+        if (!to || !buffer.length) {
           return json(res, 422, { success: false, message: 'Field to dan data (base64) wajib diisi.' });
         }
         const result = await manager.sendMedia(session, to, { type, mime: body.mime, name: body.name, caption: body.caption, buffer });
         return json(res, 200, { success: true, id: result.id });
+      }
+
+      if (req.method === 'GET' && path === '/contacts') {
+        const contacts = manager.contacts(session);
+        return json(res, 200, { success: true, count: contacts.length, contacts });
+      }
+
+      if (req.method === 'POST' && path === '/contacts/sync') {
+        const count = manager.resendContacts(session);
+        return json(res, 200, { success: true, count });
+      }
+
+      if (req.method === 'GET' && path === '/groups') {
+        const groups = await manager.groups(session);
+        return json(res, 200, { success: true, count: groups.length, groups });
       }
 
       if (req.method === 'POST' && path === '/sessions/logout') {
