@@ -583,3 +583,12 @@ img, svg, canvas { max-width: 100%; }
 .plan-table .cur { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .lic-key { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; }
 @media (max-width: 480px) { .topbar .plan-chip { display: none; } }
+
+/* Pilihan cara kirim campaign */
+.send-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.send-mode { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; cursor: pointer; font-size: 13px; }
+.send-mode:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.send-mode input[type=radio] { margin-top: 3px; }
+.send-mode span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.send-mode small { color: var(--muted); font-size: 11.5px; }
+@media (max-width: 860px) { .send-modes { grid-template-columns: 1fr; } }

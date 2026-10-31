@@ -134,7 +134,7 @@ return [
             '+ Campaign → isi nama, perangkat, kecepatan, lalu centang SATU ATAU BEBERAPA template ("Pilih semua" untuk semuanya).',
             'Pilih penerima: Rombongan (kelompok per peruntukan), tag, dan/atau tahap — kotak hijau menunjukkan jumlah penerima yang memenuhi syarat.',
             'Opsional "3. Lampiran foto / file": berlaku untuk semua penerima. Bila kosong, lampiran milik template terpilih yang dikirim.',
-            'Pilih Simpan draft, Mulai sekarang, atau Jadwalkan.',
+            'Bagian "4. Kirim": pilih 🚀 Kirim sekarang, 🕒 Jadwalkan, atau 📝 Simpan draft, lalu klik tombol di bawahnya. Draft dikirim nanti lewat tombol "Kirim sekarang" di halaman campaign.',
             'Pantau progres per template / varian di halaman detail. Jeda / Lanjutkan / Batalkan bila perlu.',
             'Duplikat: salin campaign untuk rombongan / peruntukan lain tanpa mengisi ulang template & lampiran.',
         ],

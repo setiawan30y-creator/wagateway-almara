@@ -346,4 +346,21 @@
       if (e.dataTransfer && e.dataTransfer.files.length) { input.files = e.dataTransfer.files; render(); }
     });
   });
+
+  // Tombol kirim campaign mengikuti pilihan (kirim sekarang / jadwalkan / draft)
+  var modes = document.querySelector('[data-send-modes]'), sendBtn = document.querySelector('[data-send-button]');
+  if (modes && sendBtn) {
+    var labels = { now: '🚀 Kirim sekarang', schedule: '🕒 Jadwalkan kirim', draft: '📝 Simpan draft' };
+    var syncBtn = function () {
+      var m = modes.querySelector('input[name="mode"]:checked');
+      sendBtn.textContent = labels[m ? m.value : 'now'];
+      var dt = modes.querySelector('input[name="scheduled_at"]');
+      if (dt) dt.required = !!(m && m.value === 'schedule');
+    };
+    modes.addEventListener('change', syncBtn);
+    modes.querySelector('input[name="scheduled_at"]').addEventListener('focus', function () {
+      modes.querySelector('input[value="schedule"]').checked = true; syncBtn();
+    });
+    syncBtn();
+  }
 })();

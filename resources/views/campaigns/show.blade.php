@@ -5,7 +5,7 @@
 @section('actions')
     @php $act = fn ($a, $label, $cls = 'btn', $confirm = null) => [$a, $label, $cls, $confirm]; @endphp
     @foreach (array_filter([
-        in_array($campaign->status, ['draft', 'scheduled']) ? $act('start', 'Mulai sekarang', 'btn btn-primary', 'Mulai kirim campaign ini?') : null,
+        in_array($campaign->status, ['draft', 'scheduled']) ? $act('start', '🚀 Kirim sekarang', 'btn btn-primary', 'Mulai kirim campaign ini ke semua penerima?') : null,
         $campaign->status === 'running' ? $act('run', 'Proses batch') : null,
         $campaign->status === 'running' ? $act('pause', 'Jeda') : null,
         $campaign->status === 'paused' ? $act('resume', 'Lanjutkan', 'btn btn-primary') : null,
@@ -20,6 +20,9 @@
 @endsection
 
 @section('content')
+@if ($campaign->status === 'draft')
+    <div class="alert alert-warning">📝 Campaign ini masih <b>draft</b> — belum dikirim. Klik <b>🚀 Kirim sekarang</b> di kanan atas untuk mulai mengirim.</div>
+@endif
 @if ($campaign->pause_reason)<div class="alert alert-warning">Dijeda: {{ $campaign->pause_reason }}</div>@endif
 @php $dq = $campaign->device ? \App\Support\SendingQuota::summary($campaign->device) : null; @endphp
 @if ($dq && $dq['remaining'] === 0 && in_array($campaign->status, ['running', 'scheduled']))

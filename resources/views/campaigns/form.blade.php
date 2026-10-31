@@ -81,15 +81,22 @@
 <div class="card" style="margin-top:10px">
     <div class="card-h">4. Kirim</div>
     <div class="card-b">
-        <div class="checks" style="margin-bottom:8px">
-            <label><input type="radio" name="mode" value="draft" @checked(old('mode', 'draft') === 'draft')> Simpan sebagai draft</label>
-            <label><input type="radio" name="mode" value="now" @checked(old('mode') === 'now')> Mulai sekarang</label>
-            <label><input type="radio" name="mode" value="schedule" @checked(old('mode') === 'schedule')> Jadwalkan</label>
-            <input class="input" type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}" style="width:auto;height:28px">
+        @php $mode = old('mode', 'now'); @endphp
+        <div class="send-modes" data-send-modes>
+            <label class="send-mode"><input type="radio" name="mode" value="now" @checked($mode === 'now')>
+                <span><b>🚀 Kirim sekarang</b><small>Langsung mulai mengirim ke penerima.</small></span></label>
+            <label class="send-mode"><input type="radio" name="mode" value="schedule" @checked($mode === 'schedule')>
+                <span><b>🕒 Jadwalkan</b><small>Kirim otomatis pada waktu tertentu.</small>
+                    <input class="input" type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}" style="margin-top:4px;height:28px"></span></label>
+            <label class="send-mode"><input type="radio" name="mode" value="draft" @checked($mode === 'draft')>
+                <span><b>📝 Simpan dulu (draft)</b><small>Belum dikirim. Kirim nanti dari halaman campaign → tombol “Kirim sekarang”.</small></span></label>
         </div>
-        <button class="btn btn-primary" data-once @disabled($templates->isEmpty() || $devices->isEmpty())>Simpan campaign</button>
-        <a class="btn" href="{{ route('campaigns.index') }}">Batal</a>
-        <div class="hint" style="margin-top:6px">Pengiriman berjalan bertahap tiap menit lewat scheduler (<span class="mono">php artisan schedule:work</span>). Tombol “Proses batch” di halaman campaign bisa dipakai untuk memicu manual.</div>
+        @error('scheduled_at')<div class="error-text">{{ $message }}</div>@enderror
+        <div style="margin-top:10px">
+            <button class="btn btn-primary" data-once data-send-button @disabled($templates->isEmpty() || $devices->isEmpty())>🚀 Kirim sekarang</button>
+            <a class="btn" href="{{ route('campaigns.index') }}">Batal</a>
+        </div>
+        <div class="hint" style="margin-top:6px">Pesan dikirim bertahap (bukan sekaligus) — biarkan jendela <b>Scheduler</b> dan <b>Engine</b> dari <span class="mono">mulai.bat</span> tetap terbuka sampai selesai. Progres terlihat di halaman campaign.</div>
     </div>
 </div>
 </form>

@@ -111,7 +111,13 @@ class CampaignController extends Controller
             AuditLog::record('campaign.start', 'Mulai campaign '.$campaign->name);
         }
 
-        return redirect()->route('campaigns.show', $campaign)->with('success', 'Campaign disimpan.');
+        $msg = match ($data['mode']) {
+            'now' => Setting::inQuietHours() ? 'Campaign dimulai — sedang jam tenang, pengiriman otomatis lanjut setelah jam tenang selesai.' : 'Campaign mulai dikirim. Pesan terkirim bertahap; pantau progresnya di halaman ini.',
+            'schedule' => 'Campaign dijadwalkan pada '.$campaign->scheduled_at->format('d/m/Y H:i').'.',
+            default => 'Campaign disimpan sebagai draft. Klik “Kirim sekarang” bila sudah siap.',
+        };
+
+        return redirect()->route('campaigns.show', $campaign)->with('success', $msg);
     }
 
     public function show(Campaign $campaign)
