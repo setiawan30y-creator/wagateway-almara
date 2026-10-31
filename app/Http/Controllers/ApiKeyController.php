@@ -7,7 +7,8 @@ use App\Models\AuditLog;
 use Illuminate\Http\Request;
 
 /**
- * Manajemen API key. Key penuh hanya ditampilkan sekali setelah dibuat.
+ * Manajemen API key. Key baru tersimpan terenkripsi sehingga bisa ditampilkan & disalin kapan saja.
+ * Token per perangkat juga tampil di halaman Perangkat.
  * @2026-Alifiandra
  */
 class ApiKeyController extends Controller
@@ -15,19 +16,24 @@ class ApiKeyController extends Controller
     public function index()
     {
         return view('api-keys.index', [
-            'keys' => ApiKey::with('user')->latest('id')->get(),
+            'keys' => ApiKey::with(['user', 'device'])->orderByRaw('revoked_at is not null')->latest('id')->get(),
+            'devices' => \App\Models\Device::orderByDesc('is_default')->orderBy('name')->get(['id', 'name', 'phone_number']),
         ]);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:100']], [], ['name' => 'label']);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'device_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('devices')],
+        ], [], ['name' => 'label', 'device_id' => 'perangkat']);
 
-        [$key, $plain] = ApiKey::generate($request->user(), $data['name']);
+        $device = isset($data['device_id']) ? \App\Models\Device::find($data['device_id']) : null;
+        [$key, $plain] = ApiKey::generate($request->user(), $data['name'], $device);
         AuditLog::record('api_key.create', 'Buat API key '.$key->name, ['prefix' => $key->prefix]);
 
         return redirect()->route('api-keys.index')
-            ->with('success', 'API key dibuat. Salin sekarang — key tidak akan ditampilkan lagi.')
+            ->with('success', 'API key dibuat. Klik Salin untuk menyalinnya — key bisa dilihat lagi kapan saja di halaman ini.')
             ->with('plain_key', $plain);
     }
 

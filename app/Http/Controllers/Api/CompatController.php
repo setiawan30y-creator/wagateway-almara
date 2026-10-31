@@ -72,9 +72,7 @@ class CompatController extends Controller
 
     private function device(Request $request): ?Device
     {
-        $id = $request->integer('device_id') ?: null;
-
-        return $id ? Device::where('is_active', true)->find($id) : Device::resolveDefault();
+        return $this->key($request)->resolveDevice($request->integer('device_id') ?: null);
     }
 
     /** "0812…, 0813…" -> nomor valid (maks 100). */

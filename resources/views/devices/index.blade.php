@@ -22,7 +22,7 @@
 <div class="card">
     <div class="table-wrap">
         <table class="dense">
-            <thead><tr><th>Nama</th><th>Provider</th><th class="hide-sm">Nomor</th><th>Status</th><th class="hide-sm">Terakhir aktif</th><th class="hide-sm right">Pesan</th><th class="right">Aksi</th></tr></thead>
+            <thead><tr><th>Nama</th><th>Provider</th><th class="hide-sm">Nomor</th><th>Status</th><th>Token API</th><th class="hide-sm">Terakhir aktif</th><th class="hide-sm right">Pesan</th><th class="right">Aksi</th></tr></thead>
             <tbody>
             @forelse ($devices as $d)
                 <tr>
@@ -37,9 +37,18 @@
                         @php $dq = \App\Support\SendingQuota::summary($d); @endphp
                         @if ($dq)<div class="quota {{ $dq['remaining'] === 0 ? 'full' : '' }}" title="Broadcast hari ini / batas harian{{ $dq['warmup'] ? ' (pemanasan nomor baru)' : '' }}"><span class="bar"><i style="width:{{ min(100, round($dq['sent'] * 100 / max(1, $dq['limit']))) }}%"></i></span>{{ $dq['sent'] }}/{{ $dq['limit'] }}{{ $dq['warmup'] ? ' · warm-up hari '.$dq['age'] : '' }}</div>@endif
                     </td>
+                    @php $tok = $tokens[$d->id] ?? null; $plain = $tok?->plainKey(); @endphp
+                    <td class="nowrap">
+                        @if ($plain)
+                            <span class="token-cell"><code id="tok-{{ $d->id }}" class="tok is-masked" title="Token API perangkat ini">{{ $plain }}</code>
+                            <button type="button" class="btn btn-sm btn-icon" data-reveal="#tok-{{ $d->id }}" title="Lihat / sembunyikan">👁</button>
+                            <button type="button" class="btn btn-sm" data-copy="#tok-{{ $d->id }}">Salin</button></span>
+                        @endif
+                        <button type="button" class="btn btn-sm" data-toggle-row="#integ-{{ $d->id }}" aria-expanded="{{ session('open_device') == $d->id ? 'true' : 'false' }}">🔗 Integrasi</button>
+                    </td>
                     <td class="hide-sm muted">{{ $d->last_seen_at?->diffForHumans() ?? '—' }}</td>
                     <td class="hide-sm right">{{ number_format($d->messages_count, 0, ',', '.') }}</td>
-                    <td class="right nowrap">
+                    <td class="right td-actions">
                         <form method="POST" action="{{ route('devices.check', $d) }}" class="inline">@csrf<button class="btn btn-sm" data-once>Cek</button></form>
                         @if ($d->provider === 'qr')
                             <a class="btn btn-sm {{ $d->status === 'connected' ? '' : 'btn-primary' }}" href="{{ route('devices.pair', $d) }}">{{ $d->status === 'connected' ? 'QR' : 'Scan QR' }}</a>
@@ -59,8 +68,49 @@
                         </form>
                     </td>
                 </tr>
+                @if ($plain)
+                <tr class="integ-row" id="integ-{{ $d->id }}" @if (session('open_device') != $d->id) hidden @endif>
+                    <td colspan="8">
+                        <div class="integ">
+                            <div class="integ-h"><b>Integrasi aplikasi lain — {{ $d->name }}</b>
+                                <span class="muted">Pesan yang dikirim dengan token ini otomatis keluar dari nomor <b>{{ $d->phone_number ?? $d->name }}</b>.@if ($d->provider === 'log') <span class="warn-text">Perangkat Simulasi — pesan tidak benar-benar terkirim ke WhatsApp.</span>@endif</span></div>
+                            <div class="integ-grid">
+                                @php
+                                    $rows = [
+                                        ['Token (Authorization)', $plain, 'Tempel di kolom "Token" / "API Key" aplikasi Anda.'],
+                                        ['URL gaya Fonnte', url('/api/send'), 'POST · field: target, message · header Authorization: token'],
+                                        ['URL gaya Wablas', url('/api/send-message'), 'POST/GET · field: phone, message · header Authorization: token'],
+                                        ['URL REST (lengkap)', url('/api/v1/messages/send'), 'POST JSON · to, message · header Authorization: Bearer token'],
+                                        ['Kirim lewat link (GET)', url('/api/send-message').'?token='.$plain.'&phone=08xxxxxxxxxx&message=Halo', 'Ganti nomor & pesan, buka di browser untuk uji cepat.'],
+                                        ['Device ID', (string) $d->id, 'Opsional — tidak perlu diisi bila memakai token perangkat ini.'],
+                                    ];
+                                @endphp
+                                @foreach ($rows as $i => [$label, $value, $hint])
+                                    <div class="integ-item">
+                                        <div class="integ-label">{{ $label }}</div>
+                                        <div class="secret"><code id="integ-{{ $d->id }}-{{ $i }}" @if ($i === 0 || $i === 4) class="is-masked" @endif>{{ $value }}</code>
+                                            @if ($i === 0 || $i === 4)<button type="button" class="btn btn-sm btn-icon" data-reveal="#integ-{{ $d->id }}-{{ $i }}" title="Lihat / sembunyikan">👁</button>@endif
+                                            <button type="button" class="btn btn-sm" data-copy="#integ-{{ $d->id }}-{{ $i }}">Salin</button></div>
+                                        <div class="hint">{{ $hint }}</div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="integ-label" style="margin-top:8px">Contoh cURL</div>
+                            <div class="secret"><code id="integ-{{ $d->id }}-curl" class="is-masked" style="white-space:pre">curl -X POST {{ url('/api/send') }} \
+  -H "Authorization: {{ $plain }}" \
+  -d "target=08xxxxxxxxxx" -d "message=Halo dari aplikasi"</code>
+                                <button type="button" class="btn btn-sm btn-icon" data-reveal="#integ-{{ $d->id }}-curl" title="Lihat / sembunyikan">👁</button>
+                                <button type="button" class="btn btn-sm" data-copy="#integ-{{ $d->id }}-curl">Salin</button></div>
+                            <div class="integ-foot">
+                                <form method="POST" action="{{ route('devices.token', $d) }}" class="inline" data-confirm="Buat ulang token {{ $d->name }}? Token lama langsung tidak berlaku — aplikasi yang memakainya harus diperbarui.">@csrf<button class="btn btn-sm">↻ Buat ulang token</button></form>
+                                <span class="hint">Token dipakai: {{ $tok->last_used_at?->diffForHumans() ?? 'belum pernah' }} · Kelola semua key di <a href="{{ route('api-keys.index') }}">API Key</a> · Respons berisi <span class="mono">status:true</span> bila pesan masuk antrean.</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                @endif
             @empty
-                <tr><td colspan="7" class="empty">Belum ada perangkat. Klik <b>Tambah nomor — Scan QR</b> untuk menghubungkan nomor WhatsApp.</td></tr>
+                <tr><td colspan="8" class="empty">Belum ada perangkat. Klik <b>Tambah nomor — Scan QR</b> untuk menghubungkan nomor WhatsApp.</td></tr>
             @endforelse
             </tbody>
         </table>

@@ -1,5 +1,11 @@
 # Changelog API
 
+## 1.0.2 — 2026-11-01
+- Token API per perangkat: dibuat otomatis untuk setiap nomor di menu Perangkat, bisa dilihat & disalin, panel 🔗 Integrasi berisi URL Fonnte/Wablas/REST + contoh
+- API key bisa diikat ke perangkat (`device_id`); tanpa `device_id` di request, pesan dikirim dari nomor milik key, lalu nomor utama
+- API key baru disimpan terenkripsi (APP_KEY) sehingga bisa ditampilkan ulang; key lama tetap berfungsi
+- Menghapus perangkat mencabut tokennya
+
 ## 1.0.1 — 2026-11-01
 - Endpoint kompatibel: `POST /api/send` (gaya Fonnte) dan `GET|POST /api/send-message` (gaya Wablas)
 - API key diterima juga sebagai `Authorization: alm_xxx` (tanpa "Bearer") atau parameter `token` / `api_key`

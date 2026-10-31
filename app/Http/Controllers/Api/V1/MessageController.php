@@ -36,7 +36,7 @@ class MessageController extends Controller
         // Kirim ke grup: to = ID grup "…@g.us" (lihat menu Grup WA; khusus perangkat Scan QR)
         if (\App\Models\WaGroup::isJid($data['to'])) {
             $group = \App\Models\WaGroup::where('jid', $data['to'])
-                ->when(isset($data['device_id']), fn ($w) => $w->where('device_id', $data['device_id']))
+                ->when(isset($data['device_id']) || $apiKey->device_id, fn ($w) => $w->where('device_id', $data['device_id'] ?? $apiKey->device_id))
                 ->whereHas('device', fn ($d) => $d->where('is_active', true))
                 ->first();
 
@@ -71,9 +71,7 @@ class MessageController extends Controller
             }
         }
 
-        $device = isset($data['device_id'])
-            ? Device::where('is_active', true)->find($data['device_id'])
-            : Device::resolveDefault();
+        $device = $apiKey->resolveDevice(isset($data['device_id']) ? (int) $data['device_id'] : null);
 
         if (! $device) {
             return ApiResponse::error('DEVICE_NOT_FOUND', 'Perangkat aktif tidak ditemukan. Tambahkan perangkat di menu Perangkat.', 404);
@@ -103,7 +101,7 @@ class MessageController extends Controller
             return ApiResponse::error('VALIDATION_ERROR', 'Request tidak valid.', 422, ['to' => ['Nomor WhatsApp tidak valid.']]);
         }
 
-        $device = isset($data['device_id']) ? Device::where('is_active', true)->find($data['device_id']) : Device::resolveDefault();
+        $device = $apiKey->resolveDevice(isset($data['device_id']) ? (int) $data['device_id'] : null);
 
         if (! $device) {
             return ApiResponse::error('DEVICE_NOT_FOUND', 'Perangkat aktif tidak ditemukan.', 404);

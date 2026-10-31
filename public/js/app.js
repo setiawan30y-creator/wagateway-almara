@@ -22,11 +22,25 @@
     var btn = e.target.closest('[data-copy]');
     if (!btn) return;
     var el = document.querySelector(btn.getAttribute('data-copy'));
-    if (!el || !navigator.clipboard) return;
-    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
-      var old = btn.textContent; btn.textContent = 'Tersalin';
+    if (!el) return;
+    var text = (el.value !== undefined && el.tagName !== 'BUTTON' ? el.value : el.textContent).trim();
+    var done = function () {
+      var old = btn.textContent; btn.textContent = 'Tersalin ✓';
       setTimeout(function () { btn.textContent = old; }, 1500);
-    });
+    };
+    // fallback untuk http (tanpa https) di mana navigator.clipboard tidak tersedia
+    var legacy = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) { window.prompt('Salin manual (Ctrl+C):', text); }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, legacy);
+    } else {
+      legacy();
+    }
   });
 
   // ---- Konfirmasi aksi sensitif ----
@@ -481,5 +495,26 @@
       inp.focus();
     });
     wrap.appendChild(btn);
+  });
+})();
+
+/* ---- Token API: lihat/sembunyikan & panel integrasi per perangkat ---- @2026-Alifiandra */
+(function () {
+  document.addEventListener('click', function (e) {
+    var rv = e.target.closest('[data-reveal]');
+    if (rv) {
+      var el = document.querySelector(rv.getAttribute('data-reveal'));
+      if (el) el.classList.toggle('is-masked');
+      return;
+    }
+    var masked = e.target.closest('code.is-masked');
+    if (masked) { masked.classList.remove('is-masked'); return; }
+    var tg = e.target.closest('[data-toggle-row]');
+    if (tg) {
+      var row = document.querySelector(tg.getAttribute('data-toggle-row'));
+      if (!row) return;
+      row.hidden = !row.hidden;
+      tg.setAttribute('aria-expanded', row.hidden ? 'false' : 'true');
+    }
   });
 })();

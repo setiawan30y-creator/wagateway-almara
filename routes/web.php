@@ -178,6 +178,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/perangkat/{device}/pairing', [DeviceController::class, 'pair'])->name('devices.pair');
         Route::get('/perangkat/{device}/qr', [DeviceController::class, 'qr'])->name('devices.qr');
         Route::post('/perangkat/{device}/logout', [DeviceController::class, 'logout'])->name('devices.logout');
+        Route::post('/perangkat/{device}/token', [DeviceController::class, 'token'])->name('devices.token');
 
         Route::get('/api-key', [ApiKeyController::class, 'index'])->name('api-keys.index');
         Route::post('/api-key', [ApiKeyController::class, 'store'])->name('api-keys.store');

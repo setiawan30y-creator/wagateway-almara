@@ -18,11 +18,30 @@ class DeviceController extends Controller
 {
     public function __construct(private ProviderManager $providers) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        return view('devices.index', [
-            'devices' => Device::withCount('messages')->orderByDesc('is_default')->orderBy('id')->get(),
-        ]);
+        $devices = Device::withCount('messages')->orderByDesc('is_default')->orderBy('id')->get();
+
+        // Token API per perangkat (gaya Fonnte): dibuat otomatis bila belum ada, tinggal salin.
+        $tokens = \App\Models\ApiKey::active()->whereIn('device_id', $devices->pluck('id'))->latest('id')->get()->keyBy('device_id');
+        foreach ($devices as $d) {
+            if (! $tokens->has($d->id) || ! $tokens[$d->id]->plainKey()) {
+                [$key] = \App\Models\ApiKey::forDevice($d, $request->user());
+                $tokens[$d->id] = $key;
+            }
+        }
+
+        return view('devices.index', ['devices' => $devices, 'tokens' => $tokens]);
+    }
+
+    /** Buat ulang token API perangkat (token lama langsung tidak berlaku). */
+    public function token(Request $request, Device $device)
+    {
+        [$key] = \App\Models\ApiKey::forDevice($device, $request->user());
+        AuditLog::record('api_key.rotate', 'Buat ulang token API perangkat '.$device->name, ['prefix' => $key->prefix]);
+
+        return redirect()->route('devices.index')->with('success', 'Token baru untuk '.$device->name.' dibuat. Token lama tidak berlaku lagi — perbarui token di aplikasi yang memakainya.')
+            ->with('open_device', $device->id);
     }
 
     public function create(Request $request)
@@ -89,6 +108,7 @@ class DeviceController extends Controller
         }
 
         AuditLog::record('device.delete', 'Hapus perangkat '.$device->name);
+        \App\Models\ApiKey::active()->where('device_id', $device->id)->update(['revoked_at' => now()]);
         $device->delete();
 
         return redirect()->route('devices.index')->with('success', 'Perangkat dihapus. Riwayat pesan tetap tersimpan.');

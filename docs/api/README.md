@@ -44,3 +44,17 @@ Banyak aplikasi billing / kasir sudah punya pengaturan untuk gateway WhatsApp po
 
 Respons: `{"status": true, …}` bila pesan masuk antrean, `{"status": false, "reason"/"message": "…"}` bila gagal.
 Token juga diterima di semua endpoint `/api/v1/*` lewat `Authorization: Bearer alm_xxx`, `Authorization: alm_xxx`, `X-Api-Key`, atau parameter `token` / `api_key`.
+
+### Token per perangkat (seperti token device Fonnte)
+
+Setiap nomor di menu **Perangkat** otomatis punya token di kolom **Token API** (👁 lihat, **Salin**). Tombol **🔗 Integrasi** menampilkan token, URL gaya Fonnte / Wablas / REST, link uji GET, dan contoh cURL — semuanya bisa disalin.
+
+- Pesan yang dikirim dengan token sebuah nomor **otomatis keluar dari nomor itu** (tidak perlu `device_id`). Urutan pemilihan nomor: `device_id` di request → nomor milik token → nomor utama.
+- **Buat ulang token** di panel Integrasi mencabut token lama seketika. Menghapus perangkat juga mencabut tokennya.
+- API key di menu **API Key** juga bisa diikat ke nomor tertentu ("Kirim dari") dan bisa dilihat / disalin kapan saja. Key buatan sebelum versi 1.0.2 hanya tersimpan hash-nya (tampil "Key lama") — tetap berfungsi, tetapi tidak bisa ditampilkan ulang.
+- Key disimpan terenkripsi dengan `APP_KEY`; jangan mengganti `APP_KEY` setelah aplikasi dipakai.
+
+Uji cepat dari browser:
+```
+{APP_URL}/api/send-message?token=alm_xxx&phone=08xxxxxxxxxx&message=Halo
+```
