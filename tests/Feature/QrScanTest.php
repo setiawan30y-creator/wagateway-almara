@@ -76,4 +76,16 @@ class QrScanTest extends TestCase
 
         $this->actingAs($admin)->get("/perangkat/{$device->id}/pairing")->assertOk()->assertSee('npm start');
     }
+
+    public function test_connected_qr_device_replaces_simulation_as_default(): void
+    {
+        $sim = Device::create(['name' => 'Simulasi', 'provider' => 'log', 'is_active' => true, 'is_default' => true]);
+        $qr = Device::create(['name' => 'WA', 'provider' => 'qr', 'is_active' => true, 'credentials' => ['webhook_token' => 'wh']]);
+
+        $this->withHeaders(['X-Webhook-Token' => 'wh'])->postJson("/api/webhooks/qr/{$qr->id}", ['type' => 'session', 'status' => 'connected', 'phone' => '6281200000000'])->assertOk();
+
+        $this->assertTrue($qr->refresh()->is_default);
+        $this->assertFalse($sim->refresh()->is_default);
+        $this->assertSame($qr->id, Device::resolveDefault()->id);
+    }
 }

@@ -46,7 +46,7 @@ class MessageController extends Controller
 
             $message = $service->queueGroup($group, $data['message'], $apiKey->user, $apiKey);
 
-            return ApiResponse::success($message->toApiArray(), 202);
+            return ApiResponse::success($message->toApiArray(), 202, self::deviceMeta($message));
         }
 
         $to = PhoneNumber::normalize($data['to']);
@@ -81,7 +81,7 @@ class MessageController extends Controller
 
         $message = $service->queueText($device, $to, $data['message'], $apiKey->user, $apiKey, $idempotencyKey);
 
-        return ApiResponse::success($message->toApiArray(), 202);
+        return ApiResponse::success($message->toApiArray(), 202, self::deviceMeta($message));
     }
 
     /** Kirim media (multipart/form-data): to, file, caption?, device_id? */
@@ -120,7 +120,7 @@ class MessageController extends Controller
         $media = $storage->storeUpload($request->file('file'));
         $message = $service->queueText($device, $to, (string) ($data['caption'] ?? ''), $apiKey->user, $apiKey, $key ? mb_substr(trim($key), 0, 100) : null, ['media' => $media]);
 
-        return ApiResponse::success($message->toApiArray(), 202);
+        return ApiResponse::success($message->toApiArray(), 202, self::deviceMeta($message));
     }
 
     public function index(Request $request): JsonResponse
@@ -158,5 +158,18 @@ class MessageController extends Controller
         }
 
         return ApiResponse::success($message->toApiArray());
+    }
+
+    /** Info perangkat pengirim di "meta" respons — memberi tahu bila terkirim lewat perangkat simulasi. */
+    private static function deviceMeta(Message $message): array
+    {
+        $d = $message->device;
+
+        return $d ? ['device' => array_filter([
+            'id' => $d->id,
+            'name' => $d->name,
+            'provider' => $d->provider,
+            'warning' => $d->provider === 'log' ? 'Perangkat SIMULASI: pesan hanya dicatat, tidak dikirim ke WhatsApp. Kirim device_id nomor Scan QR, atau jadikan nomor tersebut "utama" di menu Perangkat.' : null,
+        ])] : [];
     }
 }

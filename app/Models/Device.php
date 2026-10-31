@@ -52,6 +52,16 @@ class Device extends Model
         return static::query()->where('is_active', true)->orderByDesc('is_default')->orderBy('id')->first();
     }
 
+    /** Nomor sungguhan pertama yang tersambung otomatis menggantikan perangkat Simulasi sebagai nomor utama. */
+    public function promoteIfSimulationDefault(): void
+    {
+        $current = static::query()->where('is_default', true)->first();
+
+        if ($this->provider !== 'log' && (! $current || $current->provider === 'log')) {
+            $this->makeDefault();
+        }
+    }
+
     public function makeDefault(): void
     {
         static::query()->whereKeyNot($this->getKey())->update(['is_default' => false]);

@@ -178,6 +178,7 @@ class DeviceController extends Controller
         if ($pairing->connected) {
             $status = $provider->status($device); // menyimpan nomor telepon
             $device->refresh()->forceFill(['status' => 'connected', 'last_seen_at' => now(), 'paired_at' => $device->paired_at ?? now()])->save();
+            $device->promoteIfSimulationDefault();
 
             return response()->json(['connected' => true, 'message' => $status->message, 'phone' => $device->phone_number, 'qr' => null]);
         }

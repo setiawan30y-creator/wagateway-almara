@@ -109,6 +109,10 @@ class QrWebhookController extends Controller
                 'paired_at' => $data['status'] === 'connected' && ! $device->paired_at ? now() : null,
             ], fn ($v) => $v !== null))->save();
 
+            if ($data['status'] === 'connected') {
+                $device->promoteIfSimulationDefault();
+            }
+
             if ($wasConnected && $data['status'] !== 'connected') {
                 AppNotification::notify('device.disconnected', 'Perangkat '.$device->name.' terputus',
                     $data['status'] === 'logged_out' ? 'Perangkat logout dari WhatsApp. Scan QR ulang.' : 'Engine mencoba menyambung ulang…', route('devices.index'), 'admins');

@@ -1,5 +1,9 @@
 # Changelog API
 
+## 1.0.1 — 2026-11-01
+- Respons `POST /v1/messages/send` & `/v1/messages/media` menyertakan `meta.device` (id, name, provider) dan `meta.device.warning` bila terkirim lewat perangkat simulasi
+- Nomor Scan QR pertama yang tersambung otomatis menjadi nomor utama bila nomor utama sebelumnya perangkat simulasi
+
 ## 0.7.0 — 2026-10-31
 - Objek Campaign punya field `template_ids` (campaign multi-template; varian diacak per penerima)
 - Isi template mendukung spintax `{a|b|c}` saat dirender
