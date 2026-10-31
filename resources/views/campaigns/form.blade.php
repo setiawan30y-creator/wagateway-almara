@@ -61,7 +61,7 @@
             <div class="field"><label>Tahap pipeline (kosong = semua)</label>
                 <div class="checks">@foreach (\App\Models\Contact::STAGES as $k => $v)<label><input type="checkbox" name="stages[]" value="{{ $k }}" @checked(in_array($k, $selStages, true))> {{ $v }}</label>@endforeach</div></div>
             <div class="alert alert-success" data-audience-out style="margin:0">Menghitung…</div>
-            <div class="hint">Rombongan, tag, dan tahap saling mempersempit (kosong = tidak disaring). Hanya kontak <b>opt-in</b> yang dikirimi. Frequency cap, jam tenang & auto-pause mengikuti <a href="{{ route('settings.edit') }}">Pengaturan</a>.</div>
+            <div class="hint">Rombongan, tag, dan tahap saling mempersempit (kosong = tidak disaring). {!! \App\Services\CampaignService::requireOptIn() ? 'Hanya kontak <b>opt-in</b> yang dikirimi.' : 'Kontak opt-in & belum ada izin dikirimi (opt-out tidak).' !!} Frequency cap, jam tenang & auto-pause mengikuti <a href="{{ route('settings.edit') }}">Pengaturan</a>.</div>
         </div>
     </div>
 </div>

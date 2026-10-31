@@ -140,8 +140,15 @@
       aud.querySelectorAll('input[name="tags[]"]:checked').forEach(function (i) { tags.push(i.value); });
       aud.querySelectorAll('input[name="stages[]"]:checked').forEach(function (i) { stages.push(i.value); });
       post(aud.getAttribute('data-audience-form'), { lists: lists, tags: tags, stages: stages }).then(function (d) {
-        outA.innerHTML = '<b>' + d.eligible + '</b> penerima memenuhi syarat dari ' + d.total + ' kontak · ' +
-          d.no_consent + ' belum opt-in · ' + d.opted_out + ' opt-out' + (d.over_limit ? ' · ' + d.over_limit + ' melebihi batas' : '');
+        var parts = [];
+        if (d.no_consent) parts.push(d.no_consent + ' belum opt-in');
+        if (d.opted_out) parts.push(d.opted_out + ' opt-out');
+        if (d.capped) parts.push(d.capped + ' sudah menerima broadcast < ' + d.cap_hours + ' jam');
+        if (d.over_limit) parts.push(d.over_limit + ' melebihi batas');
+        outA.innerHTML = '<b>' + d.eligible + '</b> penerima akan dikirimi dari ' + d.total + ' kontak' + (parts.length ? ' · dilewati: ' + parts.join(', ') : '') +
+          (d.eligible === 0 && d.total > 0 ? '<br><b>Tidak ada yang akan terkirim.</b> ' + (d.no_consent ? 'Tandai kontak yang sudah setuju sebagai opt-in (menu Kontak → Aksi massal), ' : '') + (d.capped ? 'atau ubah Frequency cap di Pengaturan.' : '') : '');
+        outA.className = 'alert ' + (d.eligible === 0 ? 'alert-error' : 'alert-success');
+        aud.setAttribute('data-eligible', d.eligible);
       });
     };
     aud.addEventListener('change', function (e) { if (e.target && /^(lists|tags|stages)\[\]$/.test(e.target.name)) runA(); }); runA();
@@ -358,6 +365,13 @@
       if (dt) dt.required = !!(m && m.value === 'schedule');
     };
     modes.addEventListener('change', syncBtn);
+    sendBtn.form.addEventListener('submit', function (e) {
+      var m = modes.querySelector('input[name="mode"]:checked');
+      if (m && m.value !== 'draft' && sendBtn.form.getAttribute('data-eligible') === '0' &&
+          !confirm('Tidak ada penerima yang memenuhi syarat — campaign akan selesai tanpa mengirim pesan. Tetap lanjutkan?')) {
+        e.preventDefault(); e.stopImmediatePropagation();
+      }
+    }, true);
     modes.querySelector('input[name="scheduled_at"]').addEventListener('focus', function () {
       modes.querySelector('input[value="schedule"]').checked = true; syncBtn();
     });

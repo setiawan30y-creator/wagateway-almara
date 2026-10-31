@@ -11,6 +11,8 @@
         <div class="card-h">Smart Broadcast Protection</div>
         <div class="card-b">
             <div class="field"><label class="check"><input type="checkbox" name="quiet_hours_enabled" value="1" @checked($s['quiet_hours_enabled'] === '1')> Aktifkan jam tenang (quiet hours)</label></div>
+            <div class="field"><label class="check"><input type="checkbox" name="require_opt_in" value="1" @checked($s['require_opt_in'] === '1')> Broadcast hanya ke kontak yang sudah memberi izin (opt-in) — <b>disarankan</b></label>
+                <div class="hint">Bila dimatikan, kontak "belum ada izin" ikut dikirimi (kontak opt-out tetap tidak pernah dikirimi). Mengirim ke orang yang tidak meminta pesan meningkatkan risiko nomor diblokir / dilaporkan.</div></div>
             <div class="grid grid-2" style="gap:0 10px">
                 <div class="field"><label>Mulai jam tenang</label><input class="input" type="time" name="quiet_start" value="{{ $s['quiet_start'] }}" required></div>
                 <div class="field"><label>Selesai jam tenang</label><input class="input" type="time" name="quiet_end" value="{{ $s['quiet_end'] }}" required></div>

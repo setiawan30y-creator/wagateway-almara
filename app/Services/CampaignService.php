@@ -23,20 +23,40 @@ class CampaignService
         private WebhookDispatcher $webhooks,
     ) {}
 
+    /** Wajib izin (opt-in)? Bila tidak, kontak "belum ada izin" ikut dikirimi; opt-out tetap tidak pernah. */
+    public static function requireOptIn(): bool
+    {
+        return Setting::get('require_opt_in') !== '0';
+    }
+
+    /** Status izin yang boleh menerima broadcast. */
+    public static function allowedConsents(): array
+    {
+        return self::requireOptIn() ? ['opted_in'] : ['opted_in', 'unknown'];
+    }
+
     /** Hitung audience untuk pratinjau. */
     public function preview(array $audience): array
     {
         $base = Campaign::audienceQuery($audience);
         $total = (clone $base)->count();
-        $eligible = (clone $base)->where('consent', 'opted_in')->count();
+        $allowed = (clone $base)->whereIn('consent', self::allowedConsents());
+        $capHours = (int) Setting::get('frequency_cap_hours');
+        $capped = $capHours > 0
+            ? (clone $allowed)->whereHas('messages', fn ($m) => $m->whereNotNull('campaign_id')->where('direction', 'out')->where('created_at', '>=', now()->subHours($capHours)))->count()
+            : 0;
+        $eligible = $allowed->count() - $capped;
         $max = (int) Setting::get('max_recipients_per_campaign');
 
         return [
             'total' => $total,
-            'eligible' => min($eligible, $max),
+            'eligible' => max(0, min($eligible, $max)),
             'opted_out' => (clone $base)->where('consent', 'opted_out')->count(),
-            'no_consent' => (clone $base)->where('consent', 'unknown')->count(),
+            'no_consent' => self::requireOptIn() ? (clone $base)->where('consent', 'unknown')->count() : 0,
+            'capped' => $capped,
+            'cap_hours' => $capHours,
             'over_limit' => max(0, $eligible - $max),
+            'require_opt_in' => self::requireOptIn(),
         ];
     }
 
@@ -59,7 +79,7 @@ class CampaignService
                     $rows = [];
 
                     foreach ($contacts as $c) {
-                        $eligible = $c->consent === 'opted_in';
+                        $eligible = in_array($c->consent, self::allowedConsents(), true);
                         $over = $eligible && $count >= $max;
 
                         $rows[] = [
@@ -183,7 +203,7 @@ class CampaignService
 
             if (! $contact) {
                 $reason = 'kontak dihapus';
-            } elseif ($contact->consent !== 'opted_in') {
+            } elseif (! in_array($contact->consent, self::allowedConsents(), true)) {
                 $reason = $contact->consent === 'opted_out' ? 'opt-out' : 'belum ada izin (opt-in)';
             } elseif ($capHours > 0 && Message::where('contact_id', $contact->id)->whereNotNull('campaign_id')
                 ->where('direction', 'out')->where('created_at', '>=', now()->subHours($capHours))->exists()) {
@@ -267,12 +287,30 @@ class CampaignService
             $out[] = ['level' => $level, 'text' => $text];
         };
 
-        if (! in_array($campaign->status, ['running', 'scheduled'], true)) {
-            return [];
-        }
-
         $device = $campaign->device;
         $stats = $campaign->stats();
+
+        if ($device && $device->provider === 'log' && $campaign->status !== 'draft') {
+            $add('warn', 'Perangkat "'.$device->name.'" adalah SIMULASI — pesan hanya dicatat, tidak benar-benar terkirim ke WhatsApp. Pilih nomor Scan QR untuk kirim sungguhan.');
+        }
+
+        if ($campaign->status === 'completed' && $stats['sent'] + $stats['failed'] === 0) {
+            $why = $campaign->recipients()->where('status', 'skipped')->selectRaw('skip_reason, count(*) c')->groupBy('skip_reason')->pluck('c', 'skip_reason');
+            $tips = [];
+            if ($why->keys()->contains(fn ($r) => str_contains((string) $r, 'opt-in'))) {
+                $tips[] = 'tandai penerima yang sudah setuju sebagai opt-in (Kontak → centang → Aksi massal → Tandai opt-in)';
+            }
+            if ($why->keys()->contains(fn ($r) => str_contains((string) $r, 'frequency cap'))) {
+                $tips[] = 'tunggu sampai lewat batas frequency cap, atau ubah Frequency cap di Pengaturan (0 = nonaktif)';
+            }
+            $add('error', 'Tidak ada pesan yang terkirim: semua '.$stats['total'].' penerima dilewati.'.($tips ? ' Solusi: '.implode('; ', $tips).', lalu klik "Duplikat" untuk mengirim ulang.' : ''));
+
+            return $out;
+        }
+
+        if (! in_array($campaign->status, ['running', 'scheduled'], true)) {
+            return $out;
+        }
 
         if ($campaign->status === 'scheduled') {
             $add('info', 'Terjadwal: mulai dikirim '.$campaign->scheduled_at?->format('d/m/Y H:i').'.');

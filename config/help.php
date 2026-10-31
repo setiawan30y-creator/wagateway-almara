@@ -141,7 +141,8 @@ return [
         'tips' => [
             'Anti-blokir (Scan QR): pesan dikirim satu per satu dengan jeda acak + "sedang mengetik…", dan dibatasi kuota harian per nomor (nomor baru dipanaskan bertahap). Kuota habis → sisa penerima lanjut besok otomatis.',
             'Setiap penerima mendapat varian acak dari semua template terpilih (dibagi merata). Tambahkan juga {Halo|Hai|Selamat siang} di template untuk variasi kata.',
-            'Hanya kontak opt-in yang dikirimi. Opt-out & belum ada izin otomatis dilewati.',
+            'Bawaan: hanya kontak opt-in yang dikirimi; opt-out & belum ada izin dilewati. Kotak hijau/merah di form menunjukkan berapa yang akan terkirim dan alasan yang dilewati. Aturan opt-in bisa dilonggarkan di Pengaturan (tidak disarankan).',
+            'Perangkat "Simulasi" tidak benar-benar mengirim ke WhatsApp — pilih nomor Scan QR untuk kirim sungguhan.',
             'Pengaman: frequency cap, jam tenang, batas penerima, dan auto-pause bila gagal/opt-out tinggi (atur di Pengaturan).',
             'Pengiriman bertahap tiap menit membutuhkan jendela "php artisan schedule:work" berjalan.',
         ],

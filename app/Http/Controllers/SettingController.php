@@ -49,6 +49,7 @@ class SettingController extends Controller
         $data['work_days'] = implode(',', $data['work_days'] ?? []);
 
         $data['quiet_hours_enabled'] = $request->boolean('quiet_hours_enabled') ? '1' : '0';
+        $data['require_opt_in'] = $request->boolean('require_opt_in') ? '1' : '0';
         $data['broadcast_typing'] = $request->boolean('broadcast_typing') ? '1' : '0';
         $data['warmup_enabled'] = $request->boolean('warmup_enabled') ? '1' : '0';
 

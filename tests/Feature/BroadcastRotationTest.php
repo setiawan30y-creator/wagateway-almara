@@ -142,4 +142,34 @@ class BroadcastRotationTest extends TestCase
         $this->assertSame('Nama Lama', Contact::where('phone', '6281234500009')->value('name')); // tidak ditimpa
         $this->assertSame('Halo Budi', Template::render('Halo {{first_name}}', Contact::where('phone', '6281234500001')->first()));
     }
+
+    public function test_preview_explains_skips_and_opt_in_can_be_relaxed(): void
+    {
+        $t = Template::create(['name' => 'T', 'category' => 'marketing', 'is_active' => true]);
+        $t->variants()->create(['label' => 'A', 'body' => 'Halo {{name}}']);
+        $list = RecipientList::create(['name' => 'Uji']);
+        $a = Contact::create(['phone' => '6281300000101', 'name' => 'Belum izin', 'consent' => 'unknown']);
+        $b = Contact::create(['phone' => '6281300000102', 'name' => 'Opt-in', 'consent' => 'opted_in']);
+        $c = Contact::create(['phone' => '6281300000103', 'name' => 'Opt-out', 'consent' => 'opted_out']);
+        $list->addContacts([$a->id, $b->id, $c->id]);
+        // $b baru saja menerima broadcast -> frequency cap
+        $old = \App\Models\Campaign::create(['name' => 'lama', 'device_id' => $this->device->id, 'template_id' => $t->id, 'audience' => []]);
+        Message::create(['contact_id' => $b->id, 'campaign_id' => $old->id, 'device_id' => $this->device->id, 'direction' => 'out', 'to' => $b->phone, 'body' => 'x', 'status' => 'sent']);
+
+        $this->actingAs($this->admin)->postJson('/broadcast/pratinjau', ['lists' => [$list->id]])
+            ->assertJson(['total' => 3, 'eligible' => 0, 'no_consent' => 1, 'opted_out' => 1, 'capped' => 1]);
+
+        $this->actingAs($this->admin)->post('/broadcast', ['name' => 'Nol', 'device_id' => $this->device->id, 'template_ids' => [$t->id], 'lists' => [$list->id], 'rate_per_minute' => 10, 'mode' => 'now']);
+        $zero = \App\Models\Campaign::where('name', 'Nol')->first();
+        $this->assertSame('completed', $zero->status);
+        $this->actingAs($this->admin)->get("/broadcast/{$zero->id}")->assertOk()
+            ->assertSee('Tidak ada pesan yang terkirim')->assertSee('Tandai opt-in')->assertSee('SIMULASI');
+
+        // tanpa wajib opt-in: kontak "belum ada izin" ikut dikirimi, opt-out tetap tidak
+        \App\Models\Setting::set('require_opt_in', '0');
+        $this->actingAs($this->admin)->postJson('/broadcast/pratinjau', ['lists' => [$list->id]])->assertJson(['eligible' => 1, 'no_consent' => 0]);
+        $this->actingAs($this->admin)->post('/broadcast', ['name' => 'Longgar', 'device_id' => $this->device->id, 'template_ids' => [$t->id], 'lists' => [$list->id], 'rate_per_minute' => 10, 'mode' => 'now']);
+        $sent = Message::where('campaign_id', \App\Models\Campaign::where('name', 'Longgar')->value('id'))->pluck('to')->all();
+        $this->assertSame(['6281300000101'], $sent);
+    }
 }

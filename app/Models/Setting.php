@@ -23,6 +23,7 @@ class Setting extends Model
 
     public const DEFAULTS = [
         'quiet_hours_enabled' => '1',
+        'require_opt_in' => '1',          // broadcast hanya ke kontak opt-in
         'quiet_start' => '21:00',
         'quiet_end' => '08:00',
         'frequency_cap_hours' => '24',
