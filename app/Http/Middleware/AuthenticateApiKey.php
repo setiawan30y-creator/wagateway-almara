@@ -11,13 +11,19 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Autentikasi REST API memakai API key.
  * Header: Authorization: Bearer alm_xxx  atau  X-Api-Key: alm_xxx
+ * Kompatibel aplikasi lain: Authorization: alm_xxx (tanpa "Bearer"), atau parameter token / api_key / apikey.
  * @2026-Alifiandra
  */
 class AuthenticateApiKey
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $plain = $request->bearerToken() ?: $request->header('X-Api-Key');
+        $auth = trim((string) $request->header('Authorization'));
+        $plain = $request->bearerToken()
+            ?: $request->header('X-Api-Key')
+            ?: ($auth !== '' && ! str_contains($auth, ' ') ? $auth : null)   // gaya Fonnte / Wablas: token langsung
+            ?: $request->input('token') ?: $request->input('api_key') ?: $request->input('apikey');
+        $plain = is_string($plain) ? trim($plain) : $plain;
 
         if (! $plain || ! is_string($plain)) {
             return ApiResponse::error('UNAUTHENTICATED', 'API key wajib dikirim melalui header Authorization: Bearer atau X-Api-Key.', 401);

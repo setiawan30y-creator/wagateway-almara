@@ -17,6 +17,12 @@ use Illuminate\Support\Facades\Route;
 | @2026-Alifiandra
 */
 
+// Kompatibel aplikasi lain (gaya Fonnte / Wablas) — lihat Panduan → REST API
+Route::middleware(['api.log', 'api.key', 'throttle:wa-api'])->group(function () {
+    Route::post('/send', [\App\Http\Controllers\Api\CompatController::class, 'fonnte']);
+    Route::match(['get', 'post'], '/send-message', [\App\Http\Controllers\Api\CompatController::class, 'wablas']);
+});
+
 Route::prefix('v1')->middleware(['api.log', 'api.key', 'throttle:wa-api'])->group(function () {
     Route::post('/messages/send', [MessageController::class, 'send']);
     Route::post('/messages/media', [MessageController::class, 'media']);

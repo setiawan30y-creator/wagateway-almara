@@ -32,3 +32,15 @@ Postman: [`../postman`](../postman).
 Contoh request/response JSON ada di [`examples/`](examples). Semua contoh memakai data fiktif.
 
 <sub>@2026-Alifiandra</sub>
+
+## Kompatibel aplikasi lain (gaya Fonnte / Wablas)
+
+Banyak aplikasi billing / kasir sudah punya pengaturan untuk gateway WhatsApp populer. Cukup ganti **alamat** dan **token** dengan milik ALMARA:
+
+| Gaya | Alamat | Token | Parameter |
+|---|---|---|---|
+| Fonnte | `POST {APP_URL}/api/send` | Header `Authorization: alm_xxx` (tanpa "Bearer") | `target` (boleh banyak, dipisah koma), `message` |
+| Wablas | `POST` atau `GET {APP_URL}/api/send-message` | Header `Authorization: alm_xxx` atau parameter `token` | `phone`, `message` |
+
+Respons: `{"status": true, …}` bila pesan masuk antrean, `{"status": false, "reason"/"message": "…"}` bila gagal.
+Token juga diterima di semua endpoint `/api/v1/*` lewat `Authorization: Bearer alm_xxx`, `Authorization: alm_xxx`, `X-Api-Key`, atau parameter `token` / `api_key`.

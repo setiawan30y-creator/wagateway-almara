@@ -1,6 +1,8 @@
 # Changelog API
 
 ## 1.0.1 — 2026-11-01
+- Endpoint kompatibel: `POST /api/send` (gaya Fonnte) dan `GET|POST /api/send-message` (gaya Wablas)
+- API key diterima juga sebagai `Authorization: alm_xxx` (tanpa "Bearer") atau parameter `token` / `api_key`
 - Respons `POST /v1/messages/send` & `/v1/messages/media` menyertakan `meta.device` (id, name, provider) dan `meta.device.warning` bila terkirim lewat perangkat simulasi
 - Nomor Scan QR pertama yang tersambung otomatis menjadi nomor utama bila nomor utama sebelumnya perangkat simulasi
 
