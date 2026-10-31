@@ -453,4 +453,33 @@
     };
     poll();
   }
+
+})();
+
+/* ---- Kolom password: tombol mata (semua halaman, termasuk login) ---- @2026-Alifiandra */
+(function () {
+  // Tombol "mata" untuk melihat / menyembunyikan isi kolom password (login, akun, pengguna, dll.)
+  var eyeOn = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var eyeOff = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.9 17.9A10.9 10.9 0 0112 19c-7 0-11-7-11-7a20 20 0 015.1-5.9M9.9 5.2A10 10 0 0112 5c7 0 11 7 11 7a20 20 0 01-2.2 3.2M14.1 14.1a3 3 0 01-4.2-4.2"/><path d="M1 1l22 22"/></svg>';
+  document.querySelectorAll('input[type="password"]:not([data-no-eye])').forEach(function (inp) {
+    var wrap = document.createElement('span');
+    wrap.className = 'pw-wrap';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pw-eye';
+    btn.setAttribute('aria-label', 'Tampilkan password');
+    btn.title = 'Tampilkan password';
+    btn.innerHTML = eyeOn;
+    btn.addEventListener('click', function () {
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.innerHTML = show ? eyeOff : eyeOn;
+      btn.title = show ? 'Sembunyikan password' : 'Tampilkan password';
+      btn.setAttribute('aria-label', btn.title);
+      inp.focus();
+    });
+    wrap.appendChild(btn);
+  });
 })();
