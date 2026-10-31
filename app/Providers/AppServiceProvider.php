@@ -29,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('partials.pagination');
 
         Gate::define('admin', fn (User $user) => $user->isAdmin());
+        Gate::define('superadmin', fn (User $user) => (bool) $user->is_superadmin);
+
+        // Konteks penyewa mengikuti pengguna yang login (dipasang sebelum route model binding)
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Authenticated::class, fn ($e) => \App\Support\Tenancy::setFromUser($e->user));
 
         RateLimiter::for('wa-api', function (Request $request) {
             $key = $request->attributes->get('api_key');

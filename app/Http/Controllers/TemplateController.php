@@ -22,6 +22,7 @@ class TemplateController extends Controller
         // Analitik varian: terkirim / dibalas per varian dari campaign
         $variantStats = DB::table('campaign_recipients as r')
             ->join('messages as m', 'm.id', '=', 'r.message_id')
+            ->where('m.tenant_id', \App\Support\Tenancy::id() ?? \App\Models\Tenant::defaultId())
             ->whereNotNull('r.template_variant_id')
             ->selectRaw("r.template_variant_id as id, count(*) as total, sum(case when m.status in ('sent','delivered','read') then 1 else 0 end) as sent, sum(case when m.status = 'read' then 1 else 0 end) as read_count, sum(case when m.status = 'failed' then 1 else 0 end) as failed")
             ->groupBy('r.template_variant_id')

@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class RecipientList extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $fillable = ['name', 'description', 'created_by'];
 
     public function contacts(): BelongsToMany

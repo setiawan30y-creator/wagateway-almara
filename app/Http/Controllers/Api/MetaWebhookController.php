@@ -55,6 +55,10 @@ class MetaWebhookController extends Controller
                     $device = $this->resolveDevice((string) data_get($value, 'metadata.phone_number_id'));
                     $names = collect((array) ($value['contacts'] ?? []))->mapWithKeys(fn ($c) => [(string) data_get($c, 'wa_id') => data_get($c, 'profile.name')]);
 
+                    if ($device) {
+                        \App\Support\Tenancy::set($device->tenant_id);
+                    }
+
                     foreach ($messages as $msg) {
                         if (! $device) {
                             break;

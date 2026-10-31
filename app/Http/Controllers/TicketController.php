@@ -68,13 +68,13 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'contact_id' => ['nullable', 'integer', 'exists:contacts,id'],
+            'contact_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('contacts')],
             'phone' => ['required_without:contact_id', 'nullable', 'string', 'max:30'],
             'subject' => ['required', 'string', 'max:191'],
             'description' => ['nullable', 'string', 'max:5000'],
             'category' => ['required', Rule::in(array_keys(Ticket::CATEGORIES))],
             'priority' => ['required', Rule::in(array_keys(Ticket::PRIORITIES))],
-            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'integer', \App\Support\Tenancy::exists('users')],
         ], ['phone.required_without' => 'Pilih kontak atau isi nomor WhatsApp pelanggan.'], ['subject' => 'judul']);
 
         $contact = isset($data['contact_id']) ? Contact::findOrFail($data['contact_id']) : Contact::findOrCreateByPhone($data['phone'], ['source' => 'ticket']);
@@ -101,7 +101,7 @@ class TicketController extends Controller
             'status' => ['nullable', Rule::in(array_keys(Ticket::STATUSES))],
             'priority' => ['nullable', Rule::in(array_keys(Ticket::PRIORITIES))],
             'category' => ['nullable', Rule::in(array_keys(Ticket::CATEGORIES))],
-            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'integer', \App\Support\Tenancy::exists('users')],
         ]);
 
         $changes = array_filter(collect($data)->only(['status', 'priority', 'category'])->all(), fn ($v) => $v !== null);

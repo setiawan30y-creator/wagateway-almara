@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Campaign extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const STATUSES = [
         'draft' => 'Draft',
         'scheduled' => 'Terjadwal',

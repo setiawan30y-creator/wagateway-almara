@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class WaGroup extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $table = 'wa_groups';
 
     protected $fillable = [

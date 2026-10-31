@@ -26,8 +26,8 @@
                 <dt>AI Agent</dt><dd>{!! $yn($lim['ai']) !!}</dd>
                 <dt>Watermark di pesan</dt><dd>{{ $lim['watermark'] ? 'Ya — “'.trim(config('license.watermark_text'), "\n _").'”' : 'Tidak' }}</dd>
             </dl>
-            @if ($l['plan'] !== 'free')
-                <form method="POST" action="{{ route('license.remove') }}" data-confirm="Hapus lisensi? Aplikasi kembali ke paket Gratis." style="margin-top:10px">@csrf @method('DELETE')<button class="btn btn-sm btn-danger">Hapus lisensi</button></form>
+            @if ($l['plan'] !== 'free' && auth()->user()->is_superadmin)
+                <form method="POST" action="{{ route('license.remove') }}" data-confirm="Kembalikan akun usaha ini ke paket Gratis?" style="margin-top:10px">@csrf @method('DELETE')<button class="btn btn-sm btn-danger">Kembalikan ke Gratis</button></form>
             @endif
         </div>
     </div>

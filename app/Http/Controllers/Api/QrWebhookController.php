@@ -36,6 +36,8 @@ class QrWebhookController extends Controller
             return response()->json(['received' => false, 'error' => 'Token tidak valid.'], 401);
         }
 
+        \App\Support\Tenancy::set($device->tenant_id);
+
         $type = $request->input('type', 'message');
 
         if ($type === 'status') {

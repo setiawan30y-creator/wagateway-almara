@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 /** @2026-Alifiandra */
 class Tag extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $fillable = ['name', 'color'];
 
     public function contacts(): BelongsToMany

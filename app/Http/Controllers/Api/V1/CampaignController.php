@@ -38,8 +38,8 @@ class CampaignController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'template_id' => ['required', 'integer', Rule::exists('templates', 'id')->where('is_active', true)],
-            'device_id' => ['nullable', 'integer', Rule::exists('devices', 'id')->where('is_active', true)],
+            'template_id' => ['required', 'integer', \App\Support\Tenancy::exists('templates')->where('is_active', true)],
+            'device_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('devices')->where('is_active', true)],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'stages' => ['nullable', 'array'],

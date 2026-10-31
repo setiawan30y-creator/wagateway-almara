@@ -48,6 +48,13 @@ return [
     // Teks watermark di akhir setiap pesan keluar paket Gratis
     'watermark_text' => "\n\n_Dikirim via ALMARA Gateway WA_",
 
+    // Pengingat otomatis ke WhatsApp kontak penyewa (php artisan tenants:remind, harian)
+    'reminder_days' => [7, 3, 1, 0],
+    'reminder_text' => "Halo {contact}, masa sewa ALMARA Gateway WA untuk *{tenant}* (paket {plan}) {when}, tanggal {date}.\n\nAgar layanan tidak terhenti, silakan lakukan perpanjangan. Terima kasih 🙏",
+
+    // Pendaftaran mandiri akun usaha baru (paket Gratis) di /daftar
+    'signup_enabled' => (bool) env('SIGNUP_ENABLED', false),
+
     // Ditampilkan di halaman Lisensi untuk calon penyewa
     'contact' => env('LICENSE_CONTACT', 'Hubungi penyedia aplikasi untuk upgrade ke Pro.'),
 ];

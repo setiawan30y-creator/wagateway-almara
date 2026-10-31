@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Conversation extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const STATUSES = ['open' => 'Open', 'pending' => 'Pending', 'closed' => 'Closed'];
 
     public const PRIORITIES = ['low' => 'Rendah', 'normal' => 'Normal', 'high' => 'Tinggi', 'urgent' => 'Urgent'];

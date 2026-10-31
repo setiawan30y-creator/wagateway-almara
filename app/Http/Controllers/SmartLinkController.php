@@ -86,6 +86,8 @@ class SmartLinkController extends Controller
             return response()->view('smart-links.unavailable', [], 404);
         }
 
+        \App\Support\Tenancy::set($link->tenant_id);
+
         $ua = (string) $request->userAgent();
         $link->clicks()->create([
             'visitor' => hash('sha256', $request->ip().'|'.$ua.'|'.config('app.key')),
@@ -104,10 +106,10 @@ class SmartLinkController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9][a-z0-9-]*$/', Rule::unique('smart_links', 'slug')->ignore($link?->id)],
-            'device_id' => ['nullable', 'integer', 'exists:devices,id'],
+            'device_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('devices')],
             'phone' => ['nullable', 'string', 'max:30'],
             'message' => ['nullable', 'string', 'max:1000'],
-            'tag_id' => ['nullable', 'integer', 'exists:tags,id'],
+            'tag_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('tags')],
             'utm_source' => ['nullable', 'string', 'max:100'],
             'utm_medium' => ['nullable', 'string', 'max:100'],
             'utm_campaign' => ['nullable', 'string', 'max:100'],

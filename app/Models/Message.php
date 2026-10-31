@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
  */
 class Message extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const STATUSES = ['queued', 'sent', 'delivered', 'read', 'failed', 'received'];
 
     protected $fillable = [

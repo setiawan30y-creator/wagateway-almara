@@ -378,6 +378,8 @@ cd engine; npm install; cd ..
 
 Tutup lalu jalankan ulang jendela `schedule:work` dan `npm start`. Di browser tekan **Ctrl+F5**.
 
+> **Ke versi 1.0 (multi-penyewa):** **backup database dulu** (bagian 9) sebelum `php artisan migrate`. Semua data lama otomatis menjadi milik akun usaha #1 "Usaha Utama" (paket Pro tanpa batas waktu), dan akun owner pertama menjadi super-admin (menu **Platform → Penyewa**). Panduan menyewakan: `docs/PENYEWAAN.md`.
+
 > **Ke versi 0.9 (paket Gratis / Pro):** setelah update, aplikasi berjalan sebagai paket Gratis sampai lisensi diaktifkan. Pemilik aplikasi jalankan sekali `php artisan license:keygen`, lalu `php artisan license:issue "Nama Usaha" --days=0 --devices=0 --activate` (lihat `docs/LISENSI.md`).
 
 > **Dari versi 0.5 ke 0.6:** agar kontak & riwayat chat HP ikut masuk, perangkat Scan QR yang sudah terhubung perlu **Logout lalu Scan QR ulang** sekali (WhatsApp hanya mengirim kontak & riwayat saat perangkat baru ditautkan). Daftar grup bisa langsung diambil lewat **Grup WA → Sinkron grup dari HP** tanpa scan ulang.

@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AutoReply extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const TRIGGERS = ['keyword' => 'Kata kunci', 'welcome' => 'Sambutan kontak baru', 'away' => 'Di luar jam kerja'];
 
     public const MATCHES = ['contains' => 'Mengandung', 'exact' => 'Sama persis', 'starts_with' => 'Diawali'];

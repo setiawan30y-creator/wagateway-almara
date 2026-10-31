@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
  */
 class ApiKey extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $fillable = ['user_id', 'name', 'prefix', 'key_hash', 'last_used_at', 'revoked_at'];
 
     protected $hidden = ['key_hash'];

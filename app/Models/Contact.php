@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Contact extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const STAGES = [
         'new' => 'Lead baru',
         'contacted' => 'Dihubungi',

@@ -35,6 +35,8 @@ class AuthController extends Controller
             ]);
         }
 
+        \App\Support\Tenancy::forget(); // cari pengguna di semua penyewa
+
         if (! Auth::attempt($credentials + ['is_active' => true], $request->boolean('remember'))) {
             RateLimiter::hit($throttleKey, 60);
 

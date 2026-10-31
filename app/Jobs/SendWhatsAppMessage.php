@@ -29,7 +29,18 @@ class SendWhatsAppMessage implements ShouldQueue
 
     public function handle(ProviderManager $providers, WebhookDispatcher $webhooks): void
     {
-        $message = Message::with('device')->find($this->messageId);
+        $message = Message::withoutGlobalScopes()->find($this->messageId);
+
+        if ($message) {
+            \App\Support\Tenancy::set($message->tenant_id);
+            $message->load('device');
+
+            if ($message->status === 'queued' && ! \App\Support\Tenancy::current()?->isActive()) {
+                $this->markFailed($message, 'Akun usaha ditangguhkan.', app(WebhookDispatcher::class));
+
+                return;
+            }
+        }
 
         // Idempotency: jangan kirim ulang pesan yang sudah diproses.
         if (! $message || $message->status !== 'queued' || $message->direction !== 'out') {

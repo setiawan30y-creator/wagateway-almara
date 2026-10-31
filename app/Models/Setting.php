@@ -11,13 +11,15 @@ use Illuminate\Support\Facades\Cache;
  */
 class Setting extends Model
 {
-    protected $primaryKey = 'key';
+    use \App\Models\Concerns\BelongsToTenant;
 
-    public $incrementing = false;
+    protected $fillable = ['tenant_id', 'key', 'value'];
 
-    protected $keyType = 'string';
-
-    protected $fillable = ['key', 'value'];
+    /** ID penyewa pemilik pengaturan (konteks aktif, atau penyewa utama untuk konteks sistem). */
+    public static function tenantKey(): int
+    {
+        return \App\Support\Tenancy::id() ?? Tenant::defaultId();
+    }
 
     public const DEFAULTS = [
         'quiet_hours_enabled' => '1',
@@ -66,15 +68,17 @@ class Setting extends Model
 
     public static function get(string $key, ?string $default = null): ?string
     {
-        $all = Cache::rememberForever('settings.all', fn () => static::query()->pluck('value', 'key')->all());
+        $tid = static::tenantKey();
+        $all = Cache::rememberForever('settings.all.'.$tid, fn () => static::withoutGlobalScopes()->where('tenant_id', $tid)->pluck('value', 'key')->all());
 
         return $all[$key] ?? $default ?? self::DEFAULTS[$key] ?? null;
     }
 
     public static function set(string $key, ?string $value): void
     {
-        static::updateOrCreate(['key' => $key], ['value' => $value]);
-        Cache::forget('settings.all');
+        $tid = static::tenantKey();
+        static::withoutGlobalScopes()->updateOrCreate(['tenant_id' => $tid, 'key' => $key], ['value' => $value]);
+        Cache::forget('settings.all.'.$tid);
     }
 
     /** Nilai rahasia (terenkripsi). */

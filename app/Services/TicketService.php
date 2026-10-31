@@ -98,11 +98,13 @@ class TicketService
     {
         $count = 0;
 
-        Ticket::overdue()->whereNull('escalated_at')->with('contact')->get()->each(function (Ticket $t) use (&$count) {
+        Ticket::withoutGlobalScopes()->overdue()->whereNull('escalated_at')->get()->each(function (Ticket $t) use (&$count) {
+            \App\Support\Tenancy::run($t->tenant_id, function () use ($t, &$count) {
             $t->forceFill(['escalated_at' => now(), 'priority' => $t->priority === 'urgent' ? 'urgent' : ($t->priority === 'high' ? 'urgent' : 'high')])->save();
             $t->events()->create(['type' => 'escalated', 'body' => 'SLA terlewati — dieskalasi ke supervisor (prioritas '.Ticket::PRIORITIES[$t->priority].').']);
             AppNotification::notify('ticket.overdue', 'Tiket '.$t->number.' melewati SLA', $t->subject.' — '.$t->contact?->displayName(), route('tickets.show', $t), 'admins');
             $count++;
+            });
         });
 
         return $count;

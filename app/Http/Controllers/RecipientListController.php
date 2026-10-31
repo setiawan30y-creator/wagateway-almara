@@ -87,9 +87,9 @@ class RecipientListController extends Controller
             'source' => ['required', 'in:numbers,tag,group,list'],
             'numbers' => ['nullable', 'required_if:source,numbers', 'string', 'max:100000'],
             'consent' => ['nullable', 'boolean'],
-            'tag_id' => ['nullable', 'required_if:source,tag', 'integer', 'exists:tags,id'],
-            'group_id' => ['nullable', 'required_if:source,group', 'integer', 'exists:wa_groups,id'],
-            'list_id' => ['nullable', 'required_if:source,list', 'integer', 'exists:recipient_lists,id'],
+            'tag_id' => ['nullable', 'required_if:source,tag', 'integer', \App\Support\Tenancy::exists('tags')],
+            'group_id' => ['nullable', 'required_if:source,group', 'integer', \App\Support\Tenancy::exists('wa_groups')],
+            'list_id' => ['nullable', 'required_if:source,list', 'integer', \App\Support\Tenancy::exists('recipient_lists')],
         ], ['numbers.required_if' => 'Tempel minimal satu nomor.'], ['numbers' => 'daftar nomor']);
 
         $invalid = 0;
@@ -191,7 +191,7 @@ class RecipientListController extends Controller
     private function validated(Request $request, ?RecipientList $list = null): array
     {
         return $request->validate([
-            'name' => ['required', 'string', 'max:100', \Illuminate\Validation\Rule::unique('recipient_lists', 'name')->ignore($list?->id)],
+            'name' => ['required', 'string', 'max:100', \App\Support\Tenancy::unique('recipient_lists', 'name')->ignore($list?->id)],
             'description' => ['nullable', 'string', 'max:255'],
         ], [], ['name' => 'nama rombongan']);
     }

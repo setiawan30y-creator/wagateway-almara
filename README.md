@@ -8,7 +8,18 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
 📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
 
-## Baru di versi 0.9.0 — Paket Gratis / Pro (lisensi)
+## Baru di versi 1.0.0 — Siap disewakan (multi-penyewa)
+
+| Fitur | Keterangan |
+|---|---|
+| Multi-penyewa | Satu server untuk banyak akun usaha; data tiap penyewa terpisah total (nomor WA, kontak, chat, broadcast, pengaturan, API key). |
+| Panel super-admin | Menu **Platform → Penyewa**: buat penyewa + akun pemiliknya, paket & batas per penyewa, masa sewa, catat pembayaran, tangguhkan, hapus, "masuk ke akun" penyewa untuk membantu. |
+| Tagihan otomatis | Pengingat WhatsApp H-7/H-3/H-1/hari H ke penyewa dari nomor utama Anda; lewat masa sewa + 3 hari → otomatis paket Gratis. |
+| Pendaftaran mandiri | Opsional (`SIGNUP_ENABLED=true`): calon penyewa daftar sendiri di `/daftar` dengan paket Gratis. |
+
+Panduan: [`docs/PENYEWAAN.md`](docs/PENYEWAAN.md).
+
+## Versi 0.9.0 — Paket Gratis / Pro (lisensi)
 
 Untuk aplikasi yang disewakan. Tanpa lisensi: paket **Gratis** (1 nomor, 100 pesan/hari, tanpa broadcast & AI, pesan diberi watermark). Kode lisensi **Pro** ditandatangani digital dengan kunci privat pemilik aplikasi dan diaktifkan di menu **Sistem → Lisensi**. Panduan pemilik: [`docs/LISENSI.md`](docs/LISENSI.md).
 

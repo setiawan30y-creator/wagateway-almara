@@ -227,11 +227,11 @@ class ContactController extends Controller
 
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:150'],
-            'phone' => ['required', 'regex:/^[1-9]\d{7,14}$/', Rule::unique('contacts', 'phone')->ignore($contact?->id)],
+            'phone' => ['required', 'regex:/^[1-9]\d{7,14}$/', \App\Support\Tenancy::unique('contacts', 'phone')->ignore($contact?->id)],
             'email' => ['nullable', 'email', 'max:191'],
             'stage' => ['required', Rule::in(array_keys(Contact::STAGES))],
             'consent' => ['required', Rule::in(array_keys(Contact::CONSENTS))],
-            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'integer', \App\Support\Tenancy::exists('users')],
             'notes' => ['nullable', 'string', 'max:5000'],
             'tags' => ['nullable', 'string', 'max:500'],
         ], ['phone.regex' => 'Nomor WhatsApp tidak valid.', 'phone.unique' => 'Nomor ini sudah terdaftar.'], ['phone' => 'nomor WhatsApp']);

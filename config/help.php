@@ -325,12 +325,30 @@ return [
         'tips' => [],
     ],
 
+    'admin.tenants.*' => [
+        'judul' => 'Penyewa (panel super-admin)',
+        'fungsi' => 'Mengelola semua akun usaha yang menyewa aplikasi: paket, masa sewa, pembayaran, penangguhan, dan bantuan langsung ke akun mereka.',
+        'langkah' => [
+            '+ Penyewa: isi nama usaha, paket, masa berlaku, nomor WhatsApp kontak, serta email & password login pemiliknya. Kirim data login itu ke penyewa.',
+            'Detail penyewa → "Catat pembayaran & perpanjang": pilih paket, tambah hari, isi nominal. Masa sewa otomatis diperpanjang.',
+            '"Masuk ke akun ini" untuk melihat aplikasi persis seperti penyewa (membantu pengaturan / cek masalah). Klik "Kembali ke panel penyewa" untuk keluar.',
+            'Tangguhkan: penyewa tidak bisa login, API ditolak, dan pengiriman berhenti — data tetap aman. Aktifkan lagi kapan saja.',
+            'Hapus (hanya untuk penyewa yang sudah ditangguhkan) menghapus permanen semua datanya.',
+        ],
+        'tips' => [
+            'Pengingat perpanjangan otomatis dikirim ke WhatsApp kontak penyewa H-7, H-3, H-1, dan hari H dari nomor utama Anda (perlu scheduler berjalan).',
+            'Masa sewa lewat + 3 hari tenggang → penyewa otomatis turun ke paket Gratis (watermark, 1 nomor, 100 pesan/hari).',
+            'Filter "Segera habis" untuk melihat penyewa yang perlu ditagih minggu ini.',
+            'Pendaftaran mandiri (paket Gratis) bisa diaktifkan dengan SIGNUP_ENABLED=true di .env.',
+        ],
+    ],
+
     'license.*' => [
         'judul' => 'Lisensi',
         'fungsi' => 'Menampilkan paket aktif (Gratis / Pro), pemakaian kuota, dan tempat mengaktifkan kode lisensi.',
         'langkah' => [
             'Lihat paket aktif, masa berlaku, jumlah nomor, dan pesan hari ini.',
-            'Untuk upgrade / perpanjang: tempel kode lisensi dari penyedia aplikasi → Aktifkan.',
+            'Untuk upgrade / perpanjang: hubungi penyedia aplikasi. Bila Anda menerima kode lisensi, tempel di sini → Aktifkan.',
             'Tabel Perbandingan paket menunjukkan fitur tiap paket.',
         ],
         'tips' => [

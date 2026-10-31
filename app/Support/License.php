@@ -4,11 +4,11 @@ namespace App\Support;
 
 use App\Models\Device;
 use App\Models\Message;
-use App\Models\Setting;
+use App\Models\Tenant;
 use Illuminate\Support\Carbon;
 
 /**
- * Paket aktif (Gratis / Pro) berdasarkan kode lisensi bertanda tangan.
+ * Paket aktif (Gratis / Pro) per penyewa. Paket diatur super-admin atau lewat kode lisensi bertanda tangan.
  * Kode: base64url(payload JSON) . "." . base64url(tanda tangan ECDSA-SHA256)
  * Payload: {"id","name","plan","devices","exp":"YYYY-MM-DD"|null,"iat"}
  * @2026-Alifiandra
@@ -22,7 +22,13 @@ final class License
         self::$cache = null;
     }
 
-    /** Info lisensi aktif + batas paket. */
+    /** Penyewa yang dinilai paketnya (konteks aktif, atau penyewa utama). */
+    public static function tenant(): ?Tenant
+    {
+        return Tenancy::current() ?? Tenant::find(Tenant::defaultId());
+    }
+
+    /** Info paket penyewa aktif + batasnya. */
     public static function current(): array
     {
         if (self::$cache !== null) {
@@ -34,21 +40,38 @@ final class License
             return self::$cache = self::build($forced, ['name' => 'Testing']);
         }
 
-        $key = (string) Setting::get('license_key', '');
-        $payload = $key !== '' ? self::verify($key) : null;
+        $tenant = self::tenant();
 
-        if (! $payload) {
-            return self::$cache = self::build('free', [], $key !== '' ? 'Kode lisensi tidak valid.' : null);
+        if (! $tenant) {
+            return self::$cache = self::build('free', []);
         }
 
-        $exp = ! empty($payload['exp']) ? Carbon::parse($payload['exp'])->endOfDay() : null;
+        $payload = [
+            'name' => $tenant->name,
+            'id' => $tenant->license_id,
+            'exp' => $tenant->expires_at?->toDateString(),
+            'devices' => $tenant->max_devices,
+            'daily_messages' => $tenant->daily_messages,
+        ];
+
+        $exp = $tenant->expires_at?->copy()->endOfDay();
         $grace = (int) config('license.grace_days', 0);
 
-        if ($exp && $exp->copy()->addDays($grace)->isPast()) {
-            return self::$cache = self::build('free', $payload, 'Lisensi kedaluwarsa pada '.$exp->format('d/m/Y').'.');
+        if ($tenant->plan !== 'free' && $exp && $exp->copy()->addDays($grace)->isPast()) {
+            return self::$cache = self::build('free', $payload, 'Masa sewa paket '.$tenant->planLabel().' berakhir pada '.$exp->format('d/m/Y').' — akun kembali ke paket Gratis. Hubungi penyedia aplikasi untuk perpanjang.');
         }
 
-        return self::$cache = self::build((string) $payload['plan'], $payload, $exp && $exp->isPast() ? 'Lisensi sudah kedaluwarsa — masa tenggang sampai '.$exp->copy()->addDays($grace)->format('d/m/Y').'.' : null);
+        $warning = null;
+        if ($tenant->plan !== 'free' && $exp) {
+            $days = (int) now()->startOfDay()->diffInDays($exp->copy()->startOfDay(), false);
+            $warning = match (true) {
+                $days < 0 => 'Masa sewa sudah berakhir — masa tenggang sampai '.$exp->copy()->addDays($grace)->format('d/m/Y').'. Segera perpanjang.',
+                $days <= 7 => 'Masa sewa paket '.$tenant->planLabel().' berakhir '.($days === 0 ? 'hari ini' : "dalam {$days} hari").' ('.$exp->format('d/m/Y').'). Hubungi penyedia aplikasi untuk perpanjang.',
+                default => null,
+            };
+        }
+
+        return self::$cache = self::build($tenant->plan, $payload, $warning);
     }
 
     private static function build(string $plan, array $payload, ?string $warning = null): array
@@ -56,8 +79,12 @@ final class License
         $limits = config('license.plans.'.$plan) ?? config('license.plans.free');
         $plan = config('license.plans.'.$plan) ? $plan : 'free';
 
-        if ($plan !== 'free' && isset($payload['devices'])) {
-            $limits['devices'] = $payload['devices'] === null ? null : (int) $payload['devices'];
+        // batas khusus per penyewa (diatur super-admin / kode lisensi)
+        if ($plan !== 'free' && array_key_exists('devices', $payload) && $payload['devices'] !== null) {
+            $limits['devices'] = (int) $payload['devices'];
+        }
+        if (! empty($payload['daily_messages'])) {
+            $limits['daily_messages'] = (int) $payload['daily_messages'];
         }
 
         return [
@@ -163,6 +190,32 @@ final class License
         $home = getenv('USERPROFILE') ?: getenv('HOME') ?: storage_path('app');
 
         return rtrim($home, '\\/').DIRECTORY_SEPARATOR.'.almara-license'.DIRECTORY_SEPARATOR.'private.pem';
+    }
+
+    /** Terapkan kode lisensi ke penyewa. Mengembalikan pesan error, atau null bila berhasil. */
+    public static function applyKey(Tenant $tenant, string $key): ?string
+    {
+        $payload = self::verify($key);
+
+        if (! $payload) {
+            return self::publicKey() ? 'Kode lisensi tidak valid. Periksa kembali (salin utuh tanpa terpotong).' : 'Aplikasi belum memiliki kunci publik lisensi (config/license-public.pem). Hubungi penyedia aplikasi.';
+        }
+
+        if (! empty($payload['id']) && Tenant::where('license_id', $payload['id'])->whereKeyNot($tenant->id)->exists()) {
+            return 'Kode lisensi ini sudah dipakai oleh akun usaha lain.';
+        }
+
+        $tenant->forceFill([
+            'plan' => (string) $payload['plan'],
+            'max_devices' => $payload['devices'] ?? null,
+            'expires_at' => $payload['exp'] ?? null,
+            'license_id' => $payload['id'] ?? null,
+            'last_reminder' => null,
+        ])->save();
+
+        self::flush();
+
+        return null;
     }
 
     /** Periksa kode lisensi; mengembalikan payload bila sah. */

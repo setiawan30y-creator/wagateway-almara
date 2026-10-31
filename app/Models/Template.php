@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Template extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const CATEGORIES = ['marketing' => 'Marketing', 'utility' => 'Utility / Info', 'service' => 'Layanan'];
 
     public const VARIABLES = ['name', 'first_name', 'phone', 'email'];

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Contact;
 use App\Models\Device;
 use App\Models\Message;
-use App\Models\Setting;
 use App\Models\Template;
 use App\Models\User;
 use App\Services\MessageService;
@@ -35,8 +34,9 @@ class LicenseTest extends TestCase
             'license.public_key_path' => $this->dir.'/public.pem',
             'license.private_key_path' => $this->dir.'/private.pem',
         ]);
+        \App\Models\Tenant::query()->update(['plan' => 'free']); // mulai dari paket Gratis
         License::flush();
-        $this->admin = User::factory()->create(['role' => 'owner']);
+        $this->admin = User::factory()->create(['role' => 'owner', 'is_superadmin' => true]);
     }
 
     protected function tearDown(): void
@@ -111,7 +111,7 @@ class LicenseTest extends TestCase
         $this->assertTrue(License::isPro());
         $this->assertSame(3, License::limit('devices'));
         $this->assertNull(License::watermark());
-        $this->assertSame('Toko Contoh', License::current()['licensee']);
+        $this->assertStringStartsWith('LIC-', (string) License::current()['id']);
         $this->actingAs($this->admin)->get('/broadcast/buat')->assertOk();
 
         // kode diubah (mis. plan / devices dipalsukan) -> tidak sah
@@ -126,14 +126,20 @@ class LicenseTest extends TestCase
         License::flush();
         $this->assertTrue(License::isPro());
         $this->assertStringContainsString('masa tenggang', License::current()['warning']);
+        $this->actingAs($this->admin)->get('/dashboard')->assertSee('Segera perpanjang');
         $this->travel(3)->days();
         License::flush();
         $this->assertSame('free', License::plan());
-        $this->actingAs($this->admin)->get('/dashboard')->assertSee('kedaluwarsa');
+        $this->actingAs($this->admin)->get('/dashboard')->assertSee('kembali ke paket Gratis');
 
-        // hapus lisensi
+        // kode yang sama tidak bisa dipakai akun usaha lain
+        $other = \App\Models\Tenant::create(['name' => 'Usaha Lain']);
+        $this->assertStringContainsString('sudah dipakai', License::applyKey($other, $key));
+
+        // kembalikan ke Gratis (super-admin)
         $this->actingAs($this->admin)->delete('/lisensi')->assertRedirect('/lisensi');
-        $this->assertSame('', Setting::get('license_key'));
+        License::flush();
+        $this->assertSame('free', License::plan());
     }
 
     public function test_api_campaign_requires_pro(): void

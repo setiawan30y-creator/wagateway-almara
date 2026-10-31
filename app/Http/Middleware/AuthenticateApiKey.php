@@ -34,6 +34,12 @@ class AuthenticateApiKey
             $apiKey->forceFill(['last_used_at' => now()])->saveQuietly();
         }
 
+        \App\Support\Tenancy::set($apiKey->tenant_id);
+
+        if (! \App\Support\Tenancy::current()?->isActive()) {
+            return \App\Support\ApiResponse::error('TENANT_SUSPENDED', 'Akun usaha ini sedang ditangguhkan. Hubungi penyedia aplikasi.', 403);
+        }
+
         $request->attributes->set('api_key', $apiKey);
 
         return $next($request);

@@ -1,6 +1,8 @@
 # Lisensi & Paket (Gratis / Pro)
 
-Panduan untuk **pemilik aplikasi** yang menyewakan ALMARA Gateway WA. @2026-Alifiandra
+Panduan untuk **pemilik aplikasi** yang menjual / memasang salinan ALMARA Gateway WA di server pembeli. @2026-Alifiandra
+
+> Sejak versi 1.0, penyewa di server Anda sendiri cukup diatur lewat **Platform → Penyewa** (lihat `docs/PENYEWAAN.md`) — tidak perlu kode lisensi. Kode lisensi di bawah ini berguna bila aplikasi dipasang di server milik pembeli.
 
 ## Cara kerja
 
@@ -43,7 +45,7 @@ php artisan license:issue "Nama Usaha Anda" --days=0 --devices=0 --activate
 ```powershell
 php artisan license:issue "Nama Penyewa" --plan=pro --days=30 --devices=3
 ```
-Salin kode yang muncul (satu baris panjang) dan kirim ke penyewa. Penyewa membuka menu **Sistem → Lisensi**, menempel kode, lalu klik **Aktifkan**.
+Salin kode yang muncul (satu baris panjang) dan kirim ke penyewa. Pembeli membuka menu **Sistem → Lisensi**, menempel kode, lalu klik **Aktifkan**.
 
 **Perpanjangan:** terbitkan kode baru (mis. `--days=30` lagi) dan minta penyewa menempelkannya — kode lama otomatis tergantikan.
 

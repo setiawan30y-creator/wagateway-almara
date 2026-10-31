@@ -26,7 +26,8 @@ class GenerateAiReply implements ShouldQueue
 
     public function handle(AiAgent $agent): void
     {
-        $conversation = Conversation::find($this->conversationId);
+        $conversation = Conversation::withoutGlobalScopes()->find($this->conversationId);
+        \App\Support\Tenancy::set($conversation?->tenant_id ?? \App\Support\Tenancy::id());
         $message = Message::find($this->messageId);
 
         if (! $conversation || ! $message) {

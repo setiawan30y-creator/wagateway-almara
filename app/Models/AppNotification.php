@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AppNotification extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $fillable = ['user_id', 'type', 'title', 'body', 'url', 'read_at'];
 
     protected function casts(): array
@@ -30,7 +32,9 @@ class AppNotification extends Model
                 ->pluck('id');
 
         $now = now();
+        $tenantId = \App\Support\Tenancy::id() ?? Tenant::defaultId();
         $rows = $users->map(fn ($id) => [
+            'tenant_id' => $tenantId,
             'user_id' => $id,
             'type' => $type,
             'title' => mb_substr($title, 0, 150),

@@ -79,8 +79,8 @@ class AutoReplyController extends Controller
             'match_type' => ['required', Rule::in(array_keys(AutoReply::MATCHES))],
             'keywords' => ['nullable', 'required_if:trigger,keyword', 'string', 'max:500'],
             'reply' => ['required', 'string', 'max:'.config('whatsapp.max_text_length')],
-            'device_id' => ['nullable', 'integer', 'exists:devices,id'],
-            'add_tag_id' => ['nullable', 'integer', 'exists:tags,id'],
+            'device_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('devices')],
+            'add_tag_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('tags')],
             'cooldown_minutes' => ['required', 'integer', 'min:0', 'max:10080'],
             'priority' => ['required', 'integer', 'min:1', 'max:999'],
         ], ['keywords.required_if' => 'Isi minimal satu kata kunci.'], ['reply' => 'balasan']);

@@ -29,7 +29,7 @@ class SendController extends Controller
     public function store(Request $request, MessageService $service)
     {
         $data = $request->validate([
-            'device_id' => ['required', 'integer', 'exists:devices,id'],
+            'device_id' => ['required', 'integer', \App\Support\Tenancy::exists('devices')],
             'to' => ['required', 'string', 'max:2000'],
             'message' => ['required_without:file', 'nullable', 'string', 'max:'.config('whatsapp.max_text_length')],
             'file' => ['nullable', 'file', 'mimes:'.MediaStorage::EXTENSIONS, 'max:'.MediaStorage::MAX_KB],

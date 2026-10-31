@@ -48,7 +48,7 @@ class InboxController extends Controller
         $data = $request->validate([
             'body' => ['required_without:file', 'nullable', 'string', 'max:'.config('whatsapp.max_text_length')],
             'file' => ['nullable', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
-            'device_id' => ['nullable', 'integer', 'exists:devices,id'],
+            'device_id' => ['nullable', 'integer', \App\Support\Tenancy::exists('devices')],
         ], ['body.required_without' => 'Tulis pesan atau pilih lampiran.'], ['body' => 'pesan', 'file' => 'lampiran']);
 
         $device = isset($data['device_id'])
@@ -82,7 +82,7 @@ class InboxController extends Controller
         $data = $request->validate([
             'status' => ['nullable', Rule::in(array_keys(Conversation::STATUSES))],
             'priority' => ['nullable', Rule::in(array_keys(Conversation::PRIORITIES))],
-            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'integer', \App\Support\Tenancy::exists('users')],
         ]);
 
         $changes = array_filter([
@@ -147,7 +147,7 @@ class InboxController extends Controller
 
     public function start(Request $request)
     {
-        $data = $request->validate(['contact_id' => ['required', 'integer', 'exists:contacts,id']]);
+        $data = $request->validate(['contact_id' => ['required', 'integer', \App\Support\Tenancy::exists('contacts')]]);
         $contact = Contact::findOrFail($data['contact_id']);
 
         return redirect()->route('inbox.show', Conversation::forContact($contact, Device::resolveDefault()));

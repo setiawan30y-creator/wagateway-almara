@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class SmartLink extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $fillable = [
         'name', 'slug', 'device_id', 'phone', 'message', 'tag_id', 'utm_source', 'utm_medium', 'utm_campaign',
         'is_active', 'expires_at', 'clicks_count', 'chats_count', 'created_by',

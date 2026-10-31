@@ -268,14 +268,21 @@ class CampaignService
         $started = 0;
         $sent = 0;
 
-        Campaign::where('status', 'scheduled')->where('scheduled_at', '<=', now())->get()
+        // Scheduler berjalan tanpa konteks -> proses tiap campaign di konteks penyewanya
+        Campaign::withoutGlobalScopes()->where('status', 'scheduled')->where('scheduled_at', '<=', now())->get()
             ->each(function (Campaign $c) use (&$started) {
-                $this->start($c);
+                \App\Support\Tenancy::run($c->tenant_id, fn () => $this->start($c));
                 $started++;
             });
 
-        Campaign::where('status', 'running')->get()->each(function (Campaign $c) use (&$sent) {
-            $sent += $this->runBatch($c);
+        Campaign::withoutGlobalScopes()->where('status', 'running')->get()->each(function (Campaign $c) use (&$sent) {
+            $sent += \App\Support\Tenancy::run($c->tenant_id, function () use ($c) {
+                if (! \App\Support\Tenancy::current()?->isActive()) {
+                    return 0;
+                }
+
+                return $this->runBatch($c);
+            });
         });
 
         return ['started' => $started, 'sent' => $sent];

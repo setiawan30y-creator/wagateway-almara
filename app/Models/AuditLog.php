@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AuditLog extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const UPDATED_AT = null;
 
     protected $fillable = ['user_id', 'action', 'description', 'ip', 'meta'];

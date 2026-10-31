@@ -32,6 +32,9 @@
                 </div>
                 <button class="btn btn-primary" style="width:100%;justify-content:center" data-once>Masuk</button>
             </form>
+            @if (config('license.signup_enabled'))
+                <div style="margin-top:10px;text-align:center;font-size:13px">Belum punya akun? <a href="{{ route('signup') }}">Daftar gratis</a></div>
+            @endif
             <div class="footer" style="margin-top:14px"><span>Self-hosted gateway</span><span>@2026-Alifiandra</span></div>
         </div>
     </div>

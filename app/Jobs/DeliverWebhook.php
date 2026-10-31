@@ -26,8 +26,9 @@ class DeliverWebhook implements ShouldQueue
 
     public function handle(): void
     {
-        $delivery = WebhookDelivery::with('webhook')->find($this->deliveryId);
-        $hook = $delivery?->webhook;
+        $delivery = WebhookDelivery::find($this->deliveryId);
+        $hook = $delivery ? \App\Models\Webhook::withoutGlobalScopes()->find($delivery->webhook_id) : null;
+        \App\Support\Tenancy::set($hook?->tenant_id ?? \App\Support\Tenancy::id());
 
         if (! $delivery || ! $hook || ! $hook->is_active || $delivery->delivered_at) {
             return;

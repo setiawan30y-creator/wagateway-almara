@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Webhook extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     public const EVENTS = [
         'message.received' => 'Pesan masuk',
         'message.status' => 'Status pesan berubah',

@@ -13,6 +13,8 @@ use Illuminate\Notifications\Notifiable;
  */
 class User extends Authenticatable
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -22,7 +24,7 @@ class User extends Authenticatable
         'agent' => 'Agent (CS)',
     ];
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'is_active', 'last_login_at'];
+    protected $fillable = ['tenant_id', 'name', 'email', 'password', 'role', 'is_active', 'is_superadmin', 'last_login_at'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -34,6 +36,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'is_superadmin' => 'boolean',
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',

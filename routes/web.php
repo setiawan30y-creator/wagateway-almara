@@ -32,6 +32,8 @@ Route::get('/l/{slug}', [\App\Http\Controllers\SmartLinkController::class, 'go']
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+    Route::get('/daftar', [\App\Http\Controllers\SignupController::class, 'show'])->name('signup');
+    Route::post('/daftar', [\App\Http\Controllers\SignupController::class, 'store'])->name('signup.store');
 });
 
 Route::middleware(['auth', 'active'])->group(function () {
@@ -50,6 +52,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/inbox/{conversation}', [InboxController::class, 'update'])->name('inbox.update');
 
     // Kontak & CRM
+    Route::post('/admin/keluar-penyewa', [\App\Http\Controllers\Admin\TenantController::class, 'leave'])->name('admin.tenants.leave')->middleware('can:superadmin');
+
     // Rombongan penerima broadcast
     Route::get('/rombongan', [\App\Http\Controllers\RecipientListController::class, 'index'])->name('lists.index');
     Route::get('/rombongan/buat', [\App\Http\Controllers\RecipientListController::class, 'create'])->name('lists.create');
@@ -194,6 +198,20 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::put('/pengguna/{user}', [UserController::class, 'update'])->name('users.update');
 
         Route::get('/log', [LogController::class, 'index'])->name('logs.index');
+        // Panel super-admin (pengelola semua penyewa)
+        Route::middleware('can:superadmin')->prefix('admin')->name('admin.')->group(function () {
+            Route::get('/penyewa', [\App\Http\Controllers\Admin\TenantController::class, 'index'])->name('tenants.index');
+            Route::get('/penyewa/tambah', [\App\Http\Controllers\Admin\TenantController::class, 'create'])->name('tenants.create');
+            Route::post('/penyewa', [\App\Http\Controllers\Admin\TenantController::class, 'store'])->name('tenants.store');
+            Route::get('/penyewa/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'show'])->name('tenants.show');
+            Route::get('/penyewa/{tenant}/ubah', [\App\Http\Controllers\Admin\TenantController::class, 'edit'])->name('tenants.edit');
+            Route::put('/penyewa/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'update'])->name('tenants.update');
+            Route::delete('/penyewa/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'destroy'])->name('tenants.destroy');
+            Route::post('/penyewa/{tenant}/bayar', [\App\Http\Controllers\Admin\TenantController::class, 'pay'])->name('tenants.pay');
+            Route::post('/penyewa/{tenant}/status', [\App\Http\Controllers\Admin\TenantController::class, 'toggle'])->name('tenants.toggle');
+            Route::post('/penyewa/{tenant}/masuk', [\App\Http\Controllers\Admin\TenantController::class, 'impersonate'])->name('tenants.impersonate');
+        });
+
         Route::get('/lisensi', [\App\Http\Controllers\LicenseController::class, 'show'])->name('license.show');
         Route::post('/lisensi', [\App\Http\Controllers\LicenseController::class, 'activate'])->name('license.activate');
         Route::delete('/lisensi', [\App\Http\Controllers\LicenseController::class, 'remove'])->name('license.remove');

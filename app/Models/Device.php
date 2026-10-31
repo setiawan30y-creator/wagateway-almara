@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Device extends Model
 {
+    use \App\Models\Concerns\BelongsToTenant;
+
     protected $fillable = [
         'name', 'provider', 'phone_number', 'credentials',
         'status', 'is_default', 'is_active', 'last_seen_at', 'paired_at',

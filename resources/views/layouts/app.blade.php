@@ -31,6 +31,9 @@
             ['api-keys.index', 'API Key', 'key', 'api-keys.*', true],
             ['webhooks.index', 'Webhook', 'webhook', 'webhooks.*', true],
         ],
+        'Platform' => $me?->is_superadmin ? [
+            ['admin.tenants.index', 'Penyewa', 'users', 'admin.tenants.*', true],
+        ] : [],
         'Sistem' => [
             ['users.index', 'Pengguna & Role', 'users', 'users.*', true],
             ['logs.index', 'Log', 'log', 'logs.*', true],
@@ -99,6 +102,12 @@
             </div>
         </div>
 
+        @if (session('tenant_override') && $me?->is_superadmin)
+            <div class="alert alert-warning" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>👁️ Anda sedang melihat akun usaha <b>{{ \App\Support\Tenancy::current()?->name }}</b> sebagai super-admin.</span>
+                <form method="POST" action="{{ route('admin.tenants.leave') }}" class="inline" style="margin-left:auto">@csrf<button class="btn btn-sm">Kembali ke panel penyewa</button></form>
+            </div>
+        @endif
         @include('partials.flash')
         @if ($lic['warning'])
             <div class="alert alert-warning">{{ $lic['warning'] }} @can('admin')<a href="{{ route('license.show') }}">Buka Lisensi</a>@endcan</div>
