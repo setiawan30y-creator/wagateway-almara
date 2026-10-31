@@ -43,6 +43,21 @@ class CompatApiTest extends TestCase
             ->assertStatus(422)->assertJsonPath('status', false);
     }
 
+    public function test_fonnte_style_with_image_url_and_country_code_zero(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        \Illuminate\Support\Facades\Http::fake(['qris.example.test/*' => \Illuminate\Support\Facades\Http::response($png, 200, ['Content-Type' => 'image/png'])]);
+
+        $this->withHeaders(['Authorization' => $this->key])
+            ->post('/api/send', ['target' => '081300000009', 'message' => 'Scan QRIS di atas', 'url' => 'https://qris.example.test/qr.png', 'countryCode' => '0'])
+            ->assertOk()->assertJsonPath('status', true)->assertJsonPath('target.0', '6281300000009');
+
+        $m = Message::where('to', '6281300000009')->first();
+        $this->assertSame('image', $m->media_type);
+        $this->assertSame('Scan QRIS di atas', $m->body);
+    }
+
     public function test_wablas_style_post_and_get(): void
     {
         $this->withHeaders(['Authorization' => $this->key])->post('/api/send-message', ['phone' => '081300000003', 'message' => 'Halo'])

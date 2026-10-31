@@ -39,7 +39,7 @@ Banyak aplikasi billing / kasir sudah punya pengaturan untuk gateway WhatsApp po
 
 | Gaya | Alamat | Token | Parameter |
 |---|---|---|---|
-| Fonnte | `POST {APP_URL}/api/send` | Header `Authorization: alm_xxx` (tanpa "Bearer") | `target` (boleh banyak, dipisah koma), `message` |
+| Fonnte | `POST {APP_URL}/api/send` | Header `Authorization: alm_xxx` (tanpa "Bearer") | `target` (boleh banyak, dipisah koma), `message`, opsional `url` (gambar/berkas publik, mis. QRIS) atau upload `file` — `message` jadi caption |
 | Wablas | `POST` atau `GET {APP_URL}/api/send-message` | Header `Authorization: alm_xxx` atau parameter `token` | `phone`, `message` |
 
 Respons: `{"status": true, …}` bila pesan masuk antrean, `{"status": false, "reason"/"message": "…"}` bila gagal.

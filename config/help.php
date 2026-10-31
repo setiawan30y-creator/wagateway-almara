@@ -312,6 +312,7 @@ return [
             'Key disimpan terenkripsi dengan APP_KEY. Jangan mengganti APP_KEY di .env setelah aplikasi dipakai.',
             'Alamat kirim pesan: POST {alamat-aplikasi}/api/v1/messages/send dengan body JSON {"to": "08…", "message": "…"} — perhatikan awalan /api/v1.',
             'Tanpa device_id, pesan dikirim lewat nomor milik key (kolom Perangkat) atau nomor "utama". Pastikan nomor utama adalah nomor Scan QR yang terhubung, bukan Simulasi (cek "meta.device" di respons).',
+            'Gaya Fonnte juga bisa kirim gambar / berkas: tambahkan field url (alamat gambar publik, mis. QRIS) atau upload file — isi message menjadi keterangan.',
             'Aplikasi lain yang mendukung Fonnte / Wablas: pakai alamat {alamat-aplikasi}/api/send (gaya Fonnte) atau /api/send-message (gaya Wablas) dengan API key ALMARA sebagai token.',
             'Error 401 = key salah / dicabut. 403 = akun ditangguhkan atau fitur khusus Pro. 422 = nomor / isi pesan tidak valid.',
             'Dokumentasi lengkap endpoint ada di menu Panduan → REST API.',
