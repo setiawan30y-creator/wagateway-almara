@@ -48,5 +48,7 @@ return [
     'engine' => [
         'url' => env('WA_ENGINE_URL', 'http://127.0.0.1:3000'),
         'token' => env('WA_ENGINE_TOKEN'),
+        // Alamat aplikasi yang dipanggil engine (default APP_URL). Isi bila engine perlu alamat lain, mis. http://127.0.0.1
+        'webhook_base' => env('WA_ENGINE_WEBHOOK_URL'),
     ],
 ];

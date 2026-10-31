@@ -98,6 +98,18 @@ class QrEngineProvider implements WhatsAppProvider
         return new ConnectionStatus($connected, (string) ($response->json('message') ?? ($connected ? 'Terhubung' : 'Belum terhubung — scan QR.')));
     }
 
+    /**
+     * URL yang dipanggil engine untuk mengirim event ke aplikasi.
+     * Memakai WA_ENGINE_WEBHOOK_URL / APP_URL (bukan alamat browser), karena engine
+     * tidak menerima sertifikat HTTPS buatan sendiri (mis. https://*.test di Laragon).
+     */
+    public static function webhookUrl(Device $device): string
+    {
+        $base = rtrim((string) (config('whatsapp.engine.webhook_base') ?: config('app.url')), '/');
+
+        return $base.'/api/webhooks/qr/'.$device->id;
+    }
+
     /** Mulai sesi di engine dan daftarkan URL webhook pesan masuk. */
     public function startSession(Device $device, string $webhookUrl): ConnectionStatus
     {

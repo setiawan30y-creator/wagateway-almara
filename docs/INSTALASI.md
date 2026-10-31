@@ -446,6 +446,7 @@ Simpan salinan backup di lokasi terpisah (Google Drive, storage lain).
 
 | Gejala | Penyebab & solusi |
 |---|---|
+| Jendela engine: `"err":"fetch failed" … gagal meneruskan event ke gateway` | Engine tidak bisa memanggil aplikasi (pesan masuk, status terkirim, kontak tidak masuk). Pastikan `APP_URL` di `.env` benar dan bisa dibuka (Laragon: `http://wagateway-almara.test`, bukan `https`), jalankan `php artisan optimize:clear`, lalu **Perangkat → Cek** untuk mendaftarkan ulang alamatnya ke engine. Bila perlu isi `WA_ENGINE_WEBHOOK_URL=http://127.0.0.1:8000` (saat memakai `php artisan serve`). |
 | `Command "servecd" is not defined` | Dua perintah tergabung saat paste. Jalankan satu per satu. |
 | Halaman error 500 | Lihat `storage/logs/laravel.log`. Jalankan `php artisan optimize:clear`. Pastikan `.env` ada dan `APP_KEY` terisi. |
 | `SQLSTATE[HY000] [1049] Unknown database` | Database belum dibuat — ulangi langkah 2.5. |

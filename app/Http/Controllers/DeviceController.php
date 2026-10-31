@@ -103,6 +103,11 @@ class DeviceController extends Controller
 
     public function check(Device $device)
     {
+        // perbarui alamat webhook di engine (mis. setelah APP_URL berubah)
+        if ($device->provider === 'qr' && $device->credential('webhook_token')) {
+            $this->providers->for($device)->startSession($device, QrEngineProvider::webhookUrl($device));
+        }
+
         $status = $this->providers->for($device)->status($device);
 
         if (! $status->connected && $device->status === 'connected') {
@@ -157,7 +162,7 @@ class DeviceController extends Controller
 
         /** @var QrEngineProvider $provider */
         $provider = $this->providers->for($device);
-        $start = $provider->startSession($device, url('/api/webhooks/qr/'.$device->id));
+        $start = $provider->startSession($device, QrEngineProvider::webhookUrl($device));
 
         return view('devices.pair', ['device' => $device, 'engineError' => $start->connected || ! str_contains($start->message, 'tidak dapat dihubungi') ? null : $start->message]);
     }
