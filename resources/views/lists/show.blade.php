@@ -22,8 +22,9 @@
         <div class="grid grid-2">
             <form method="POST" action="{{ route('lists.add', $list) }}">
                 @csrf <input type="hidden" name="source" value="numbers">
-                <div class="field"><label for="numbers">Tempel nomor WhatsApp</label>
-                    <textarea class="input" id="numbers" name="numbers" rows="4" placeholder="Satu nomor per baris, atau pisahkan dengan koma&#10;081234567890&#10;+62 813-0000-0000"></textarea>
+                <div class="field"><label for="numbers">Tempel nomor WhatsApp (boleh dengan nama)</label>
+                    <textarea class="input" id="numbers" name="numbers" rows="5" placeholder="Satu orang per baris: nomor, nama&#10;081234567890, Nama Lengkap&#10;Nama Pelanggan - 0813 0000 0000&#10;081500000000"></textarea>
+                    <div class="hint">Nama dipakai untuk <span class="mono">{{ '{'.'{name}'.'}' }}</span> / <span class="mono">{{ '{'.'{first_name}'.'}' }}</span> di template. Kontak yang sudah punya nama tidak ditimpa. Bisa juga salin 2 kolom (Nomor | Nama) langsung dari Excel.</div>
                     @error('numbers')<div class="error-text">{{ $message }}</div>@enderror</div>
                 <label class="check"><input type="checkbox" name="consent" value="1"> Nomor-nomor ini sudah memberi izin menerima pesan (opt-in)</label>
                 <div style="margin-top:6px"><button class="btn btn-primary btn-sm" data-once>Tambahkan</button></div>

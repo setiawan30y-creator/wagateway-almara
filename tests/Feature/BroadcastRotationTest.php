@@ -126,4 +126,20 @@ class BroadcastRotationTest extends TestCase
 
         $this->actingAs($this->admin)->get("/broadcast/buat?rombongan={$list->id}")->assertOk()->assertSee('value="'.$list->id.'" checked', false);
     }
+
+    public function test_paste_numbers_with_names(): void
+    {
+        $list = RecipientList::create(['name' => 'Pelanggan']);
+        Contact::create(['phone' => '6281234500009', 'name' => 'Nama Lama']);
+
+        $this->actingAs($this->admin)->post("/rombongan/{$list->id}/anggota", ['source' => 'numbers', 'consent' => 1,
+            'numbers' => "081234500001, Budi Santoso\nSiti Aminah - 0812 3450 0002\n6281234500003\tAndi\n081234500009, Nama Baru"])->assertRedirect();
+
+        $this->assertSame(4, $list->contacts()->count());
+        $this->assertSame('Budi Santoso', Contact::where('phone', '6281234500001')->value('name'));
+        $this->assertSame('Siti Aminah', Contact::where('phone', '6281234500002')->value('name'));
+        $this->assertSame('Andi', Contact::where('phone', '6281234500003')->value('name'));
+        $this->assertSame('Nama Lama', Contact::where('phone', '6281234500009')->value('name')); // tidak ditimpa
+        $this->assertSame('Halo Budi', Template::render('Halo {{first_name}}', Contact::where('phone', '6281234500001')->first()));
+    }
 }

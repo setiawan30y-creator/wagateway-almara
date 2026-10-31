@@ -98,7 +98,7 @@ class RecipientListController extends Controller
         $ids = match ($data['source']) {
             'tag' => Tag::find($data['tag_id'])->contacts()->pluck('contacts.id'),
             'list' => RecipientList::find($data['list_id'])->contacts()->pluck('contacts.id'),
-            'group' => $this->contactsFromPhones(WaGroup::find($data['group_id'])->memberPhones(), false, $request, $created, $invalid),
+            'group' => $this->contactsFromPhones(array_map(fn ($p) => ['phone' => $p, 'name' => null], WaGroup::find($data['group_id'])->memberPhones()), false, $request, $created, $invalid),
             'numbers' => $this->contactsFromPhones($this->parseNumbers($data['numbers']), $request->boolean('consent'), $request, $created, $invalid),
         };
 
@@ -118,18 +118,51 @@ class RecipientListController extends Controller
         return back()->with('success', "{$removed} anggota dikeluarkan dari rombongan.");
     }
 
-    /** "0812…, 62813…\n+62 814…" -> daftar nomor mentah. */
-    private function parseNumbers(string $raw): array
+    /**
+     * Tempel nomor, boleh dengan nama (satu orang per baris):
+     *   081234567890, Budi Santoso   |   Budi Santoso - 0812 3456 7890   |   081234567890 (tanpa nama)
+     * Baris tanpa huruf boleh berisi beberapa nomor dipisah koma / spasi.
+     *
+     * @return array<int, array{phone: string, name: ?string}>
+     */
+    public static function parseNumbers(string $raw): array
     {
-        return array_values(array_filter(array_map('trim', preg_split('/[\s,;]+/', $raw) ?: [])));
+        $out = [];
+
+        foreach (preg_split('/\r\n|\r|\n/', $raw) ?: [] as $line) {
+            $line = trim($line);
+
+            if ($line === '') {
+                continue;
+            }
+
+            if (! preg_match('/\p{L}/u', $line)) {
+                foreach (preg_split('/[,;\t]+|\s{2,}/', $line) ?: [] as $part) {
+                    // "0812 3456 7890" tetap satu nomor; "0812…,0813…" dipisah koma
+                    foreach (preg_match_all('/\+?\d[\d\s\-.()]{6,}\d/', $part, $m) ? $m[0] : [] as $num) {
+                        $out[] = ['phone' => $num, 'name' => null];
+                    }
+                }
+
+                continue;
+            }
+
+            if (preg_match('/\+?\d[\d\s\-.()]{6,}\d/', $line, $m)) {
+                $name = trim(str_replace($m[0], ' ', $line), " \t,;:-|/");
+                $name = preg_replace('/\s+/', ' ', $name);
+                $out[] = ['phone' => $m[0], 'name' => $name !== '' ? mb_substr($name, 0, 150) : null];
+            }
+        }
+
+        return $out;
     }
 
-    private function contactsFromPhones(array $phones, bool $consent, Request $request, int &$created, int &$invalid)
+    private function contactsFromPhones(array $entries, bool $consent, Request $request, int &$created, int &$invalid)
     {
         $ids = collect();
 
-        foreach (array_unique($phones) as $raw) {
-            $phone = PhoneNumber::normalize((string) $raw);
+        foreach ($entries as $entry) {
+            $phone = PhoneNumber::normalize((string) $entry['phone']);
 
             if (! PhoneNumber::isValid($phone)) {
                 $invalid++;
@@ -137,8 +170,13 @@ class RecipientListController extends Controller
                 continue;
             }
 
-            $contact = Contact::findOrCreateByPhone($phone, ['source' => 'rombongan']);
+            $contact = Contact::findOrCreateByPhone($phone, ['source' => 'rombongan', 'name' => $entry['name'] ?? null]);
             $created += $contact->wasRecentlyCreated ? 1 : 0;
+
+            // nama hanya diisi bila kontak belum punya nama (nama yang sudah ada tidak ditimpa)
+            if (! $contact->name && ! empty($entry['name'])) {
+                $contact->forceFill(['name' => $entry['name']])->save();
+            }
 
             if ($consent && $contact->consent === 'unknown') {
                 $contact->setConsent('opted_in', 'manual', 'Ditambahkan ke rombongan oleh '.$request->user()->name);
