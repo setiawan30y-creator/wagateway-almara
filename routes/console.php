@@ -26,6 +26,49 @@ Artisan::command('tickets:escalate', function (\App\Services\TicketService $serv
     $this->info('Tiket dieskalasi: '.$service->escalateOverdue());
 })->purpose('Eskalasi tiket yang melewati SLA');
 
+// --- Diagnosa engine Scan QR ---------------------------------------------------------
+Artisan::command('engine:check', function () {
+    $url = rtrim((string) config('whatsapp.engine.url'), '/');
+    $token = (string) config('whatsapp.engine.token');
+    $ok = true;
+    $line = function (bool $good, string $text) use (&$ok) {
+        $ok = $ok && $good;
+        $this->line(($good ? '<info>[OK]</info>   ' : '<error>[GAGAL]</error> ').$text);
+    };
+
+    $this->line('Engine: '.$url);
+    $line($token !== '', 'WA_ENGINE_TOKEN di .env '.($token !== '' ? 'terisi' : 'KOSONG — isi dengan token yang sama dengan ENGINE_TOKEN di engine/.env'));
+
+    $engineEnv = base_path('engine/.env');
+    if (is_file($engineEnv)) {
+        preg_match('/^ENGINE_TOKEN=(.*)$/m', (string) file_get_contents($engineEnv), $m);
+        $et = trim($m[1] ?? '', " \t\r\"'");
+        $line($et !== '' && hash_equals($et, $token), 'ENGINE_TOKEN di engine/.env '.($et === '' ? 'kosong' : ($et === $token ? 'sama dengan WA_ENGINE_TOKEN' : 'BERBEDA dengan WA_ENGINE_TOKEN')));
+    } else {
+        $line(false, 'File engine/.env belum ada — salin dari engine/.env.example lalu isi ENGINE_TOKEN');
+    }
+
+    $line(is_dir(base_path('engine/node_modules')), 'Paket engine '.(is_dir(base_path('engine/node_modules')) ? 'terpasang' : 'BELUM terpasang — jalankan: cd engine && npm install --omit=dev'));
+
+    try {
+        $health = \Illuminate\Support\Facades\Http::timeout(5)->get($url.'/health');
+        $line($health->successful(), 'Engine '.($health->successful() ? 'berjalan ('.$health->json('sessions').' sesi)' : 'merespons HTTP '.$health->status()));
+
+        $st = \Illuminate\Support\Facades\Http::timeout(5)->withToken($token)->get($url.'/status', ['session' => 'cek']);
+        $line($st->status() !== 401, 'Token '.($st->status() === 401 ? 'DITOLAK engine (token tidak sama)' : 'diterima engine'));
+    } catch (\Throwable $e) {
+        $line(false, 'Engine TIDAK dapat dihubungi — '.(PHP_OS_FAMILY === 'Windows' ? 'jalankan mulai.bat' : 'sudo supervisorctl start wagateway-engine (lihat log: storage/logs/engine.log)'));
+    }
+
+    $app = (string) config('app.url');
+    $line(str_starts_with($app, 'http'), 'APP_URL = '.$app.' (alamat yang dipanggil engine untuk pesan masuk)');
+
+    $this->newLine();
+    $ok ? $this->info('Semua pemeriksaan lolos.') : $this->warn('Perbaiki baris [GAGAL] di atas, lalu jalankan lagi: php artisan engine:check');
+
+    return $ok ? 0 : 1;
+})->purpose('Periksa koneksi ke engine Scan QR (token, paket, status)');
+
 // --- Lisensi (dijalankan PEMILIK aplikasi, bukan penyewa) ---------------------------
 Artisan::command('license:keygen {--force : Timpa kunci yang sudah ada}', function () {
     $privPath = \App\Support\License::privateKeyPath();

@@ -349,10 +349,22 @@ autorestart=true
 stdout_logfile=/var/www/wagateway-almara/storage/logs/engine.log
 ```
 
+Sebelum menyalakan engine (sekali saja):
+
+```bash
+cd /var/www/wagateway-almara/engine
+node -v                                   # harus v20 atau lebih baru
+sudo -u www-data npm install --omit=dev    # atau: npm install --omit=dev lalu chown (lihat bawah)
+cp -n .env.example .env
+TOKEN=$(grep '^WA_ENGINE_TOKEN=' ../.env | cut -d= -f2-)
+sed -i "s|^ENGINE_TOKEN=.*|ENGINE_TOKEN=$TOKEN|" .env   # samakan token engine dengan Laravel
+```
+
 ```bash
 sudo chown -R www-data:www-data /var/www/wagateway-almara/engine
 sudo supervisorctl reread && sudo supervisorctl update
 sudo supervisorctl status
+cd /var/www/wagateway-almara && php artisan engine:check   # semua baris harus [OK]
 ```
 
 Firewall: buka hanya 22, 80, 443.
@@ -455,7 +467,7 @@ Simpan salinan backup di lokasi terpisah (Google Drive, storage lain).
 | `SQLSTATE[HY000] [1049] Unknown database` | Database belum dibuat — ulangi langkah 2.5. |
 | `SQLSTATE[HY000] [2002]` | MySQL belum berjalan. Start MySQL di Laragon / `sudo systemctl start mysql`. |
 | Login gagal | Jalankan `php artisan db:seed` atau reset password (bagian 3). |
-| Halaman Scan QR: *Engine QR tidak dapat dihubungi* | Jendela `npm start` belum berjalan, atau `WA_ENGINE_TOKEN` ≠ `ENGINE_TOKEN`. Samakan lalu `php artisan config:clear`. |
+| Halaman Scan QR: *Engine QR tidak dapat dihubungi* | Jalankan `php artisan engine:check` — menunjukkan yang salah (engine/.env, token, `npm install`, engine mati). Windows: jalankan `mulai.bat`. Ubuntu: `sudo supervisorctl status wagateway-engine` harus RUNNING (lihat 7.5 & `storage/logs/engine.log`). |
 | QR tidak muncul / terus menunggu | Cek pesan error di jendela engine. Pastikan Node.js ≥ 20 dan `npm install` selesai tanpa error. |
 | Pesan masuk dari nomor QR tidak muncul di Inbox | Engine mengirim ke URL yang tercatat saat pairing. Bila `APP_URL`/alamat berubah, buka lagi halaman **Scan QR** perangkat tersebut agar URL diperbarui. |
 | Broadcast tidak berjalan | Jendela `php artisan schedule:work` belum dijalankan, atau sedang jam tenang (cek Pengaturan). |

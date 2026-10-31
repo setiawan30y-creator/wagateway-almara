@@ -110,6 +110,14 @@ class QrEngineProvider implements WhatsAppProvider
         return $base.'/api/webhooks/qr/'.$device->id;
     }
 
+    /** Petunjuk menyalakan engine sesuai sistem operasi server. */
+    public static function startHint(): string
+    {
+        return PHP_OS_FAMILY === 'Windows'
+            ? 'Jalankan mulai.bat (atau: cd engine; npm start).'
+            : 'Pastikan engine berjalan: sudo supervisorctl status wagateway-engine — cek dengan: php artisan engine:check';
+    }
+
     /** Mulai sesi di engine dan daftarkan URL webhook pesan masuk. */
     public function startSession(Device $device, string $webhookUrl): ConnectionStatus
     {
@@ -120,7 +128,7 @@ class QrEngineProvider implements WhatsAppProvider
                 'webhook_token' => (string) $device->credential('webhook_token'),
             ]);
         } catch (ConnectionException $e) {
-            return new ConnectionStatus(false, 'Engine QR tidak dapat dihubungi di '.$this->baseUrl($device).'. Jalankan: cd engine; npm start');
+            return new ConnectionStatus(false, 'Engine QR tidak dapat dihubungi di '.$this->baseUrl($device).'. '.self::startHint());
         }
 
         if (! $response->successful()) {
@@ -136,7 +144,7 @@ class QrEngineProvider implements WhatsAppProvider
         try {
             $response = $this->client($device)->get($device->credential('qr_path') ?: '/qr', ['session' => $this->session($device)]);
         } catch (ConnectionException $e) {
-            return new ConnectionStatus(false, 'Engine QR tidak dapat dihubungi. Jalankan: cd engine; npm start');
+            return new ConnectionStatus(false, 'Engine QR tidak dapat dihubungi. '.self::startHint());
         }
 
         if (! $response->successful()) {
@@ -158,7 +166,7 @@ class QrEngineProvider implements WhatsAppProvider
         try {
             $response = $this->client($device)->timeout(60)->get('/groups', ['session' => $this->session($device)]);
         } catch (ConnectionException $e) {
-            throw new \RuntimeException('Engine QR tidak dapat dihubungi. Jalankan: cd engine; npm start');
+            throw new \RuntimeException('Engine QR tidak dapat dihubungi. '.self::startHint());
         }
 
         if (! $response->successful()) {
@@ -174,7 +182,7 @@ class QrEngineProvider implements WhatsAppProvider
         try {
             $response = $this->client($device)->timeout(60)->get('/contacts', ['session' => $this->session($device)]);
         } catch (ConnectionException $e) {
-            throw new \RuntimeException('Engine QR tidak dapat dihubungi. Jalankan: cd engine; npm start');
+            throw new \RuntimeException('Engine QR tidak dapat dihubungi. '.self::startHint());
         }
 
         if (! $response->successful()) {

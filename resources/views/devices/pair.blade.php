@@ -11,7 +11,11 @@
 @if ($engineError)
     <div class="alert alert-error">
         {{ $engineError }}<br>
-        Buka PowerShell baru lalu jalankan: <span class="mono">cd C:\laragon\www\wagateway-almara\engine; npm start</span> — kemudian klik “Muat ulang QR”.
+        @if (PHP_OS_FAMILY === 'Windows')
+            Klik dua kali <span class="mono">mulai.bat</span>, atau buka PowerShell baru lalu jalankan: <span class="mono">cd {{ base_path('engine') }}; npm start</span> — kemudian klik “Muat ulang QR”.
+        @else
+            Di server jalankan: <span class="mono">sudo supervisorctl status wagateway-engine</span> (harus RUNNING). Bila belum terpasang, ikuti Panduan → Cara pemasangan bagian 7.5. Cek cepat: <span class="mono">php artisan engine:check</span> — kemudian klik “Muat ulang QR”.
+        @endif
     </div>
 @endif
 <div class="grid grid-2">
