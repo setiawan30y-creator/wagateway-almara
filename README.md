@@ -8,7 +8,16 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
 📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
 
-## Baru di versi 0.7.0 — Broadcast anti-seragam & rombongan
+## Baru di versi 0.8.0 — Anti-blokir broadcast (Scan QR)
+
+| Fitur | Keterangan |
+|---|---|
+| Jeda acak + mengetik | Pesan broadcast masuk antrean engine dan dikirim satu per satu dengan jeda acak (default 8–25 detik) serta status "sedang mengetik…". Balasan Inbox tetap langsung terkirim. |
+| Batas harian per nomor | Default 300 broadcast / nomor / hari; sisa penerima otomatis dilanjutkan besok. |
+| Pemanasan nomor baru | Hari 1–3: 30, 4–7: 60, 8–14: 120, 15–21: 200 pesan/hari, setelah itu mengikuti batas harian. |
+| Pantauan | Kuota harian tampil di menu Perangkat & detail campaign. Atur di **Pengaturan → Anti-blokir**. |
+
+## Versi 0.7.0 — Broadcast anti-seragam & rombongan
 
 | Fitur | Keterangan |
 |---|---|

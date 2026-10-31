@@ -15,10 +15,11 @@ use App\WhatsApp\SendResult;
 interface WhatsAppProvider
 {
     /** Kirim pesan teks ke nomor tujuan (format internasional tanpa '+', mis. 6281234567890). */
-    public function sendText(Device $device, string $to, string $body): SendResult;
+    /** $options['humanize'] = ['min_delay' => detik, 'max_delay' => detik, 'typing' => bool] (dipakai broadcast; diabaikan provider yang tidak mendukung) */
+    public function sendText(Device $device, string $to, string $body, array $options = []): SendResult;
 
     /** Kirim media (gambar / video / audio / dokumen) dengan keterangan opsional. */
-    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult;
+    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null, array $options = []): SendResult;
 
     /** Cek status koneksi perangkat. */
     public function status(Device $device): ConnectionStatus;

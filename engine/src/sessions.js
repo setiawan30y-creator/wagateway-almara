@@ -5,6 +5,10 @@
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const rand = (min, max) => min + Math.random() * Math.max(0, max - min);
 
 const SAFE_NAME = /^[a-zA-Z0-9_-]{1,64}$/;
 export const BATCH = { contacts: 500, history: 200 };
@@ -23,7 +27,8 @@ export class SessionManager {
    * @param {(url: string, token: string, payload: object) => Promise<void>} opts.notify  kirim event ke gateway
    * @param {object} opts.logger
    */
-  constructor({ storageDir, createDriver, notify, logger }) {
+  constructor({ storageDir, createDriver, notify, logger, sleepFn }) {
+    this.sleep = sleepFn || sleep;
     this.storageDir = storageDir;
     this.createDriver = createDriver;
     this.notify = notify;
@@ -77,6 +82,9 @@ export class SessionManager {
       lastError: null,
       driver: null,
       groups: null,
+      humanQueue: [],
+      humanBusy: false,
+      lastHumanAt: 0,
     };
     this.sessions.set(name, session);
 
@@ -126,8 +134,8 @@ export class SessionManager {
 
   emit(name, payload) {
     const cfg = this.config[name] || {};
-    if (!cfg.webhookUrl) return;
-    this.notify(cfg.webhookUrl, cfg.webhookToken || '', { session: name, ...payload }).catch((e) =>
+    if (!cfg.webhookUrl) return Promise.resolve();
+    return this.notify(cfg.webhookUrl, cfg.webhookToken || '', { session: name, ...payload }).catch((e) =>
       this.logger.warn({ err: e?.message, name }, 'gagal meneruskan event ke gateway'),
     );
   }
@@ -217,6 +225,7 @@ export class SessionManager {
       name: s.pushName,
       message: messages[s.state] || s.state,
       last_error: s.lastError,
+      queue: s.humanQueue.length,
     };
   }
 
@@ -226,6 +235,57 @@ export class SessionManager {
 
   async sendMedia(name, to, media) {
     return this.connected(name).driver.sendMedia(to, media);
+  }
+
+  /**
+   * Antrean kirim "seperti manusia" (untuk broadcast): jeda acak antar pesan + status mengetik.
+   * Langsung mengembalikan ID pesan; pengiriman sebenarnya berjalan di latar belakang.
+   * Gagal -> event status "failed" ke gateway.
+   * @param {{kind: 'text'|'media', to: string, text?: string, media?: object, humanize: {min_delay?: number, max_delay?: number, typing?: boolean}}} job
+   */
+  enqueue(name, job) {
+    const s = this.connected(name);
+    const id = s.driver.newMessageId?.() || '3EB0' + randomBytes(10).toString('hex').toUpperCase();
+    s.humanQueue.push({ ...job, id });
+    const position = s.humanQueue.length;
+    this.drain(name, s);
+    return { id, queued: true, position };
+  }
+
+  async drain(name, s) {
+    if (s.humanBusy) return;
+    s.humanBusy = true;
+
+    try {
+      while (s.humanQueue.length) {
+        const job = s.humanQueue[0];
+        const h = job.humanize || {};
+        const min = Math.max(0, Number(h.min_delay ?? 8)) * 1000;
+        const max = Math.max(min, Number(h.max_delay ?? 25) * 1000);
+        const gap = rand(min, max);
+        const wait = Math.max(0, s.lastHumanAt + gap - Date.now());
+        if (wait > 0) await this.sleep(wait);
+
+        s.humanQueue.shift();
+
+        try {
+          if (s.state !== 'connected') throw new Error('Sesi WhatsApp terputus sebelum pesan terkirim.');
+          if (h.typing !== false && s.driver.typing) {
+            const len = (job.text || job.media?.caption || '').length;
+            await s.driver.typing(job.to, Math.min(6000, Math.max(1200, len * 50)) * (0.8 + Math.random() * 0.4));
+          }
+          if (job.kind === 'media') await s.driver.sendMedia(job.to, job.media, { messageId: job.id });
+          else await s.driver.sendText(job.to, job.text, { messageId: job.id });
+          this.emit(name, { type: 'status', id: job.id, status: 'sent' });
+        } catch (e) {
+          this.emit(name, { type: 'status', id: job.id, status: 'failed', error: String(e?.message || e).slice(0, 300) });
+        }
+
+        s.lastHumanAt = Date.now();
+      }
+    } finally {
+      s.humanBusy = false;
+    }
   }
 
   async logout(name) {
@@ -241,6 +301,13 @@ export class SessionManager {
   }
 
   async shutdown() {
+    const pending = [];
+    for (const [name, s] of this.sessions.entries()) {
+      for (const job of s.humanQueue.splice(0)) {
+        pending.push(this.emit(name, { type: 'status', id: job.id, status: 'failed', error: 'Engine dimatikan sebelum pesan terkirim.' }));
+      }
+    }
+    await Promise.race([Promise.all(pending), sleep(3000)]);
     for (const s of this.sessions.values()) {
       await s.driver?.close?.().catch(() => {});
     }

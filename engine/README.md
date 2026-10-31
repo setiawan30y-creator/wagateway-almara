@@ -45,6 +45,7 @@ Biarkan jendela `npm start` tetap terbuka. Sesi tersimpan di `engine/storage/` s
 | GET | `/groups?session=` | Daftar grup + anggota `[{jid, subject, size, is_admin, announce, participants}]` |
 
 `to` pada `/send-message` & `/send-media` boleh nomor atau ID grup `…@g.us`.
+Tambahkan `"humanize": {"min_delay": 8, "max_delay": 25, "typing": true}` agar pesan masuk antrean broadcast: respons langsung `{success, id, queued: true}`, pesan dikirim satu per satu dengan jeda acak + "sedang mengetik…", hasilnya dikirim lewat event `status` (`sent` / `failed`). Antrean yang belum terkirim saat engine dimatikan dilaporkan `failed`.
 
 Header: `Authorization: Bearer <ENGINE_TOKEN>`.
 Event ke gateway: `POST {APP_URL}/api/webhooks/qr/{device}` dengan `X-Webhook-Token` (pesan masuk pribadi & grup, status terkirim/dibaca, status sesi, kontak HP per 500, riwayat chat per 200, daftar grup).

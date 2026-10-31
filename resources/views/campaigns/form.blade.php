@@ -31,7 +31,7 @@
                 </select></div>
             <div class="field"><label for="rate_per_minute">Kecepatan (pesan / menit)</label>
                 <input class="input" id="rate_per_minute" type="number" name="rate_per_minute" min="1" max="120" value="{{ old('rate_per_minute', $campaign->rate_per_minute) }}" required>
-                <div class="hint">Rate limiter. Kecepatan rendah lebih aman untuk kualitas nomor.</div></div>
+                <div class="hint">Rate limiter. Untuk perangkat Scan QR, pesan dikirim satu per satu dengan jeda acak {{ implode('–', \App\Support\SendingQuota::delayRange()) }} detik (maks ±{{ \App\Support\SendingQuota::maxPerMinute() }}/menit) dan dibatasi kuota harian per nomor — atur di <a href="{{ route('settings.edit') }}">Pengaturan</a>.</div></div>
 
             <div class="field">
                 <div class="label-row"><label>Template pesan</label><button type="button" class="btn btn-sm" data-template-all>Pilih semua</button></div>

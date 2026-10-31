@@ -139,6 +139,7 @@ return [
             'Duplikat: salin campaign untuk rombongan / peruntukan lain tanpa mengisi ulang template & lampiran.',
         ],
         'tips' => [
+            'Anti-blokir (Scan QR): pesan dikirim satu per satu dengan jeda acak + "sedang mengetik…", dan dibatasi kuota harian per nomor (nomor baru dipanaskan bertahap). Kuota habis → sisa penerima lanjut besok otomatis.',
             'Setiap penerima mendapat varian acak dari semua template terpilih (dibagi merata). Tambahkan juga {Halo|Hai|Selamat siang} di template untuk variasi kata.',
             'Hanya kontak opt-in yang dikirimi. Opt-out & belum ada izin otomatis dilewati.',
             'Pengaman: frequency cap, jam tenang, batas penerima, dan auto-pause bila gagal/opt-out tinggi (atur di Pengaturan).',
@@ -335,7 +336,9 @@ return [
             'Jam kerja: dipakai Auto-Reply "di luar jam kerja" dan mode AI.',
             'Klik Simpan pengaturan.',
         ],
-        'tips' => [],
+        'tips' => [
+            'Anti-blokir (Scan QR): atur jeda acak antar pesan, simulasi "sedang mengetik…", batas broadcast per nomor per hari, dan pemanasan nomor baru (hari 1–3: 30, 4–7: 60, 8–14: 120, 15–21: 200 pesan/hari).',
+        ],
     ],
 
     'notifications.*' => [

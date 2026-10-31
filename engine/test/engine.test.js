@@ -7,21 +7,25 @@ import { join } from 'node:path';
 import { SessionManager } from '../src/sessions.js';
 import { createApp } from '../src/app.js';
 
-function setup() {
+function setup(extra = {}) {
   const events = [];
+  const sent = [];
+  const typed = [];
+  let seq = 0;
   let ctxRef;
   const manager = new SessionManager({
     storageDir: mkdtempSync(join(tmpdir(), 'eng-')),
+    ...extra,
     logger: { error() {}, warn() {}, child() { return this; } },
     notify: async (url, token, payload) => { events.push({ url, token, payload }); },
     createDriver: async (ctx) => {
       ctxRef = ctx;
       setTimeout(() => ctx.onQr('QR-STRING'), 0);
-      return { groups: async () => [{ jid: '120363000000000001@g.us', subject: 'Tim Sales', size: 2, participants: [{ phone: '6281111111111', admin: 'admin' }, { phone: '6282222222222', admin: null }] }], sendText: async (to, text) => ({ id: 'MSG-' + to }), sendMedia: async (to, m) => ({ id: 'MED-' + m.type + '-' + m.buffer.length }), logout: async () => {}, close: async () => {} };
+      return { groups: async () => [{ jid: '120363000000000001@g.us', subject: 'Tim Sales', size: 2, participants: [{ phone: '6281111111111', admin: 'admin' }, { phone: '6282222222222', admin: null }] }], sendText: async (to, text, o) => { sent.push({ to, text, id: o?.messageId, at: Date.now() }); return { id: o?.messageId || 'MSG-' + to }; }, sendMedia: async (to, m, o) => { sent.push({ to, media: m.type, id: o?.messageId }); return { id: o?.messageId || 'MED-' + m.type + '-' + m.buffer.length }; }, typing: async (to, ms) => { typed.push({ to, ms }); }, newMessageId: () => 'ID' + (++seq), logout: async () => {}, close: async () => {} };
     },
   });
   const app = createApp({ manager, token: 'tok', toDataUrl: async (qr) => 'data:image/png;base64,' + Buffer.from(qr).toString('base64') });
-  return new Promise((resolve) => app.listen(0, '127.0.0.1', () => resolve({ app, events, manager, ctx: () => ctxRef, base: `http://127.0.0.1:${app.address().port}` })));
+  return new Promise((resolve) => app.listen(0, '127.0.0.1', () => resolve({ app, events, sent, typed, manager, ctx: () => ctxRef, base: `http://127.0.0.1:${app.address().port}` })));
 }
 
 const h = { Authorization: 'Bearer tok', 'Content-Type': 'application/json' };
@@ -114,5 +118,36 @@ test('sinkron kontak, riwayat, grup, kirim ke grup', async () => {
   const g = events.filter((e) => e.payload.type === 'groups').at(-1).payload;
   assert.equal(g.groups[0].participants, undefined);
 
+  app.close();
+});
+
+test('antrean broadcast: jeda acak, mengetik, status lewat webhook', async () => {
+  const waits = [];
+  const { app, events, sent, typed, base, ctx } = await setup({ sleepFn: async (ms) => { waits.push(ms); } });
+  await fetch(base + '/sessions/start', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev3', webhook_url: 'http://gw/q/3', webhook_token: 'wt' }) });
+  await new Promise((s) => setTimeout(s, 10));
+  ctx().onOpen({ phone: '6281200000000' });
+
+  const humanize = { min_delay: 8, max_delay: 20, typing: true };
+  const ids = [];
+  for (const to of ['6281111111111', '6281111111112', '6281111111113']) {
+    const r = await (await fetch(base + '/send-message', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev3', to, message: 'Promo', humanize }) })).json();
+    assert.equal(r.success, true);
+    assert.equal(r.queued, true);
+    ids.push(r.id);
+  }
+  const r = await (await fetch(base + '/send-media', { method: 'POST', headers: h, body: JSON.stringify({ session: 'dev3', to: '6281111111114', type: 'image', mime: 'image/png', data: Buffer.from('x').toString('base64'), caption: 'Katalog', humanize }) })).json();
+  ids.push(r.id);
+
+  await new Promise((s) => setTimeout(s, 30));
+  assert.equal(sent.length, 4);
+  assert.deepEqual(sent.map((x) => x.id), ids); // ID yang dikembalikan = ID pesan WhatsApp
+  assert.equal(typed.length, 4);
+  // jeda antar pesan berada dalam rentang 8–20 detik (pesan pertama setelah idle tidak perlu menunggu)
+  assert.ok(waits.length >= 3);
+  assert.ok(waits.every((w) => w <= 20000));
+  assert.ok(waits.slice(-3).every((w) => w > 7000));
+  const st = events.filter((e) => e.payload.type === 'status');
+  assert.deepEqual(st.map((e) => e.payload.status), ['sent', 'sent', 'sent', 'sent']);
   app.close();
 });

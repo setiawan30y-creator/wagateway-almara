@@ -28,6 +28,9 @@ class SettingController extends Controller
             'auto_pause_failed_rate' => ['required', 'numeric', 'min:1', 'max:100'],
             'auto_pause_optout_rate' => ['required', 'numeric', 'min:0.5', 'max:100'],
             'auto_pause_min_sample' => ['required', 'integer', 'min:5', 'max:10000'],
+            'broadcast_delay_min' => ['required', 'integer', 'min:0', 'max:600'],
+            'broadcast_delay_max' => ['required', 'integer', 'min:0', 'max:600', 'gte:broadcast_delay_min'],
+            'broadcast_daily_limit' => ['required', 'integer', 'min:0', 'max:100000'],
             'stop_keywords' => ['required', 'string', 'max:255'],
             'start_keywords' => ['required', 'string', 'max:255'],
             'stop_reply' => ['nullable', 'string', 'max:1000'],
@@ -41,11 +44,13 @@ class SettingController extends Controller
             'work_days.*' => ['integer', 'between:1,7'],
             'work_start' => ['required', 'date_format:H:i'],
             'work_end' => ['required', 'date_format:H:i', 'after:work_start'],
-        ], [], ['work_end' => 'jam selesai kerja']);
+        ], [], ['work_end' => 'jam selesai kerja', 'broadcast_delay_min' => 'jeda minimum', 'broadcast_delay_max' => 'jeda maksimum', 'broadcast_daily_limit' => 'batas harian']);
 
         $data['work_days'] = implode(',', $data['work_days'] ?? []);
 
         $data['quiet_hours_enabled'] = $request->boolean('quiet_hours_enabled') ? '1' : '0';
+        $data['broadcast_typing'] = $request->boolean('broadcast_typing') ? '1' : '0';
+        $data['warmup_enabled'] = $request->boolean('warmup_enabled') ? '1' : '0';
 
         foreach ($data as $key => $value) {
             Setting::set($key, (string) $value);

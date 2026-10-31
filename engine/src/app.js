@@ -4,8 +4,10 @@
  *   POST /sessions/start   {session, webhook_url, webhook_token}
  *   GET  /status?session=
  *   GET  /qr?session=      -> {qr: "data:image/png;base64,..."} atau connected
- *   POST /send-message     {session, to, message}
- *   POST /send-media       {session, to, type, mime, name, caption, data(base64)}
+ *   POST /send-message     {session, to, message, humanize?}
+ *   POST /send-media       {session, to, type, mime, name, caption, data(base64), humanize?}
+ *     humanize = {min_delay, max_delay, typing} -> masuk antrean broadcast (jeda acak + "mengetik…"),
+ *     respons langsung {success, id, queued:true}; hasil akhir dikirim lewat webhook status.
  *   POST /sessions/logout  {session}
  *   GET  /contacts?session=      kontak hasil sinkron dari HP
  *   POST /contacts/sync {session} kirim ulang semua kontak ke gateway (webhook "contacts")
@@ -109,6 +111,9 @@ export function createApp({ manager, token, toDataUrl }) {
         if (!to || !message.trim()) {
           return json(res, 422, { success: false, message: 'Field to dan message wajib diisi.' });
         }
+        if (body.humanize && typeof body.humanize === 'object') {
+          return json(res, 200, { success: true, ...manager.enqueue(session, { kind: 'text', to, text: message, humanize: body.humanize }) });
+        }
         const result = await manager.sendText(session, to, message);
         return json(res, 200, { success: true, id: result.id });
       }
@@ -120,7 +125,11 @@ export function createApp({ manager, token, toDataUrl }) {
         if (!to || !buffer.length) {
           return json(res, 422, { success: false, message: 'Field to dan data (base64) wajib diisi.' });
         }
-        const result = await manager.sendMedia(session, to, { type, mime: body.mime, name: body.name, caption: body.caption, buffer });
+        const media = { type, mime: body.mime, name: body.name, caption: body.caption, buffer };
+        if (body.humanize && typeof body.humanize === 'object') {
+          return json(res, 200, { success: true, ...manager.enqueue(session, { kind: 'media', to, media, humanize: body.humanize }) });
+        }
+        const result = await manager.sendMedia(session, to, media);
         return json(res, 200, { success: true, id: result.id });
       }
 

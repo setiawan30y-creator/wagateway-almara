@@ -13,7 +13,7 @@ export async function createBaileysDriver(ctx) {
   const {
     useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion,
     jidNormalizedUser, isJidGroup, isJidBroadcast, isJidStatusBroadcast, isPnUser, isLidUser,
-    normalizeMessageContent, getContentType, downloadMediaMessage,
+    normalizeMessageContent, getContentType, downloadMediaMessage, generateMessageIDV2,
   } = baileys;
 
   const MAX_MEDIA = 16 * 1024 * 1024;
@@ -306,18 +306,30 @@ export async function createBaileysDriver(ctx) {
 
   await connect();
 
+  const opts = (o) => (o && o.messageId ? { messageId: o.messageId } : undefined);
+
   return {
-    async sendText(to, text) {
-      const sent = await sock.sendMessage(await resolveTarget(to), { text });
+    newMessageId() {
+      return generateMessageIDV2(sock?.user?.id);
+    },
+    /** Tampilkan "sedang mengetik…" selama ms lalu berhenti (simulasi manusia). */
+    async typing(to, ms) {
+      const jid = await resolveTarget(to);
+      await sock.sendPresenceUpdate('composing', jid).catch(() => {});
+      await new Promise((r) => setTimeout(r, ms));
+      await sock.sendPresenceUpdate('paused', jid).catch(() => {});
+    },
+    async sendText(to, text, o) {
+      const sent = await sock.sendMessage(await resolveTarget(to), { text }, opts(o));
       return { id: sent?.key?.id || null };
     },
-    async sendMedia(to, { type, mime, name, caption, buffer }) {
+    async sendMedia(to, { type, mime, name, caption, buffer }, o) {
       const content =
         type === 'image' ? { image: buffer, caption: caption || undefined, mimetype: mime } :
         type === 'video' ? { video: buffer, caption: caption || undefined, mimetype: mime } :
         type === 'audio' ? { audio: buffer, mimetype: mime, ptt: /ogg|opus/.test(mime || '') } :
         { document: buffer, mimetype: mime || 'application/octet-stream', fileName: name || 'berkas', caption: caption || undefined };
-      const sent = await sock.sendMessage(await resolveTarget(to), content);
+      const sent = await sock.sendMessage(await resolveTarget(to), content, opts(o));
       return { id: sent?.key?.id || null };
     },
     async groups() {

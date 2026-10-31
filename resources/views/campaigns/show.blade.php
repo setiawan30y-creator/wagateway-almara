@@ -21,6 +21,13 @@
 
 @section('content')
 @if ($campaign->pause_reason)<div class="alert alert-warning">Dijeda: {{ $campaign->pause_reason }}</div>@endif
+@php $dq = $campaign->device ? \App\Support\SendingQuota::summary($campaign->device) : null; @endphp
+@if ($dq && $dq['remaining'] === 0 && in_array($campaign->status, ['running', 'scheduled']))
+    <div class="alert alert-warning">Batas broadcast harian nomor <b>{{ $campaign->device->name }}</b> sudah tercapai ({{ $dq['sent'] }}/{{ $dq['limit'] }}{{ $dq['warmup'] ? ', pemanasan hari ke-'.$dq['age'] : '' }}). Sisa penerima otomatis dilanjutkan besok.</div>
+@endif
+@if ($campaign->device?->provider === 'qr' && $campaign->status === 'running')
+    <div class="hint" style="margin-bottom:8px">🛡️ Anti-blokir aktif: pesan dikirim satu per satu dengan jeda acak {{ implode('–', \App\Support\SendingQuota::delayRange()) }} detik{{ \App\Models\Setting::get('broadcast_typing') === '1' ? ' + “sedang mengetik…”' : '' }}@if ($dq) · kuota hari ini {{ $dq['sent'] }}/{{ $dq['limit'] }}@endif.</div>
+@endif
 @if ($quiet && in_array($campaign->status, ['running', 'scheduled']))<div class="alert alert-warning">Sedang jam tenang (quiet hours) — pengiriman otomatis menunggu.</div>@endif
 
 <div class="grid grid-5" style="margin-bottom:10px">

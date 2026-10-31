@@ -14,7 +14,7 @@ class Device extends Model
 {
     protected $fillable = [
         'name', 'provider', 'phone_number', 'credentials',
-        'status', 'is_default', 'is_active', 'last_seen_at',
+        'status', 'is_default', 'is_active', 'last_seen_at', 'paired_at',
     ];
 
     protected $hidden = ['credentials'];
@@ -26,6 +26,7 @@ class Device extends Model
             'is_default' => 'boolean',
             'is_active' => 'boolean',
             'last_seen_at' => 'datetime',
+            'paired_at' => 'datetime',
         ];
     }
 

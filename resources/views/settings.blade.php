@@ -21,6 +21,20 @@
                 <div class="field"><label>Auto-pause bila gagal ≥ (%)</label><input class="input" type="number" step="0.5" name="auto_pause_failed_rate" min="1" max="100" value="{{ $s['auto_pause_failed_rate'] }}" required></div>
                 <div class="field"><label>Auto-pause bila opt-out ≥ (%)</label><input class="input" type="number" step="0.5" name="auto_pause_optout_rate" min="0.5" max="100" value="{{ $s['auto_pause_optout_rate'] }}" required></div>
             </div>
+
+            <h4 class="sec-title">Anti-blokir (perangkat Scan QR)</h4>
+            <div class="grid grid-2" style="gap:0 10px">
+                <div class="field"><label>Jeda acak minimum (detik)</label><input class="input" type="number" name="broadcast_delay_min" min="0" max="600" value="{{ $s['broadcast_delay_min'] }}" required></div>
+                <div class="field"><label>Jeda acak maksimum (detik)</label><input class="input" type="number" name="broadcast_delay_max" min="0" max="600" value="{{ $s['broadcast_delay_max'] }}" required>
+                    @error('broadcast_delay_max')<div class="error-text">{{ $message }}</div>@enderror</div>
+                <div class="field"><label>Batas broadcast / nomor / hari</label><input class="input" type="number" name="broadcast_daily_limit" min="0" value="{{ $s['broadcast_daily_limit'] }}" required><div class="hint">0 = tanpa batas. Sisa kuota berlanjut otomatis besok.</div></div>
+                <div class="field"><label>&nbsp;</label>
+                    <label class="check"><input type="checkbox" name="broadcast_typing" value="1" @checked($s['broadcast_typing'] === '1')> Tampilkan “sedang mengetik…” sebelum kirim</label>
+                    <label class="check"><input type="checkbox" name="warmup_enabled" value="1" @checked($s['warmup_enabled'] === '1')> Pemanasan nomor baru</label></div>
+            </div>
+            <div class="hint">Pesan broadcast dikirim satu per satu dengan jeda acak di antara kedua angka di atas — tidak serentak — sehingga polanya mirip manusia.
+                Pemanasan membatasi nomor yang baru ditautkan: hari 1–3 maks 30, hari 4–7 maks 60, hari 8–14 maks 120, hari 15–21 maks 200 pesan/hari, setelah itu mengikuti batas harian.
+                Dengan jeda saat ini, kecepatan efektif ±{{ \App\Support\SendingQuota::maxPerMinute() }} pesan/menit.</div>
         </div>
     </div>
 

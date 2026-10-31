@@ -567,3 +567,8 @@ img, svg, canvas { max-width: 100%; }
 .field .label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
 .field .label-row > label { margin: 0; }
 .field .label-row .btn { margin-left: auto; }
+.sec-title { margin: 12px 0 6px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.quota { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.quota .bar { display: inline-block; width: 60px; height: 5px; background: var(--border); border-radius: 3px; vertical-align: middle; overflow: hidden; margin-right: 4px; }
+.quota .bar i { display: block; height: 100%; background: var(--ok); }
+.quota.full .bar i { background: var(--err); }

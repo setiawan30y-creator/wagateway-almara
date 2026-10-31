@@ -147,6 +147,23 @@ class CampaignService
         $recent = $campaign->recipients()->where('status', '!=', 'skipped')->where('processed_at', '>=', now()->subMinute())->count();
         $quota = max(0, $campaign->rate_per_minute - $recent);
 
+        if (\App\Support\SendingQuota::applies($device)) {
+            // Scan QR: engine mengirim satu per satu dengan jeda acak -> batasi per menit per nomor (semua campaign)
+            $recentDevice = Message::where('device_id', $device->id)->where('direction', 'out')->whereNotNull('campaign_id')
+                ->where('created_at', '>=', now()->subMinute())->count();
+            $quota = min($quota, max(0, \App\Support\SendingQuota::maxPerMinute() - $recentDevice));
+
+            // Batas harian + pemanasan nomor baru: sisa penerima menunggu besok
+            $remaining = \App\Support\SendingQuota::remaining($device);
+            if ($remaining !== null) {
+                $quota = min($quota, $remaining);
+            }
+        }
+
+        if ($quota === 0) {
+            return 0;
+        }
+
         $capHours = (int) Setting::get('frequency_cap_hours');
         $campaignMedia = $campaign->mediaFile();
         $bag = [];

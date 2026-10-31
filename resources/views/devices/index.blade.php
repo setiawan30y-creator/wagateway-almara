@@ -33,7 +33,10 @@
                     </td>
                     <td>{{ $d->providerLabel() }}</td>
                     <td class="hide-sm mono">{{ $d->phone_number ?? '—' }}</td>
-                    <td><span class="badge st-{{ $d->status }}">{{ $d->status }}</span></td>
+                    <td><span class="badge st-{{ $d->status }}">{{ $d->status }}</span>
+                        @php $dq = \App\Support\SendingQuota::summary($d); @endphp
+                        @if ($dq)<div class="quota {{ $dq['remaining'] === 0 ? 'full' : '' }}" title="Broadcast hari ini / batas harian{{ $dq['warmup'] ? ' (pemanasan nomor baru)' : '' }}"><span class="bar"><i style="width:{{ min(100, round($dq['sent'] * 100 / max(1, $dq['limit']))) }}%"></i></span>{{ $dq['sent'] }}/{{ $dq['limit'] }}{{ $dq['warmup'] ? ' · warm-up hari '.$dq['age'] : '' }}</div>@endif
+                    </td>
                     <td class="hide-sm muted">{{ $d->last_seen_at?->diffForHumans() ?? '—' }}</td>
                     <td class="hide-sm right">{{ number_format($d->messages_count, 0, ',', '.') }}</td>
                     <td class="right nowrap">

@@ -29,6 +29,12 @@ class Setting extends Model
         'auto_pause_failed_rate' => '20',
         'auto_pause_optout_rate' => '5',
         'auto_pause_min_sample' => '20',
+        // Pengaman broadcast perangkat Scan QR
+        'broadcast_delay_min' => '8',    // detik
+        'broadcast_delay_max' => '25',   // detik
+        'broadcast_typing' => '1',       // tampilkan "sedang mengetik…"
+        'broadcast_daily_limit' => '300', // per nomor per hari, 0 = tanpa batas
+        'warmup_enabled' => '1',         // pemanasan nomor baru
         'stop_keywords' => 'stop, berhenti, unsubscribe, unreg',
         'start_keywords' => 'start, mulai, daftar',
         'stop_reply' => 'Anda telah berhenti berlangganan pesan dari kami. Balas MULAI untuk berlangganan kembali.',

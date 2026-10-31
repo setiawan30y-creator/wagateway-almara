@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
  */
 class LogProvider implements WhatsAppProvider
 {
-    public function sendText(Device $device, string $to, string $body): SendResult
+    public function sendText(Device $device, string $to, string $body, array $options = []): SendResult
     {
         Log::info('[WA-SIMULASI] Pesan dikirim', [
             'device' => $device->name,
@@ -28,7 +28,7 @@ class LogProvider implements WhatsAppProvider
         return SendResult::success('sim_'.Str::lower(Str::random(16)));
     }
 
-    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult
+    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null, array $options = []): SendResult
     {
         Log::info('[WA-SIMULASI] Media dikirim', ['device' => $device->name, 'to' => $to, 'type' => $media->type, 'size' => $media->size]);
 

@@ -39,11 +39,20 @@ class QrWebhookController extends Controller
         $type = $request->input('type', 'message');
 
         if ($type === 'status') {
-            $data = $request->validate(['id' => ['required', 'string', 'max:191'], 'status' => ['required', Rule::in(['sent', 'delivered', 'read', 'failed'])]]);
+            $data = $request->validate([
+                'id' => ['required', 'string', 'max:191'],
+                'status' => ['required', Rule::in(['sent', 'delivered', 'read', 'failed'])],
+                'error' => ['nullable', 'string', 'max:500'],
+            ]);
             $message = Message::where('provider_message_id', $data['id'])->where('direction', 'out')->where('device_id', $device->id)->first();
 
             if ($message && self::RANK[$data['status']] > (self::RANK[$message->status] ?? 0)) {
-                $message->forceFill(['status' => $data['status']] + ($data['status'] === 'failed' ? ['error' => 'Gagal terkirim (engine QR)'] : []))->save();
+                $message->forceFill(['status' => $data['status']] + ($data['status'] === 'failed' ? ['error' => 'Engine QR: '.($data['error'] ?? 'gagal terkirim')] : []))->save();
+
+                if ($data['status'] === 'failed' && $message->campaign_id) {
+                    \App\Models\CampaignRecipient::where('message_id', $message->id)->update(['status' => 'failed']);
+                }
+
                 $webhooks->dispatch('message.status', ['message' => $message->toApiArray()]);
             }
 
@@ -77,6 +86,7 @@ class QrWebhookController extends Controller
                 'status' => $data['status'] === 'connected' ? 'connected' : 'disconnected',
                 'phone_number' => $data['phone'] ?? null,
                 'last_seen_at' => $data['status'] === 'connected' ? now() : null,
+                'paired_at' => $data['status'] === 'connected' && ! $device->paired_at ? now() : null,
             ], fn ($v) => $v !== null))->save();
 
             if ($wasConnected && $data['status'] !== 'connected') {

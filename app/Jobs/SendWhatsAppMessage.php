@@ -49,9 +49,11 @@ class SendWhatsAppMessage implements ShouldQueue
         try {
             $provider = $providers->for($device);
             $media = $message->mediaFile();
+            // Broadcast lewat Scan QR: kirim seperti manusia (jeda acak + "sedang mengetik…")
+            $options = $message->campaign_id && $device->provider === 'qr' ? ['humanize' => \App\Support\SendingQuota::humanize()] : [];
             $result = $media
-                ? $provider->sendMedia($device, $message->to, $media, $message->body !== '' ? $message->body : null)
-                : $provider->sendText($device, $message->to, $message->body);
+                ? $provider->sendMedia($device, $message->to, $media, $message->body !== '' ? $message->body : null, $options)
+                : $provider->sendText($device, $message->to, $message->body, $options);
         } catch (Throwable $e) {
             Log::error('[WA] Gagal mengirim pesan', ['message' => $message->public_id, 'error' => $e->getMessage()]);
             $result = SendResult::failure('Kesalahan internal saat mengirim pesan.');

@@ -31,14 +31,14 @@ use Illuminate\Support\Facades\Http;
  */
 class QrEngineProvider implements WhatsAppProvider
 {
-    public function sendText(Device $device, string $to, string $body): SendResult
+    public function sendText(Device $device, string $to, string $body, array $options = []): SendResult
     {
         try {
             $response = $this->client($device)->post($device->credential('send_path') ?: '/send-message', [
                 'session' => $this->session($device),
                 'to' => $to,
                 'message' => $body,
-            ]);
+            ] + (isset($options['humanize']) ? ['humanize' => $options['humanize']] : []));
         } catch (ConnectionException $e) {
             return SendResult::failure('Engine QR tidak dapat dihubungi. Pastikan engine berjalan (npm start di folder engine).', retryable: true);
         }
@@ -54,7 +54,7 @@ class QrEngineProvider implements WhatsAppProvider
         return SendResult::failure('Engine QR: '.(is_string($error) ? $error : json_encode($error)), retryable: $response->serverError());
     }
 
-    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null): SendResult
+    public function sendMedia(Device $device, string $to, MediaFile $media, ?string $caption = null, array $options = []): SendResult
     {
         try {
             $response = $this->client($device)->timeout(120)->post('/send-media', [
@@ -65,7 +65,7 @@ class QrEngineProvider implements WhatsAppProvider
                 'name' => $media->name,
                 'caption' => $caption,
                 'data' => $media->base64(),
-            ]);
+            ] + (isset($options['humanize']) ? ['humanize' => $options['humanize']] : []));
         } catch (ConnectionException $e) {
             return SendResult::failure('Engine QR tidak dapat dihubungi. Pastikan engine berjalan (npm start di folder engine).', retryable: true);
         }
