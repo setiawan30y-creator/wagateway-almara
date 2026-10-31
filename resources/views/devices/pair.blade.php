@@ -66,7 +66,12 @@
     function load() {
         if (done) return;
         fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                return r.json().catch(function () { return { _http: r.status }; }).then(function (d) {
+                    if (!r.ok) { throw new Error('HTTP ' + r.status + (d && d.message ? ' — ' + d.message : '')); }
+                    return d;
+                });
+            })
             .then(function (d) {
                 if (d.connected) {
                     done = true;
@@ -79,7 +84,10 @@
                 render(d.qr);
                 statusEl.textContent = d.message || '';
             })
-            .catch(function () { statusEl.textContent = 'Gagal menghubungi server gateway.'; });
+            .catch(function (e) {
+                statusEl.textContent = 'Gagal menghubungi server gateway' + (e && e.message ? ' (' + e.message + ')' : '') + '. Lihat storage/logs/laravel.log di server.';
+                setTimeout(load, 5000);
+            });
     }
 
     document.getElementById('qr-refresh').addEventListener('click', function () { lastQr = null; load(); });
