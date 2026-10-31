@@ -43,7 +43,7 @@ class CampaignService
         $allowed = (clone $base)->whereIn('consent', self::allowedConsents());
         $capHours = (int) Setting::get('frequency_cap_hours');
         $capped = $capHours > 0
-            ? (clone $allowed)->whereHas('messages', fn ($m) => $m->whereNotNull('campaign_id')->where('direction', 'out')->where('created_at', '>=', now()->subHours($capHours)))->count()
+            ? (clone $allowed)->whereHas('messages', fn ($m) => $m->whereNotNull('campaign_id')->where('direction', 'out')->where('status', '!=', 'failed')->where('created_at', '>=', now()->subHours($capHours)))->count()
             : 0;
         $eligible = $allowed->count() - $capped;
         $max = (int) Setting::get('max_recipients_per_campaign');
@@ -206,7 +206,7 @@ class CampaignService
             } elseif (! in_array($contact->consent, self::allowedConsents(), true)) {
                 $reason = $contact->consent === 'opted_out' ? 'opt-out' : 'belum ada izin (opt-in)';
             } elseif ($capHours > 0 && Message::where('contact_id', $contact->id)->whereNotNull('campaign_id')
-                ->where('direction', 'out')->where('created_at', '>=', now()->subHours($capHours))->exists()) {
+                ->where('direction', 'out')->where('status', '!=', 'failed')->where('created_at', '>=', now()->subHours($capHours))->exists()) {
                 $reason = "frequency cap ({$capHours} jam)";
             }
 

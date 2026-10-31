@@ -149,6 +149,7 @@
           (d.eligible === 0 && d.total > 0 ? '<br><b>Tidak ada yang akan terkirim.</b> ' + (d.no_consent ? 'Tandai kontak yang sudah setuju sebagai opt-in (menu Kontak → Aksi massal), ' : '') + (d.capped ? 'atau ubah Frequency cap di Pengaturan.' : '') : '');
         outA.className = 'alert ' + (d.eligible === 0 ? 'alert-error' : 'alert-success');
         aud.setAttribute('data-eligible', d.eligible);
+        aud.setAttribute('data-why', (d.total === 0 ? 'Tidak ada kontak yang cocok dengan pilihan rombongan / tag / tahap.' : d.total + ' kontak dipilih, semua dilewati: ' + parts.join(', ') + '.'));
       });
     };
     aud.addEventListener('change', function (e) { if (e.target && /^(lists|tags|stages)\[\]$/.test(e.target.name)) runA(); }); runA();
@@ -368,7 +369,7 @@
     sendBtn.form.addEventListener('submit', function (e) {
       var m = modes.querySelector('input[name="mode"]:checked');
       if (m && m.value !== 'draft' && sendBtn.form.getAttribute('data-eligible') === '0' &&
-          !confirm('Tidak ada penerima yang memenuhi syarat — campaign akan selesai tanpa mengirim pesan. Tetap lanjutkan?')) {
+          !confirm('Tidak ada penerima yang memenuhi syarat.\n\n' + (sendBtn.form.getAttribute('data-why') || '') + '\n\nSolusi: tandai kontak opt-in (Rombongan → Tandai anggota opt-in) dan/atau ubah Frequency cap di Pengaturan.\n\nTetap simpan campaign tanpa mengirim?')) {
         e.preventDefault(); e.stopImmediatePropagation();
       }
     }, true);
