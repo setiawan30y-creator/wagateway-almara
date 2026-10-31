@@ -255,6 +255,65 @@ class CampaignService
         }
     }
 
+    /**
+     * Penjelasan kenapa campaign belum / tidak bergerak (ditampilkan di halaman campaign).
+     *
+     * @return array<int, array{level: string, text: string}>
+     */
+    public function diagnose(Campaign $campaign): array
+    {
+        $out = [];
+        $add = function (string $level, string $text) use (&$out) {
+            $out[] = ['level' => $level, 'text' => $text];
+        };
+
+        if (! in_array($campaign->status, ['running', 'scheduled'], true)) {
+            return [];
+        }
+
+        $device = $campaign->device;
+        $stats = $campaign->stats();
+
+        if ($campaign->status === 'scheduled') {
+            $add('info', 'Terjadwal: mulai dikirim '.$campaign->scheduled_at?->format('d/m/Y H:i').'.');
+        }
+
+        if (! \App\Support\License::allows('broadcast')) {
+            $add('error', 'Paket Anda tidak termasuk fitur broadcast.');
+        }
+
+        if ($campaign->status === 'running' && $stats['total'] > 0 && $stats['pending'] === 0 && $stats['sent'] + $stats['failed'] === 0) {
+            $add('error', 'Tidak ada penerima yang bisa dikirimi — semua dilewati (lihat "Dilewati" di bawah, umumnya karena kontak belum opt-in).');
+        } elseif ($campaign->status === 'running' && $stats['total'] === 0) {
+            $add('error', 'Audience kosong: tidak ada kontak yang cocok dengan rombongan / tag / tahap yang dipilih.');
+        }
+
+        if (! $device || ! $device->is_active) {
+            $add('error', 'Perangkat pengirim tidak ada atau nonaktif.');
+        } elseif ($device->provider === 'qr' && $device->status !== 'connected') {
+            $add('error', 'Nomor WhatsApp "'.$device->name.'" tidak terhubung. Buka Perangkat → Cek / Scan QR, dan pastikan jendela Engine berjalan.');
+        }
+
+        if (Setting::inQuietHours()) {
+            $add('warn', 'Sedang jam tenang ('.Setting::get('quiet_start').'–'.Setting::get('quiet_end').'): pengiriman menunggu sampai jam tenang selesai. Ubah di Pengaturan bila perlu.');
+        }
+
+        if ($device && ($rem = \App\Support\SendingQuota::remaining($device)) === 0) {
+            $add('warn', 'Kuota broadcast harian nomor ini sudah habis — dilanjutkan besok.');
+        }
+
+        $beat = \Illuminate\Support\Facades\Cache::get('scheduler.heartbeat');
+        if ($stats['pending'] > 0 && (! $beat || now()->diffInSeconds(\Illuminate\Support\Carbon::parse($beat)) > 150)) {
+            $add('error', 'Scheduler tidak berjalan, jadi sisa penerima tidak diproses. Jalankan mulai.bat (jendela "Scheduler") atau: php artisan schedule:work — atau klik "Proses batch" untuk mengirim satu batch manual.');
+        }
+
+        if ($out === [] && $stats['pending'] > 0) {
+            $add('info', 'Sedang mengirim: '.$stats['pending'].' penerima menunggu giliran (dikirim bertahap dengan jeda acak).');
+        }
+
+        return $out;
+    }
+
     private function autoPause(Campaign $campaign, string $reason): void
     {
         $this->pause($campaign, 'Otomatis: '.$reason);

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schedule;
 */
 
 Artisan::command('campaigns:run', function (CampaignService $service) {
+    \Illuminate\Support\Facades\Cache::put('scheduler.heartbeat', now()->toIso8601String(), 600);
     $result = $service->tick();
     $this->info("Campaign dimulai: {$result['started']}, pesan dikirim: {$result['sent']}");
 })->purpose('Proses campaign broadcast terjadwal & berjalan (satu batch)');

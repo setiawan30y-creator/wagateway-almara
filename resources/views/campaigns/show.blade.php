@@ -20,18 +20,21 @@
 @endsection
 
 @section('content')
+<div id="campaign-live" @if (in_array($campaign->status, ['running', 'scheduled'])) data-live-refresh="10" @endif>
 @if ($campaign->status === 'draft')
     <div class="alert alert-warning">📝 Campaign ini masih <b>draft</b> — belum dikirim. Klik <b>🚀 Kirim sekarang</b> di kanan atas untuk mulai mengirim.</div>
 @endif
 @if ($campaign->pause_reason)<div class="alert alert-warning">Dijeda: {{ $campaign->pause_reason }}</div>@endif
 @php $dq = $campaign->device ? \App\Support\SendingQuota::summary($campaign->device) : null; @endphp
-@if ($dq && $dq['remaining'] === 0 && in_array($campaign->status, ['running', 'scheduled']))
-    <div class="alert alert-warning">Batas broadcast harian nomor <b>{{ $campaign->device->name }}</b> sudah tercapai ({{ $dq['sent'] }}/{{ $dq['limit'] }}{{ $dq['warmup'] ? ', pemanasan hari ke-'.$dq['age'] : '' }}). Sisa penerima otomatis dilanjutkan besok.</div>
-@endif
+@foreach ($diagnosis as $d)
+    <div class="alert {{ $d['level'] === 'error' ? 'alert-error' : ($d['level'] === 'warn' ? 'alert-warning' : 'alert-success') }}">{{ $d['level'] === 'info' ? '⏳' : '⚠️' }} {{ $d['text'] }}</div>
+@endforeach
 @if ($campaign->device?->provider === 'qr' && $campaign->status === 'running')
     <div class="hint" style="margin-bottom:8px">🛡️ Anti-blokir aktif: pesan dikirim satu per satu dengan jeda acak {{ implode('–', \App\Support\SendingQuota::delayRange()) }} detik{{ \App\Models\Setting::get('broadcast_typing') === '1' ? ' + “sedang mengetik…”' : '' }}@if ($dq) · kuota hari ini {{ $dq['sent'] }}/{{ $dq['limit'] }}@endif.</div>
 @endif
-@if ($quiet && in_array($campaign->status, ['running', 'scheduled']))<div class="alert alert-warning">Sedang jam tenang (quiet hours) — pengiriman otomatis menunggu.</div>@endif
+@if (in_array($campaign->status, ['running', 'scheduled']))
+    <div class="hint live-note" style="margin-bottom:8px"><span class="live-dot"></span> Halaman ini diperbarui otomatis tiap 10 detik.</div>
+@endif
 
 <div class="grid grid-5" style="margin-bottom:10px">
     <div class="card kpi"><div class="l">Status</div><div class="v" style="font-size:16px">{{ $campaign->statusLabel() }}</div><div class="progress" style="margin-top:5px"><i style="width:{{ $stats['progress'] }}%"></i></div></div>
@@ -119,5 +122,6 @@
         </tbody>
     </table></div>
     {{ $recipients->links() }}
+</div>
 </div>
 @endsection

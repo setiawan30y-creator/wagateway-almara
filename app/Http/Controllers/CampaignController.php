@@ -135,6 +135,7 @@ class CampaignController extends Controller
         return view('campaigns.show', [
             'campaign' => $campaign,
             'usedTemplates' => $campaign->usedTemplates(),
+            'diagnosis' => $this->service->diagnose($campaign),
             'stats' => $campaign->stats(),
             'variantStats' => $variantStats,
             'recipients' => $campaign->recipients()->with(['contact', 'variant', 'message'])->latest('id')->paginate(50),

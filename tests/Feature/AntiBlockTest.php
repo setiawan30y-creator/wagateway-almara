@@ -87,7 +87,7 @@ class AntiBlockTest extends TestCase
         $this->assertSame('running', $campaign->refresh()->status);
 
         $admin = User::factory()->create(['role' => 'owner']);
-        $this->actingAs($admin)->get("/broadcast/{$campaign->id}")->assertOk()->assertSee('Batas broadcast harian');
+        $this->actingAs($admin)->get("/broadcast/{$campaign->id}")->assertOk()->assertSee('Kuota broadcast harian');
         $this->actingAs($admin)->get('/perangkat')->assertOk()->assertSee('7/7');
 
         $this->travel(1)->days();
@@ -127,5 +127,38 @@ class AntiBlockTest extends TestCase
         app(\App\Services\MessageService::class)->queueText($device, '081300000001', 'Halo', User::factory()->create());
 
         $this->assertArrayNotHasKey('humanize', $payloads[0]);
+    }
+
+    public function test_campaign_page_explains_why_it_waits(): void
+    {
+        Http::fake(fn () => Http::response(['success' => true, 'id' => 'X'.uniqid(), 'queued' => true]));
+        Setting::set('warmup_enabled', '0');
+        $device = $this->qrDevice(40);
+        $campaign = $this->campaign($device, 3);
+        $admin = User::factory()->create(['role' => 'owner']);
+
+        // scheduler belum pernah jalan + ada penerima menunggu
+        $this->actingAs($admin)->get("/broadcast/{$campaign->id}")->assertOk()
+            ->assertSee('Scheduler tidak berjalan')->assertSee('data-live-refresh', false);
+
+        \Illuminate\Support\Facades\Artisan::call('campaigns:run');
+        $this->assertNotNull(\Illuminate\Support\Facades\Cache::get('scheduler.heartbeat'));
+
+        // nomor terputus + jam tenang
+        $device->update(['status' => 'disconnected']);
+        Setting::set('quiet_start', '00:00');
+        Setting::set('quiet_end', '23:59');
+        $c2 = $this->campaign2($device);
+        $this->actingAs($admin)->get("/broadcast/{$c2->id}")->assertOk()
+            ->assertSee('tidak terhubung')->assertSee('Sedang jam tenang')->assertDontSee('Scheduler tidak berjalan');
+    }
+
+    private function campaign2(Device $device): Campaign
+    {
+        Contact::create(['phone' => '6281399990001', 'name' => 'Z', 'consent' => 'opted_in']);
+        $c = Campaign::create(['name' => 'C2', 'device_id' => $device->id, 'template_id' => Template::first()->id, 'audience' => [], 'rate_per_minute' => 10]);
+        app(CampaignService::class)->start($c);
+
+        return $c->refresh();
     }
 }

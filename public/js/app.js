@@ -363,4 +363,27 @@
     });
     syncBtn();
   }
+
+  // Halaman campaign berjalan: perbarui progres otomatis tanpa reload penuh
+  var live = document.querySelector('[data-live-refresh]');
+  if (live) {
+    var every = (+live.getAttribute('data-live-refresh') || 10) * 1000;
+    var tick = function () {
+      var c = document.getElementById('campaign-live');
+      if (!c || !c.hasAttribute('data-live-refresh')) return;
+      var busy = c.querySelector('details[open]') || (document.activeElement && c.contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+      if (document.hidden || busy) { setTimeout(tick, every); return; }
+      fetch(location.href, { headers: { 'X-Requested-With': 'fetch' }, credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (html) {
+          if (html) {
+            var next = new DOMParser().parseFromString(html, 'text/html').getElementById('campaign-live');
+            if (next) { c.replaceWith(next); if (!next.hasAttribute('data-live-refresh')) return; }
+          }
+          setTimeout(tick, every);
+        })
+        .catch(function () { setTimeout(tick, every); });
+    };
+    setTimeout(tick, every);
+  }
 })();
