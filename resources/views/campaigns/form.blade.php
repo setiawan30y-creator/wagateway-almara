@@ -35,18 +35,33 @@
 
             <div class="field">
                 <div class="label-row"><label>Template pesan</label><button type="button" class="btn btn-sm" data-template-all>Pilih semua</button></div>
+                @php $selVariants = array_map('intval', old('variant_ids', $campaign->variantIds())); @endphp
+                <input type="hidden" name="variant_ids[]" value="0">
                 <div class="pick-list">
-                    @foreach ($templates as $t)
-                        <label class="pick">
-                            <input type="checkbox" name="template_ids[]" value="{{ $t->id }}" data-variants="{{ max(1, $t->variants->count()) }}" @checked(in_array($t->id, $selTemplates, true))>
-                            <span><b>{{ $t->name }}</b>
-                                <span class="muted">{{ $t->variants->count() }} varian @if ($t->media_type)· 📎 {{ \App\Support\MediaFile::LABELS[$t->media_type] ?? 'file' }}@endif</span></span>
-                        </label>
-                    @endforeach
+                    @forelse ($templates as $t)
+                        @php $tOn = in_array($t->id, $selTemplates, true); @endphp
+                        <div class="pick-group" data-template-group>
+                            <label class="pick">
+                                <input type="checkbox" name="template_ids[]" value="{{ $t->id }}" data-template-box @checked($tOn)>
+                                <span><b>{{ $t->name }}</b>
+                                    <span class="muted">{{ $t->variants->count() }} varian @if ($t->media_type)· 📎 {{ \App\Support\MediaFile::LABELS[$t->media_type] ?? 'file' }}@endif</span></span>
+                            </label>
+                            <div class="pick-variants">
+                                @foreach ($t->variants as $v)
+                                    <label class="pick pick-variant" title="{{ $v->body }}">
+                                        <input type="checkbox" name="variant_ids[]" value="{{ $v->id }}" data-variant-box @checked($tOn && ($selVariants === [] || in_array($v->id, $selVariants, true)))>
+                                        <span><b>Varian {{ $v->label }}</b> <span class="muted">{{ \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', $v->body), 90) }}</span></span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @empty
+                        <div class="muted" style="padding:6px">Belum ada template aktif. <a href="{{ route('templates.create') }}">Buat template</a>.</div>
+                    @endforelse
                 </div>
                 <div class="hint" data-template-count></div>
                 @error('template_ids')<div class="error-text">{{ $message }}</div>@enderror
-                <div class="hint">Pilih beberapa template agar tiap penerima mendapat pesan yang berbeda secara acak (tidak seragam). Tulis juga variasi kata di template dengan format <span class="mono">{Halo|Hai|Selamat siang}</span>.</div>
+                <div class="hint">Centang template lalu pilih varian mana saja yang dipakai. Tiap penerima mendapat salah satu varian terpilih secara acak; pilih beberapa agar pesan tidak seragam. Hanya template aktif yang tampil. Tulis juga variasi kata di template dengan format <span class="mono">{Halo|Hai|Selamat siang}</span>.</div>
             </div>
         </div>
     </div>

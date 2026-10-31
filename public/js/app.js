@@ -154,17 +154,29 @@
     };
     aud.addEventListener('change', function (e) { if (e.target && /^(lists|tags|stages)\[\]$/.test(e.target.name)) runA(); }); runA();
 
-    // Template: hitung varian terpilih + tombol pilih semua
+    // Template & varian: centang template = semua variannya; pilih varian satu per satu; hitung variasi
     var tplOut = document.querySelector('[data-template-count]');
+    var groups = aud.querySelectorAll('[data-template-group]');
     var countT = function () {
       var t = 0, v = 0;
-      aud.querySelectorAll('input[name="template_ids[]"]:checked').forEach(function (i) { t++; v += +(i.getAttribute('data-variants') || 1); });
-      if (tplOut) tplOut.textContent = t ? t + ' template · ' + v + ' variasi pesan diacak per penerima' : 'Pilih minimal satu template';
+      groups.forEach(function (g) {
+        var n = g.querySelectorAll('[data-variant-box]:checked').length;
+        if (n) { t++; v += n; }
+      });
+      if (tplOut) tplOut.textContent = v ? t + ' template · ' + v + ' varian pesan diacak per penerima' : 'Pilih minimal satu template / varian';
     };
-    aud.addEventListener('change', function (e) { if (e.target && e.target.name === 'template_ids[]') countT(); });
+    groups.forEach(function (g) {
+      var tb = g.querySelector('[data-template-box]'), vbs = g.querySelectorAll('[data-variant-box]');
+      tb.addEventListener('change', function () { vbs.forEach(function (b) { b.checked = tb.checked; }); countT(); });
+      vbs.forEach(function (b) {
+        b.addEventListener('change', function () {
+          tb.checked = Array.prototype.some.call(vbs, function (x) { return x.checked; }); countT();
+        });
+      });
+    });
     var allBtn = document.querySelector('[data-template-all]');
     if (allBtn) allBtn.addEventListener('click', function () {
-      var boxes = aud.querySelectorAll('input[name="template_ids[]"]');
+      var boxes = aud.querySelectorAll('[data-template-box], [data-variant-box]');
       var all = Array.prototype.every.call(boxes, function (b) { return b.checked; });
       boxes.forEach(function (b) { b.checked = !all; }); countT();
     });

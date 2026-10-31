@@ -37,7 +37,7 @@ class CampaignController extends Controller
 
         $campaign = $from
             ? new Campaign([
-                'name' => $from->name.' (salinan)', 'device_id' => $from->device_id, 'template_ids' => $from->templateIds(),
+                'name' => $from->name.' (salinan)', 'device_id' => $from->device_id, 'template_ids' => $from->templateIds(), 'variant_ids' => $from->variantIds(),
                 'audience' => $from->audience ?? [], 'rate_per_minute' => $from->rate_per_minute,
             ])
             : new Campaign(['rate_per_minute' => (int) Setting::get('default_rate_per_minute'), 'audience' => ['lists' => array_filter([$request->integer('rombongan')])]]);
@@ -64,6 +64,8 @@ class CampaignController extends Controller
             'device_id' => ['required', 'integer', \App\Support\Tenancy::exists('devices')],
             'template_ids' => ['required', 'array', 'min:1'],
             'template_ids.*' => ['integer', \App\Support\Tenancy::exists('templates')],
+            'variant_ids' => ['nullable', 'array'],
+            'variant_ids.*' => ['integer'],
             'lists' => ['nullable', 'array'],
             'lists.*' => ['integer', \App\Support\Tenancy::exists('recipient_lists')],
             'copy_media_from' => ['nullable', 'integer', \App\Support\Tenancy::exists('campaigns')],
@@ -82,11 +84,25 @@ class CampaignController extends Controller
         $media ??= isset($data['copy_media_from']) ? Campaign::find($data['copy_media_from'])?->mediaFile() : null;
         $templateIds = array_values(array_unique(array_map('intval', $data['template_ids'])));
 
+        // varian terpilih harus milik template terpilih; semua varian template tercentang = simpan null (semua)
+        $variantIds = null;
+        if (array_key_exists('variant_ids', $data)) {
+            $all = \App\Models\TemplateVariant::whereIn('template_id', $templateIds)->pluck('id')->all();
+            $picked = array_values(array_intersect(array_map('intval', (array) $data['variant_ids']), $all));
+
+            if ($picked === []) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['template_ids' => 'Pilih minimal satu varian pesan.']);
+            }
+
+            $variantIds = count($picked) === count($all) ? null : $picked;
+        }
+
         $campaign = Campaign::create([
             'name' => $data['name'],
             'device_id' => $data['device_id'],
             'template_id' => $templateIds[0],
             'template_ids' => $templateIds,
+            'variant_ids' => $variantIds,
             'media_type' => $media?->type,
             'media_path' => $media?->path,
             'media_name' => $media?->name,

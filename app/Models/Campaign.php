@@ -25,7 +25,7 @@ class Campaign extends Model
     ];
 
     protected $fillable = [
-        'name', 'device_id', 'template_id', 'template_ids', 'media_type', 'media_path', 'media_name', 'media_mime', 'media_size', 'status', 'audience', 'rate_per_minute',
+        'name', 'device_id', 'template_id', 'template_ids', 'variant_ids', 'media_type', 'media_path', 'media_name', 'media_mime', 'media_size', 'status', 'audience', 'rate_per_minute',
         'scheduled_at', 'started_at', 'finished_at', 'pause_reason', 'created_by',
     ];
 
@@ -36,6 +36,7 @@ class Campaign extends Model
         return [
             'audience' => 'array',
             'template_ids' => 'array',
+            'variant_ids' => 'array',
             'scheduled_at' => 'datetime',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
@@ -61,10 +62,27 @@ class Campaign extends Model
         return $ids ?: array_filter([(int) $this->template_id]);
     }
 
-    /** Template aktif + varian yang dipakai campaign ini. */
+    /** ID varian terpilih (kosong = semua varian dari template terpilih). */
+    public function variantIds(): array
+    {
+        return array_values(array_unique(array_map('intval', (array) ($this->variant_ids ?? []))));
+    }
+
+    /** Template + hanya varian yang dipilih untuk campaign ini (template tanpa varian terpilih tidak dipakai). */
     public function usedTemplates(): \Illuminate\Support\Collection
     {
-        return Template::with('variants')->whereIn('id', $this->templateIds())->orderBy('name')->get();
+        $pick = $this->variantIds();
+
+        return Template::with('variants')->whereIn('id', $this->templateIds())->orderBy('name')->get()
+            ->map(function (Template $t) use ($pick) {
+                if ($pick) {
+                    $t->setRelation('variants', $t->variants->filter(fn ($v) => in_array($v->id, $pick, true))->values());
+                }
+
+                return $t;
+            })
+            ->filter(fn (Template $t) => $t->variants->isNotEmpty())
+            ->values();
     }
 
     public function recipients(): HasMany
@@ -152,6 +170,7 @@ class Campaign extends Model
             'device_id' => $this->device_id,
             'template_id' => $this->template_id,
             'template_ids' => $this->templateIds(),
+            'variant_ids' => $this->variantIds() ?: null,
             'audience' => $this->audience,
             'rate_per_minute' => $this->rate_per_minute,
             'scheduled_at' => $this->scheduled_at?->toIso8601String(),

@@ -186,4 +186,40 @@ class BroadcastRotationTest extends TestCase
         $this->assertSame('opted_in', $a->refresh()->consent);
         $this->assertSame('opted_out', $b->refresh()->consent);
     }
+
+    public function test_choose_specific_variants(): void
+    {
+        $t1 = Template::create(['name' => 'Satu', 'category' => 'marketing', 'is_active' => true]);
+        $a = $t1->variants()->create(['label' => 'A', 'body' => 'V1A']);
+        $b = $t1->variants()->create(['label' => 'B', 'body' => 'V1B']);
+        $c = $t1->variants()->create(['label' => 'C', 'body' => 'V1C']);
+        $t2 = Template::create(['name' => 'Dua', 'category' => 'marketing', 'is_active' => true]);
+        $d = $t2->variants()->create(['label' => 'A', 'body' => 'V2A']);
+        foreach (range(1, 6) as $i) {
+            Contact::create(['phone' => '62813000003'.$i.'0', 'name' => "K{$i}", 'consent' => 'opted_in']);
+        }
+
+        $this->actingAs($this->admin)->get('/broadcast/buat')->assertOk()->assertSee('Varian B')->assertSee('V1C');
+
+        // hanya varian A & C dari template "Satu" + varian A template "Dua"
+        $this->actingAs($this->admin)->post('/broadcast', [
+            'name' => 'Pilih', 'device_id' => $this->device->id, 'template_ids' => [$t1->id, $t2->id],
+            'variant_ids' => [0, $a->id, $c->id, $d->id], 'rate_per_minute' => 60, 'mode' => 'now',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $campaign = \App\Models\Campaign::where('name', 'Pilih')->first();
+        $this->assertEqualsCanonicalizing([$a->id, $c->id, $d->id], $campaign->variantIds());
+        $bodies = Message::where('campaign_id', $campaign->id)->pluck('body');
+        $this->assertCount(6, $bodies);
+        $this->assertFalse($bodies->contains('V1B'));
+        $this->assertEqualsCanonicalizing(['V1A', 'V1C', 'V2A'], $bodies->unique()->values()->all());
+
+        // tanpa varian sama sekali -> ditolak
+        $this->actingAs($this->admin)->post('/broadcast', ['name' => 'Kosong', 'device_id' => $this->device->id, 'template_ids' => [$t1->id], 'variant_ids' => [0], 'rate_per_minute' => 60, 'mode' => 'draft'])
+            ->assertSessionHasErrors('template_ids');
+
+        // semua varian tercentang -> disimpan sebagai "semua"
+        $this->actingAs($this->admin)->post('/broadcast', ['name' => 'Semua', 'device_id' => $this->device->id, 'template_ids' => [$t2->id], 'variant_ids' => [0, $d->id], 'rate_per_minute' => 60, 'mode' => 'draft']);
+        $this->assertSame([], \App\Models\Campaign::where('name', 'Semua')->first()->variantIds());
+    }
 }

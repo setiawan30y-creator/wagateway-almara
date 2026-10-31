@@ -556,7 +556,7 @@ img, svg, canvas { max-width: 100%; }
 .campaign-media-thumb { max-width: 160px; max-height: 120px; border-radius: 6px; border: 1px solid var(--border); display: block; margin-top: 4px; }
 
 /* Pilihan template (multi) */
-.pick-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px; }
+.pick-list { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px; }
 .pick { display: flex; gap: 8px; align-items: flex-start; padding: 5px 6px; border-radius: 4px; cursor: pointer; font-size: 13px; }
 .pick:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .pick input { margin-top: 3px; }
@@ -613,3 +613,9 @@ img, svg, canvas { max-width: 100%; }
 .typing-dots::after { content: '…'; animation: tdots 1.2s steps(4) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
 @keyframes tdots { 0% { width: 0; } 100% { width: 1.2em; } }
 @media (max-width: 860px) { .lp-grid { grid-template-columns: 1fr; } }
+.pick-group { border-bottom: 1px dashed var(--border); padding-bottom: 3px; }
+.pick-group:last-child { border-bottom: 0; }
+.pick-variants { padding-left: 24px; }
+.pick-variant { padding: 3px 6px; font-size: 12.5px; }
+.pick-variant span { display: block !important; }
+.pick-variant .muted { display: inline !important; }
