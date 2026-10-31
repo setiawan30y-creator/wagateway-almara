@@ -8,7 +8,11 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
 📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
 
-## Baru di versi 0.8.0 — Anti-blokir broadcast (Scan QR)
+## Baru di versi 0.9.0 — Paket Gratis / Pro (lisensi)
+
+Untuk aplikasi yang disewakan. Tanpa lisensi: paket **Gratis** (1 nomor, 100 pesan/hari, tanpa broadcast & AI, pesan diberi watermark). Kode lisensi **Pro** ditandatangani digital dengan kunci privat pemilik aplikasi dan diaktifkan di menu **Sistem → Lisensi**. Panduan pemilik: [`docs/LISENSI.md`](docs/LISENSI.md).
+
+## Versi 0.8.0 — Anti-blokir broadcast (Scan QR)
 
 | Fitur | Keterangan |
 |---|---|

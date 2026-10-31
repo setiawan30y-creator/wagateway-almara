@@ -5,6 +5,9 @@
 @section('actions')<a class="btn btn-primary" href="{{ route('campaigns.create') }}">+ Campaign</a>@endsection
 
 @section('content')
+@unless (\App\Support\License::allows('broadcast'))
+    <div class="alert alert-warning">Fitur Broadcast hanya tersedia di paket <b>Pro</b>. @can('admin')<a href="{{ route('license.show') }}">Lihat paket & aktifkan lisensi</a>@endcan</div>
+@endunless
 <div class="card">
     <div class="table-wrap">
         <table class="dense">

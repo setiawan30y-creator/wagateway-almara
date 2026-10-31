@@ -4,7 +4,7 @@
  * dan isi pesan TIDAK pernah di-cache. Navigasi offline -> /offline.html.
  * @2026-Alifiandra
  */
-const VERSION = 'almara-wa-v0.8.0';
+const VERSION = 'almara-wa-v0.9.0';
 const STATIC_ASSETS = [
   '/offline.html',
   '/css/app.css',

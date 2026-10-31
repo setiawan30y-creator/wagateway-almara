@@ -325,6 +325,20 @@ return [
         'tips' => [],
     ],
 
+    'license.*' => [
+        'judul' => 'Lisensi',
+        'fungsi' => 'Menampilkan paket aktif (Gratis / Pro), pemakaian kuota, dan tempat mengaktifkan kode lisensi.',
+        'langkah' => [
+            'Lihat paket aktif, masa berlaku, jumlah nomor, dan pesan hari ini.',
+            'Untuk upgrade / perpanjang: tempel kode lisensi dari penyedia aplikasi → Aktifkan.',
+            'Tabel Perbandingan paket menunjukkan fitur tiap paket.',
+        ],
+        'tips' => [
+            'Paket Gratis: 1 nomor, 100 pesan/hari, tanpa broadcast & AI, pesan diberi watermark.',
+            'Lisensi kedaluwarsa masih berlaku 3 hari (masa tenggang) sebelum turun ke Gratis.',
+        ],
+    ],
+
     'settings.*' => [
         'judul' => 'Pengaturan',
         'fungsi' => 'Aturan umum gateway: pengaman broadcast, kata kunci STOP/MULAI, penugasan otomatis, SLA tiket, dan jam kerja.',

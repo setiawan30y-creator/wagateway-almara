@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.key' => AuthenticateApiKey::class,
             'api.log' => LogApiRequest::class,
             'active' => EnsureUserIsActive::class,
+            'feature' => \App\Http\Middleware\RequirePlanFeature::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));

@@ -44,6 +44,20 @@ class SendWhatsAppMessage implements ShouldQueue
             return;
         }
 
+        // Batas paket (Gratis / Pro)
+        if (! \App\Support\License::deviceAllowed($device)) {
+            $this->markFailed($message, 'Nomor ini melebihi batas perangkat paket '.\App\Support\License::current()['label'].'. Upgrade lisensi untuk memakai lebih banyak nomor.', $webhooks);
+
+            return;
+        }
+
+        if (($max = \App\Support\License::limit('daily_messages')) !== null
+            && Message::where('direction', 'out')->where('created_at', '>=', now()->startOfDay())->where('status', '!=', 'failed')->where('id', '<', $message->id)->count() >= $max) {
+            $this->markFailed($message, "Batas {$max} pesan/hari paket ".\App\Support\License::current()['label'].' tercapai. Upgrade ke Pro untuk tanpa batas.', $webhooks);
+
+            return;
+        }
+
         $message->increment('attempts');
 
         try {
@@ -51,9 +65,12 @@ class SendWhatsAppMessage implements ShouldQueue
             $media = $message->mediaFile();
             // Broadcast lewat Scan QR: kirim seperti manusia (jeda acak + "sedang mengetik…")
             $options = $message->campaign_id && $device->provider === 'qr' ? ['humanize' => \App\Support\SendingQuota::humanize()] : [];
+            // Paket Gratis: watermark di akhir pesan / keterangan lampiran (audio tidak punya keterangan)
+            $text = \App\Support\License::applyWatermark($message->body);
+            $caption = $message->body !== '' ? $text : (\App\Support\License::watermark() !== null ? trim(\App\Support\License::watermark()) : null);
             $result = $media
-                ? $provider->sendMedia($device, $message->to, $media, $message->body !== '' ? $message->body : null, $options)
-                : $provider->sendText($device, $message->to, $message->body, $options);
+                ? $provider->sendMedia($device, $message->to, $media, $media->type === 'audio' ? null : $caption, $options)
+                : $provider->sendText($device, $message->to, $text, $options);
         } catch (Throwable $e) {
             Log::error('[WA] Gagal mengirim pesan', ['message' => $message->public_id, 'error' => $e->getMessage()]);
             $result = SendResult::failure('Kesalahan internal saat mengirim pesan.');

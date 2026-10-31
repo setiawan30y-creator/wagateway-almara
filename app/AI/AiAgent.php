@@ -31,7 +31,7 @@ class AiAgent
 
     public function isConfigured(): bool
     {
-        return Setting::get('ai_enabled') === '1' && Setting::secret('ai_api_key') !== '';
+        return \App\Support\License::allows('ai') && Setting::get('ai_enabled') === '1' && Setting::secret('ai_api_key') !== '';
     }
 
     /**

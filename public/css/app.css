@@ -572,3 +572,14 @@ img, svg, canvas { max-width: 100%; }
 .quota .bar { display: inline-block; width: 60px; height: 5px; background: var(--border); border-radius: 3px; vertical-align: middle; overflow: hidden; margin-right: 4px; }
 .quota .bar i { display: block; height: 100%; background: var(--ok); }
 .quota.full .bar i { background: var(--err); }
+
+/* Paket / lisensi */
+.plan-chip { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 1px 7px; border-radius: 10px; margin-left: 6px; border: 1px solid var(--border); color: var(--muted); }
+.plan-chip.plan-pro { background: var(--accent); border-color: var(--accent); color: #fff; }
+.plan-table td, .plan-table th { text-align: center; }
+.plan-table td:first-child, .plan-table th:first-child { text-align: left; }
+.plan-table .yes { color: var(--ok); font-weight: 700; }
+.plan-table .no { color: var(--muted); }
+.plan-table .cur { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.lic-key { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; }
+@media (max-width: 480px) { .topbar .plan-chip { display: none; } }

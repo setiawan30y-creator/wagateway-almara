@@ -4,6 +4,9 @@
 @section('crumb', 'AI Agent')
 
 @section('content')
+@unless (\App\Support\License::allows('ai'))
+    <div class="alert alert-warning">Fitur AI Agent hanya tersedia di paket <b>Pro</b>. @can('admin')<a href="{{ route('license.show') }}">Lihat paket & aktifkan lisensi</a>@endcan</div>
+@endunless
 @if (! $hasKey)
     <div class="card" style="margin-bottom:10px;border-color:var(--info)">
         <div class="card-h" style="color:var(--info)">Langkah awal — dapatkan API key OpenRouter (gratis)</div>

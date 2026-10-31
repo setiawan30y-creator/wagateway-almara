@@ -83,7 +83,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::delete('/kontak/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy')->middleware('can:admin');
 
     // AI untuk agent: saran balasan & on/off per percakapan
-    Route::post('/inbox/{conversation}/ai-saran', [\App\Http\Controllers\AiAgentController::class, 'suggest'])->name('ai.suggest');
+    Route::post('/inbox/{conversation}/ai-saran', [\App\Http\Controllers\AiAgentController::class, 'suggest'])->name('ai.suggest')->middleware('feature:ai');
     Route::post('/inbox/{conversation}/ai', [\App\Http\Controllers\AiAgentController::class, 'toggleConversation'])->name('ai.conversation');
 
     // Tiket
@@ -125,14 +125,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/template/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy');
 
         Route::get('/broadcast', [CampaignController::class, 'index'])->name('campaigns.index');
-        Route::get('/broadcast/buat', [CampaignController::class, 'create'])->name('campaigns.create');
-        Route::post('/broadcast/pratinjau', [CampaignController::class, 'preview'])->name('campaigns.preview');
-        Route::post('/broadcast', [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::get('/broadcast/buat', [CampaignController::class, 'create'])->name('campaigns.create')->middleware('feature:broadcast');
+        Route::post('/broadcast/pratinjau', [CampaignController::class, 'preview'])->name('campaigns.preview')->middleware('feature:broadcast');
+        Route::post('/broadcast', [CampaignController::class, 'store'])->name('campaigns.store')->middleware('feature:broadcast');
         Route::get('/broadcast/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
         Route::get('/template/{template}/lampiran', [\App\Http\Controllers\MediaController::class, 'template'])->name('templates.media');
         Route::get('/broadcast/{campaign}/lampiran', [\App\Http\Controllers\MediaController::class, 'campaign'])->name('campaigns.media');
-        Route::post('/broadcast/{campaign}/lampiran', [CampaignController::class, 'attachment'])->name('campaigns.attachment');
-        Route::post('/broadcast/{campaign}/{action}', [CampaignController::class, 'action'])->whereIn('action', ['start', 'pause', 'resume', 'cancel', 'run'])->name('campaigns.action');
+        Route::post('/broadcast/{campaign}/lampiran', [CampaignController::class, 'attachment'])->name('campaigns.attachment')->middleware('feature:broadcast');
+        Route::post('/broadcast/{campaign}/{action}', [CampaignController::class, 'action'])->whereIn('action', ['start', 'pause', 'resume', 'cancel', 'run'])->name('campaigns.action')->middleware('feature:broadcast');
         Route::delete('/broadcast/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
 
         Route::get('/smart-link', [\App\Http\Controllers\SmartLinkController::class, 'index'])->name('smart-links.index');
@@ -144,9 +144,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/smart-link/{smartLink}', [\App\Http\Controllers\SmartLinkController::class, 'destroy'])->name('smart-links.destroy');
 
         Route::get('/ai-agent', [\App\Http\Controllers\AiAgentController::class, 'index'])->name('ai.index');
-        Route::put('/ai-agent', [\App\Http\Controllers\AiAgentController::class, 'update'])->name('ai.update');
+        Route::put('/ai-agent', [\App\Http\Controllers\AiAgentController::class, 'update'])->name('ai.update')->middleware('feature:ai');
         Route::delete('/ai-agent/api-key', [\App\Http\Controllers\AiAgentController::class, 'forgetKey'])->name('ai.forget-key');
-        Route::post('/ai-agent/uji', [\App\Http\Controllers\AiAgentController::class, 'test'])->name('ai.test');
+        Route::post('/ai-agent/uji', [\App\Http\Controllers\AiAgentController::class, 'test'])->name('ai.test')->middleware('feature:ai');
         Route::post('/ai-agent/pengetahuan', [\App\Http\Controllers\AiAgentController::class, 'storeKnowledge'])->name('ai.knowledge.store');
         Route::put('/ai-agent/pengetahuan/{item}', [\App\Http\Controllers\AiAgentController::class, 'updateKnowledge'])->name('ai.knowledge.update');
         Route::delete('/ai-agent/pengetahuan/{item}', [\App\Http\Controllers\AiAgentController::class, 'destroyKnowledge'])->name('ai.knowledge.destroy');
@@ -194,6 +194,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::put('/pengguna/{user}', [UserController::class, 'update'])->name('users.update');
 
         Route::get('/log', [LogController::class, 'index'])->name('logs.index');
+        Route::get('/lisensi', [\App\Http\Controllers\LicenseController::class, 'show'])->name('license.show');
+        Route::post('/lisensi', [\App\Http\Controllers\LicenseController::class, 'activate'])->name('license.activate');
+        Route::delete('/lisensi', [\App\Http\Controllers\LicenseController::class, 'remove'])->name('license.remove');
         Route::get('/pengaturan', [SettingController::class, 'edit'])->name('settings.edit');
         Route::put('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
     });

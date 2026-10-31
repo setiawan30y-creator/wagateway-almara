@@ -27,6 +27,10 @@ class DeviceController extends Controller
 
     public function create(Request $request)
     {
+        if (! \App\Support\License::canAddDevice((string) $request->query('provider', 'log'))) {
+            return redirect()->route('devices.index')->with('warning', 'Paket '.\App\Support\License::current()['label'].' maksimal '.\App\Support\License::limit('devices').' nomor WhatsApp. Upgrade lisensi di menu Lisensi untuk menambah nomor.');
+        }
+
         $provider = (string) $request->query('provider', 'log');
         $provider = array_key_exists($provider, config('whatsapp.providers')) ? $provider : 'log';
 
@@ -39,6 +43,10 @@ class DeviceController extends Controller
 
     public function store(Request $request)
     {
+        if (! \App\Support\License::canAddDevice((string) $request->input('provider', 'qr'))) {
+            return redirect()->route('devices.index')->with('warning', 'Paket '.\App\Support\License::current()['label'].' maksimal '.\App\Support\License::limit('devices').' nomor WhatsApp. Upgrade lisensi di menu Lisensi untuk menambah nomor.');
+        }
+
         $data = $this->validated($request);
         $device = Device::create($data);
 
@@ -112,6 +120,10 @@ class DeviceController extends Controller
     /** Tambah perangkat cepat: cukup nama, lalu langsung ke halaman scan QR. */
     public function scan(Request $request)
     {
+        if (! \App\Support\License::canAddDevice('qr')) {
+            return redirect()->route('devices.index')->with('warning', 'Paket '.\App\Support\License::current()['label'].' maksimal '.\App\Support\License::limit('devices').' nomor WhatsApp. Upgrade lisensi di menu Lisensi untuk menambah nomor.');
+        }
+
         $data = $request->validate(['name' => ['required', 'string', 'max:100']], [], ['name' => 'nama perangkat']);
 
         $device = Device::create([

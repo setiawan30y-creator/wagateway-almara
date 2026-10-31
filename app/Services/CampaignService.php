@@ -128,6 +128,12 @@ class CampaignService
             return 0;
         }
 
+        if (! \App\Support\License::allows('broadcast')) {
+            $this->autoPause($campaign, 'Fitur broadcast hanya tersedia di paket Pro.');
+
+            return 0;
+        }
+
         $device = $campaign->device;
         // Semua varian dari semua template yang dipilih -> diacak per penerima (anti-seragam)
         $templates = $campaign->usedTemplates()->keyBy('id');

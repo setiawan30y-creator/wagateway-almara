@@ -378,6 +378,8 @@ cd engine; npm install; cd ..
 
 Tutup lalu jalankan ulang jendela `schedule:work` dan `npm start`. Di browser tekan **Ctrl+F5**.
 
+> **Ke versi 0.9 (paket Gratis / Pro):** setelah update, aplikasi berjalan sebagai paket Gratis sampai lisensi diaktifkan. Pemilik aplikasi jalankan sekali `php artisan license:keygen`, lalu `php artisan license:issue "Nama Usaha" --days=0 --devices=0 --activate` (lihat `docs/LISENSI.md`).
+
 > **Dari versi 0.5 ke 0.6:** agar kontak & riwayat chat HP ikut masuk, perangkat Scan QR yang sudah terhubung perlu **Logout lalu Scan QR ulang** sekali (WhatsApp hanya mengirim kontak & riwayat saat perangkat baru ditautkan). Daftar grup bisa langsung diambil lewat **Grup WA → Sinkron grup dari HP** tanpa scan ulang.
 
 ### Server (Ubuntu)

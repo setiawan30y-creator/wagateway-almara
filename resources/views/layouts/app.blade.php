@@ -35,6 +35,7 @@
             ['users.index', 'Pengguna & Role', 'users', 'users.*', true],
             ['logs.index', 'Log', 'log', 'logs.*', true],
             ['settings.edit', 'Pengaturan', 'settings', 'settings.*', true],
+            ['license.show', 'Lisensi', 'key', 'license.*', true],
         ],
     ];
     $bottom = [
@@ -49,6 +50,8 @@
     <a class="brand" href="{{ route('dashboard') }}">
         <img src="/icons/icon-192.png" alt="">
         <span>ALMARA GATEWAY WA <small>v{{ config('whatsapp.version') }}</small></span>
+        @php $lic = \App\Support\License::current(); @endphp
+        <span class="plan-chip plan-{{ $lic['plan'] }}" title="{{ $lic['licensee'] ? 'Lisensi: '.$lic['licensee'] : 'Belum ada lisensi' }}">{{ $lic['label'] }}</span>
     </a>
     <span class="spacer"></span>
     <a class="btn btn-sm bell" href="{{ route('notifications.index') }}" title="Notifikasi">
@@ -97,6 +100,9 @@
         </div>
 
         @include('partials.flash')
+        @if ($lic['warning'])
+            <div class="alert alert-warning">{{ $lic['warning'] }} @can('admin')<a href="{{ route('license.show') }}">Buka Lisensi</a>@endcan</div>
+        @endif
         @yield('content')
 
         <footer class="footer">

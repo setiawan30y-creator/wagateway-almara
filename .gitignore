@@ -29,3 +29,7 @@ Thumbs.db
 # File pribadi di root folder lokal (catatan akun, blueprint) — jangan ikut ke repo
 /*.txt
 /ALMARA_*Blueprint*.md
+
+# kunci privat lisensi tidak boleh ikut repo
+private.pem
+*.private.pem

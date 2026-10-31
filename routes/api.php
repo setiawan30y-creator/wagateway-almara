@@ -30,7 +30,7 @@ Route::prefix('v1')->middleware(['api.log', 'api.key', 'throttle:wa-api'])->grou
     Route::get('/templates', [TemplateController::class, 'index']);
 
     Route::get('/campaigns', [CampaignController::class, 'index']);
-    Route::post('/campaigns', [CampaignController::class, 'store']);
+    Route::post('/campaigns', [CampaignController::class, 'store'])->middleware('feature:broadcast');
     Route::get('/campaigns/{id}', [CampaignController::class, 'show'])->whereNumber('id');
 
     Route::get('/webhooks', [WebhookController::class, 'index']);
