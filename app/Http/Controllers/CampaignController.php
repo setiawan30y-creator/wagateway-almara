@@ -139,6 +139,33 @@ class CampaignController extends Controller
         return back()->with('success', $msg);
     }
 
+    /** Tambah / ganti / hapus lampiran campaign yang belum selesai. */
+    public function attachment(Request $request, Campaign $campaign)
+    {
+        abort_unless(in_array($campaign->status, ['draft', 'scheduled', 'paused'], true), 422, 'Lampiran hanya bisa diubah saat campaign draft, terjadwal, atau dijeda.');
+
+        if ($request->boolean('remove')) {
+            $campaign->forceFill(['media_type' => null, 'media_path' => null, 'media_name' => null, 'media_mime' => null, 'media_size' => null])->save();
+            AuditLog::record('campaign.attachment', 'Hapus lampiran campaign '.$campaign->name);
+
+            return back()->with('success', 'Lampiran dihapus.');
+        }
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
+        ], ['file.required' => 'Pilih foto / file terlebih dahulu.'], ['file' => 'lampiran']);
+
+        $media = app(\App\Services\MediaStorage::class)->storeUpload($request->file('file'));
+        $campaign->forceFill([
+            'media_type' => $media->type, 'media_path' => $media->path, 'media_name' => $media->name,
+            'media_mime' => $media->mime, 'media_size' => $media->size,
+        ])->save();
+
+        AuditLog::record('campaign.attachment', 'Lampiran campaign '.$campaign->name.': '.$media->name);
+
+        return back()->with('success', 'Lampiran disimpan. Penerima berikutnya akan menerima lampiran ini.');
+    }
+
     public function destroy(Campaign $campaign)
     {
         abort_if($campaign->status === 'running', 422, 'Jeda atau batalkan campaign terlebih dahulu.');

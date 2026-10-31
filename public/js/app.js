@@ -299,4 +299,34 @@
     if (e.key === 'Escape' && !box.hidden) close();
     else if (e.key === '?' && !typing) { e.preventDefault(); box.hidden ? open() : close(); }
   });
+
+  // Kotak unggah lampiran (klik / seret & lepas) dengan pratinjau
+  document.querySelectorAll('[data-dropzone]').forEach(function (zone) {
+    var input = zone.querySelector('.dz-input');
+    var empty = zone.querySelector('.dz-empty'), filled = zone.querySelector('.dz-filled');
+    var thumb = zone.querySelector('.dz-thumb'), doc = zone.querySelector('.dz-doc');
+    var url = null;
+    function kb(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+    function render() {
+      var f = input.files && input.files[0];
+      if (url) { URL.revokeObjectURL(url); url = null; }
+      if (f && f.size > 16 * 1024 * 1024) { alert('Berkas maksimal 16 MB.'); input.value = ''; f = null; }
+      empty.hidden = !!f; filled.hidden = !f;
+      if (!f) return;
+      zone.querySelector('.dz-name').textContent = f.name;
+      zone.querySelector('.dz-size').textContent = kb(f.size) + ' · ' + (f.type || 'file');
+      var isImg = /^image\//.test(f.type);
+      thumb.hidden = !isImg; doc.hidden = isImg;
+      if (isImg) { url = URL.createObjectURL(f); thumb.src = url; }
+    }
+    input.addEventListener('change', render);
+    zone.querySelector('.dz-clear').addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation(); input.value = ''; render();
+    });
+    ['dragenter', 'dragover'].forEach(function (t) { zone.addEventListener(t, function (e) { e.preventDefault(); zone.classList.add('over'); }); });
+    ['dragleave', 'drop'].forEach(function (t) { zone.addEventListener(t, function (e) { e.preventDefault(); zone.classList.remove('over'); }); });
+    zone.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files.length) { input.files = e.dataTransfer.files; render(); }
+    });
+  });
 })();

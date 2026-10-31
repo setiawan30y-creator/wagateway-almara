@@ -118,6 +118,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/broadcast/pratinjau', [CampaignController::class, 'preview'])->name('campaigns.preview');
         Route::post('/broadcast', [CampaignController::class, 'store'])->name('campaigns.store');
         Route::get('/broadcast/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
+        Route::get('/broadcast/{campaign}/lampiran', [\App\Http\Controllers\MediaController::class, 'campaign'])->name('campaigns.media');
+        Route::post('/broadcast/{campaign}/lampiran', [CampaignController::class, 'attachment'])->name('campaigns.attachment');
         Route::post('/broadcast/{campaign}/{action}', [CampaignController::class, 'action'])->whereIn('action', ['start', 'pause', 'resume', 'cancel', 'run'])->name('campaigns.action');
         Route::delete('/broadcast/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
 

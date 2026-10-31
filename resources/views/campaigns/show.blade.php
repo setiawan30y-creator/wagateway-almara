@@ -36,7 +36,26 @@
         <div class="card-b">
             <dl class="kv">
                 <dt>Template</dt><dd>{{ $campaign->template?->name ?? '—' }}</dd>
-                <dt>Lampiran</dt><dd>@if ($campaign->media_type)📎 {{ $campaign->media_name ?: \App\Support\MediaFile::LABELS[$campaign->media_type] ?? 'media' }} <span class="muted">({{ \App\Support\MediaFile::LABELS[$campaign->media_type] ?? $campaign->media_type }}, {{ number_format(($campaign->media_size ?? 0) / 1024, 0, ',', '.') }} KB)</span>@else — @endif</dd>
+                <dt>Lampiran</dt><dd>
+                    @if ($campaign->media_type)
+                        📎 {{ $campaign->media_name ?: \App\Support\MediaFile::LABELS[$campaign->media_type] ?? 'media' }} <span class="muted">({{ \App\Support\MediaFile::LABELS[$campaign->media_type] ?? $campaign->media_type }}, {{ number_format(($campaign->media_size ?? 0) / 1024, 0, ',', '.') }} KB)</span>
+                        @if ($campaign->media_type === 'image')<a href="{{ route('campaigns.media', $campaign) }}" target="_blank"><img class="campaign-media-thumb" src="{{ route('campaigns.media', $campaign) }}" alt="Lampiran"></a>@endif
+                    @else — @endif
+                    @if (in_array($campaign->status, ['draft', 'scheduled', 'paused']))
+                        <details style="margin-top:6px" @if ($errors->has('file')) open @endif>
+                            <summary class="btn btn-sm">{{ $campaign->media_type ? 'Ganti lampiran' : '+ Tambah foto / file' }}</summary>
+                            <form method="POST" action="{{ route('campaigns.attachment', $campaign) }}" enctype="multipart/form-data" style="margin-top:6px">
+                                @csrf
+                                @include('partials.dropzone', ['name' => 'file', 'id' => 'campaign-file'])
+                                @error('file')<div class="error-text">{{ $message }}</div>@enderror
+                                <button class="btn btn-primary btn-sm" style="margin-top:6px" data-once>Simpan lampiran</button>
+                            </form>
+                            @if ($campaign->media_type)
+                                <form method="POST" action="{{ route('campaigns.attachment', $campaign) }}" class="inline" data-confirm="Hapus lampiran campaign ini?">@csrf<input type="hidden" name="remove" value="1"><button class="btn btn-sm btn-danger" style="margin-top:4px">Hapus lampiran</button></form>
+                            @endif
+                        </details>
+                    @endif
+                </dd>
                 <dt>Perangkat</dt><dd>{{ $campaign->device?->name ?? '—' }}</dd>
                 <dt>Kecepatan</dt><dd>{{ $campaign->rate_per_minute }} pesan/menit</dd>
                 <dt>Audience</dt><dd>

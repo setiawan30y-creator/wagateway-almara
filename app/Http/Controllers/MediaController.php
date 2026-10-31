@@ -13,7 +13,17 @@ class MediaController extends Controller
 {
     public function show(Message $message)
     {
-        $media = $message->mediaFile();
+        return $this->serve($message->mediaFile());
+    }
+
+    /** Lampiran campaign broadcast. */
+    public function campaign(\App\Models\Campaign $campaign)
+    {
+        return $this->serve($campaign->mediaFile());
+    }
+
+    private function serve(?\App\Support\MediaFile $media)
+    {
         abort_unless($media && Storage::disk($media::DISK)->exists($media->path), 404);
 
         $inline = in_array($media->type, ['image', 'audio', 'video'], true) && ! request()->boolean('download');

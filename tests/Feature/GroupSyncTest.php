@@ -199,4 +199,26 @@ class GroupSyncTest extends TestCase
 
         $this->actingAs($admin)->get("/broadcast/{$campaign->id}")->assertOk()->assertSee('brosur.jpg');
     }
+
+    public function test_attachment_can_be_added_to_draft_campaign(): void
+    {
+        Storage::fake('local');
+        $device = Device::create(['name' => 'Sim', 'provider' => 'log', 'is_active' => true, 'is_default' => true]);
+        $template = Template::create(['name' => 'Promo', 'is_active' => true]);
+        $template->variants()->create(['label' => 'A', 'body' => 'Halo {{name}}']);
+        $admin = User::factory()->create(['role' => 'owner']);
+
+        $this->actingAs($admin)->get('/broadcast/buat')->assertOk()->assertSee('data-dropzone', false)->assertSee('enctype="multipart/form-data"', false);
+        $this->actingAs($admin)->post('/broadcast', ['name' => 'Draft', 'device_id' => $device->id, 'template_id' => $template->id, 'rate_per_minute' => 10, 'mode' => 'draft'])->assertRedirect();
+        $campaign = Campaign::first();
+        $this->assertNull($campaign->media_type);
+
+        $this->actingAs($admin)->get("/broadcast/{$campaign->id}")->assertOk()->assertSee('Tambah foto / file');
+        $this->actingAs($admin)->post("/broadcast/{$campaign->id}/lampiran", ['file' => UploadedFile::fake()->image('promo.png', 300, 300)])->assertRedirect()->assertSessionHas('success');
+        $this->assertSame('image', $campaign->refresh()->media_type);
+        $this->actingAs($admin)->get("/broadcast/{$campaign->id}/lampiran")->assertOk();
+
+        $this->actingAs($admin)->post("/broadcast/{$campaign->id}/lampiran", ['remove' => 1])->assertRedirect();
+        $this->assertNull($campaign->refresh()->media_type);
+    }
 }
