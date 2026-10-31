@@ -28,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::defaultView('partials.pagination');
 
+        // APP_URL https (server produksi, termasuk di balik Cloudflare / proxy): semua link & request JS ikut https
+        // agar browser tidak memblokir sebagai "mixed content" (gejala: "Failed to fetch").
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         Gate::define('admin', fn (User $user) => $user->isAdmin());
         Gate::define('superadmin', fn (User $user) => (bool) $user->is_superadmin);
 

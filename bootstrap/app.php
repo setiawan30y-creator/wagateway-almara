@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureUserIsActive::class,
             'feature' => \App\Http\Middleware\RequirePlanFeature::class,
         ]);
+        // Di balik Nginx / Cloudflare: percayai header X-Forwarded-* (skema https, IP asli)
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', '*'));
         $middleware->web(append: [\App\Http\Middleware\SetTenant::class]);
         $middleware->prependToPriorityList(\Illuminate\Routing\Middleware\SubstituteBindings::class, \App\Http\Middleware\SetTenant::class);
         $middleware->redirectGuestsTo(fn () => route('login'));

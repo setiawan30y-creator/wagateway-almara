@@ -43,8 +43,8 @@
 @push('scripts')
 <script>
 (function () {
-    var url = @json(route('devices.qr', $device));
-    var back = @json(route('devices.index'));
+    var url = @json(route('devices.qr', $device, false));
+    var back = @json(route('devices.index', [], false));
     var target = document.getElementById('qr-target');
     var statusEl = document.getElementById('qr-status');
     var bar = document.getElementById('qr-bar');

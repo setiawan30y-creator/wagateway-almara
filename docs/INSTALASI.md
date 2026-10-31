@@ -467,6 +467,7 @@ Simpan salinan backup di lokasi terpisah (Google Drive, storage lain).
 | `SQLSTATE[HY000] [1049] Unknown database` | Database belum dibuat — ulangi langkah 2.5. |
 | `SQLSTATE[HY000] [2002]` | MySQL belum berjalan. Start MySQL di Laragon / `sudo systemctl start mysql`. |
 | Login gagal | Jalankan `php artisan db:seed` atau reset password (bagian 3). |
+| Halaman Scan QR: *Gagal menghubungi server gateway (Failed to fetch)* | Browser memblokir request http dari halaman https (mixed content), umumnya di balik Cloudflare / proxy. Pastikan `APP_URL` di `.env` diawali `https://`, lalu `php artisan optimize:clear` (aplikasi otomatis memakai https). |
 | Halaman Scan QR: *Engine QR tidak dapat dihubungi* | Jalankan `php artisan engine:check` — menunjukkan yang salah (engine/.env, token, `npm install`, engine mati). Windows: jalankan `mulai.bat`. Ubuntu: `sudo supervisorctl status wagateway-engine` harus RUNNING (lihat 7.5 & `storage/logs/engine.log`). |
 | QR tidak muncul / terus menunggu | Cek pesan error di jendela engine. Pastikan Node.js ≥ 20 dan `npm install` selesai tanpa error. |
 | Pesan masuk dari nomor QR tidak muncul di Inbox | Engine mengirim ke URL yang tercatat saat pairing. Bila `APP_URL`/alamat berubah, buka lagi halaman **Scan QR** perangkat tersebut agar URL diperbarui. |
