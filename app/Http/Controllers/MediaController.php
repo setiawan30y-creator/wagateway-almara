@@ -22,6 +22,12 @@ class MediaController extends Controller
         return $this->serve($campaign->mediaFile());
     }
 
+    /** Lampiran template. */
+    public function template(\App\Models\Template $template)
+    {
+        return $this->serve($template->mediaFile());
+    }
+
     private function serve(?\App\Support\MediaFile $media)
     {
         abort_unless($media && Storage::disk($media::DISK)->exists($media->path), 404);

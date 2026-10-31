@@ -102,10 +102,20 @@ class TemplateController extends Controller
             'variants.A' => ['required', 'string', 'max:'.config('whatsapp.max_text_length')],
             'variants.B' => ['nullable', 'string', 'max:'.config('whatsapp.max_text_length')],
             'variants.C' => ['nullable', 'string', 'max:'.config('whatsapp.max_text_length')],
-        ], [], ['variants.A' => 'isi varian A', 'name' => 'nama template']);
+            'file' => ['nullable', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
+        ], [], ['variants.A' => 'isi varian A', 'name' => 'nama template', 'file' => 'lampiran']);
+
+        $attributes = ['name' => $data['name'], 'category' => $data['category'], 'is_active' => $request->boolean('is_active')];
+
+        if ($request->hasFile('file')) {
+            $m = app(\App\Services\MediaStorage::class)->storeUpload($request->file('file'));
+            $attributes += ['media_type' => $m->type, 'media_path' => $m->path, 'media_name' => $m->name, 'media_mime' => $m->mime, 'media_size' => $m->size];
+        } elseif ($request->boolean('remove_media')) {
+            $attributes += ['media_type' => null, 'media_path' => null, 'media_name' => null, 'media_mime' => null, 'media_size' => null];
+        }
 
         return [
-            'attributes' => ['name' => $data['name'], 'category' => $data['category'], 'is_active' => $request->boolean('is_active')],
+            'attributes' => $attributes,
             'variants' => array_filter($data['variants'], fn ($v) => trim((string) $v) !== ''),
         ];
     }

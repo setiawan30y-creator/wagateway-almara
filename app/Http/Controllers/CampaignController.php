@@ -30,22 +30,43 @@ class CampaignController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        // Duplikat: ?dari={id} -> isi form dari campaign lama (ganti rombongan / jadwal saja)
+        $from = $request->integer('dari') ? Campaign::find($request->integer('dari')) : null;
+
+        $campaign = $from
+            ? new Campaign([
+                'name' => $from->name.' (salinan)', 'device_id' => $from->device_id, 'template_ids' => $from->templateIds(),
+                'audience' => $from->audience ?? [], 'rate_per_minute' => $from->rate_per_minute,
+            ])
+            : new Campaign(['rate_per_minute' => (int) Setting::get('default_rate_per_minute'), 'audience' => ['lists' => array_filter([$request->integer('rombongan')])]]);
+
         return view('campaigns.form', [
-            'campaign' => new Campaign(['rate_per_minute' => (int) Setting::get('default_rate_per_minute'), 'audience' => []]),
+            'campaign' => $campaign,
+            'from' => $from,
             'devices' => Device::where('is_active', true)->orderByDesc('is_default')->get(),
             'templates' => Template::where('is_active', true)->with('variants')->orderBy('name')->get(),
             'tags' => Tag::withCount('contacts')->orderBy('name')->get(),
+            'lists' => \App\Models\RecipientList::withCount('contacts')->orderBy('name')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
+        // kompatibel dengan form/klien lama yang mengirim satu template_id
+        if (! $request->has('template_ids') && $request->filled('template_id')) {
+            $request->merge(['template_ids' => [(int) $request->input('template_id')]]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'device_id' => ['required', 'integer', 'exists:devices,id'],
-            'template_id' => ['required', 'integer', 'exists:templates,id'],
+            'template_ids' => ['required', 'array', 'min:1'],
+            'template_ids.*' => ['integer', 'exists:templates,id'],
+            'lists' => ['nullable', 'array'],
+            'lists.*' => ['integer', 'exists:recipient_lists,id'],
+            'copy_media_from' => ['nullable', 'integer', 'exists:campaigns,id'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', 'exists:tags,id'],
             'stages' => ['nullable', 'array'],
@@ -54,20 +75,28 @@ class CampaignController extends Controller
             'mode' => ['required', Rule::in(['draft', 'now', 'schedule'])],
             'scheduled_at' => ['nullable', 'required_if:mode,schedule', 'date', 'after:now'],
             'file' => ['nullable', 'file', 'mimes:'.\App\Services\MediaStorage::EXTENSIONS, 'max:'.\App\Services\MediaStorage::MAX_KB],
-        ], [], ['template_id' => 'template', 'device_id' => 'perangkat', 'scheduled_at' => 'jadwal', 'file' => 'lampiran']);
+        ], ['template_ids.required' => 'Pilih minimal satu template.'], ['template_ids' => 'template', 'device_id' => 'perangkat', 'scheduled_at' => 'jadwal', 'file' => 'lampiran']);
 
         $media = $request->hasFile('file') ? app(\App\Services\MediaStorage::class)->storeUpload($request->file('file')) : null;
+        // duplikat campaign: pakai lampiran campaign asal bila tidak mengunggah yang baru
+        $media ??= isset($data['copy_media_from']) ? Campaign::find($data['copy_media_from'])?->mediaFile() : null;
+        $templateIds = array_values(array_unique(array_map('intval', $data['template_ids'])));
 
         $campaign = Campaign::create([
             'name' => $data['name'],
             'device_id' => $data['device_id'],
-            'template_id' => $data['template_id'],
+            'template_id' => $templateIds[0],
+            'template_ids' => $templateIds,
             'media_type' => $media?->type,
             'media_path' => $media?->path,
             'media_name' => $media?->name,
             'media_mime' => $media?->mime,
             'media_size' => $media?->size,
-            'audience' => ['tags' => array_values($data['tags'] ?? []), 'stages' => array_values($data['stages'] ?? [])],
+            'audience' => [
+                'lists' => array_values(array_map('intval', $data['lists'] ?? [])),
+                'tags' => array_values($data['tags'] ?? []),
+                'stages' => array_values($data['stages'] ?? []),
+            ],
             'rate_per_minute' => $data['rate_per_minute'],
             'status' => $data['mode'] === 'schedule' ? 'scheduled' : 'draft',
             'scheduled_at' => $data['mode'] === 'schedule' ? Carbon::parse($data['scheduled_at']) : null,
@@ -87,7 +116,7 @@ class CampaignController extends Controller
 
     public function show(Campaign $campaign)
     {
-        $campaign->load(['device', 'template.variants', 'creator']);
+        $campaign->load(['device', 'creator']);
 
         $variantStats = DB::table('campaign_recipients as r')
             ->leftJoin('messages as m', 'm.id', '=', 'r.message_id')
@@ -99,6 +128,7 @@ class CampaignController extends Controller
 
         return view('campaigns.show', [
             'campaign' => $campaign,
+            'usedTemplates' => $campaign->usedTemplates(),
             'stats' => $campaign->stats(),
             'variantStats' => $variantStats,
             'recipients' => $campaign->recipients()->with(['contact', 'variant', 'message'])->latest('id')->paginate(50),
@@ -110,6 +140,7 @@ class CampaignController extends Controller
     public function preview(Request $request)
     {
         return response()->json($this->service->preview([
+            'lists' => array_map('intval', (array) $request->input('lists', [])),
             'tags' => array_map('intval', (array) $request->input('tags', [])),
             'stages' => (array) $request->input('stages', []),
         ]));

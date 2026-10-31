@@ -554,3 +554,16 @@ img, svg, canvas { max-width: 100%; }
 .dropzone .dz-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; font-size: 13px; }
 .dropzone .dz-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .campaign-media-thumb { max-width: 160px; max-height: 120px; border-radius: 6px; border: 1px solid var(--border); display: block; margin-top: 4px; }
+
+/* Pilihan template (multi) */
+.pick-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px; }
+.pick { display: flex; gap: 8px; align-items: flex-start; padding: 5px 6px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.pick:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.pick input { margin-top: 3px; }
+.pick span { display: flex; flex-direction: column; }
+.pick .muted { font-size: 11.5px; }
+.field label.pick { display: flex; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text); font-size: 13px; margin: 0; }
+.field label.pick b { font-weight: 600; }
+.field .label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.field .label-row > label { margin: 0; }
+.field .label-row .btn { margin-left: auto; }

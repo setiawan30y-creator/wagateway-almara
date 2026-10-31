@@ -12,7 +12,7 @@
             <tbody>
             @forelse ($templates as $t)
                 <tr>
-                    <td><b>{{ $t->name }}</b><div class="muted msg" style="max-width:320px;font-size:12px">{{ $t->variants->first()?->body }}</div></td>
+                    <td><b>{{ $t->name }}</b>@if ($t->media_type) <span class="tag" title="{{ $t->media_name }}">📎 {{ \App\Support\MediaFile::LABELS[$t->media_type] ?? 'file' }}</span>@endif<div class="muted msg" style="max-width:320px;font-size:12px">{{ $t->variants->first()?->body }}</div></td>
                     <td><span class="tag">{{ \App\Models\Template::CATEGORIES[$t->category] ?? $t->category }}</span></td>
                     <td>{{ $t->variants->pluck('label')->implode(' / ') }}</td>
                     <td class="hide-sm mono" style="font-size:11.5px">

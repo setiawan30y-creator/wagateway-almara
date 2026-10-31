@@ -50,6 +50,17 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::patch('/inbox/{conversation}', [InboxController::class, 'update'])->name('inbox.update');
 
     // Kontak & CRM
+    // Rombongan penerima broadcast
+    Route::get('/rombongan', [\App\Http\Controllers\RecipientListController::class, 'index'])->name('lists.index');
+    Route::get('/rombongan/buat', [\App\Http\Controllers\RecipientListController::class, 'create'])->name('lists.create');
+    Route::post('/rombongan', [\App\Http\Controllers\RecipientListController::class, 'store'])->name('lists.store');
+    Route::get('/rombongan/{list}', [\App\Http\Controllers\RecipientListController::class, 'show'])->name('lists.show');
+    Route::get('/rombongan/{list}/ubah', [\App\Http\Controllers\RecipientListController::class, 'edit'])->name('lists.edit');
+    Route::put('/rombongan/{list}', [\App\Http\Controllers\RecipientListController::class, 'update'])->name('lists.update');
+    Route::delete('/rombongan/{list}', [\App\Http\Controllers\RecipientListController::class, 'destroy'])->name('lists.destroy');
+    Route::post('/rombongan/{list}/anggota', [\App\Http\Controllers\RecipientListController::class, 'addMembers'])->name('lists.add');
+    Route::post('/rombongan/{list}/keluarkan', [\App\Http\Controllers\RecipientListController::class, 'removeMembers'])->name('lists.remove');
+
     // Grup WhatsApp & sinkron kontak HP (perangkat Scan QR)
     Route::get('/grup', [\App\Http\Controllers\GroupController::class, 'index'])->name('groups.index');
     Route::post('/grup/sinkron', [\App\Http\Controllers\GroupController::class, 'sync'])->name('groups.sync');
@@ -118,6 +129,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/broadcast/pratinjau', [CampaignController::class, 'preview'])->name('campaigns.preview');
         Route::post('/broadcast', [CampaignController::class, 'store'])->name('campaigns.store');
         Route::get('/broadcast/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
+        Route::get('/template/{template}/lampiran', [\App\Http\Controllers\MediaController::class, 'template'])->name('templates.media');
         Route::get('/broadcast/{campaign}/lampiran', [\App\Http\Controllers\MediaController::class, 'campaign'])->name('campaigns.media');
         Route::post('/broadcast/{campaign}/lampiran', [CampaignController::class, 'attachment'])->name('campaigns.attachment');
         Route::post('/broadcast/{campaign}/{action}', [CampaignController::class, 'action'])->whereIn('action', ['start', 'pause', 'resume', 'cancel', 'run'])->name('campaigns.action');

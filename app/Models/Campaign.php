@@ -23,7 +23,7 @@ class Campaign extends Model
     ];
 
     protected $fillable = [
-        'name', 'device_id', 'template_id', 'media_type', 'media_path', 'media_name', 'media_mime', 'media_size', 'status', 'audience', 'rate_per_minute',
+        'name', 'device_id', 'template_id', 'template_ids', 'media_type', 'media_path', 'media_name', 'media_mime', 'media_size', 'status', 'audience', 'rate_per_minute',
         'scheduled_at', 'started_at', 'finished_at', 'pause_reason', 'created_by',
     ];
 
@@ -33,6 +33,7 @@ class Campaign extends Model
     {
         return [
             'audience' => 'array',
+            'template_ids' => 'array',
             'scheduled_at' => 'datetime',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
@@ -48,6 +49,20 @@ class Campaign extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(Template::class);
+    }
+
+    /** ID template yang dipakai (multi-template); kompatibel dengan campaign lama (template_id saja). */
+    public function templateIds(): array
+    {
+        $ids = array_values(array_unique(array_map('intval', (array) ($this->template_ids ?? []))));
+
+        return $ids ?: array_filter([(int) $this->template_id]);
+    }
+
+    /** Template aktif + varian yang dipakai campaign ini. */
+    public function usedTemplates(): \Illuminate\Support\Collection
+    {
+        return Template::with('variants')->whereIn('id', $this->templateIds())->orderBy('name')->get();
     }
 
     public function recipients(): HasMany
@@ -80,8 +95,10 @@ class Campaign extends Model
     {
         $tags = array_filter((array) ($audience['tags'] ?? []));
         $stages = array_filter((array) ($audience['stages'] ?? []));
+        $lists = array_filter((array) ($audience['lists'] ?? []));
 
         return Contact::query()
+            ->when($lists, fn ($q) => $q->whereHas('recipientLists', fn ($l) => $l->whereIn('recipient_lists.id', $lists)))
             ->when($tags, fn ($q) => $q->whereHas('tags', fn ($t) => $t->whereIn('tags.id', $tags)))
             ->when($stages, fn ($q) => $q->whereIn('stage', $stages));
     }
@@ -132,6 +149,7 @@ class Campaign extends Model
             'status' => $this->status,
             'device_id' => $this->device_id,
             'template_id' => $this->template_id,
+            'template_ids' => $this->templateIds(),
             'audience' => $this->audience,
             'rate_per_minute' => $this->rate_per_minute,
             'scheduled_at' => $this->scheduled_at?->toIso8601String(),

@@ -129,9 +129,11 @@ class CampaignService
         }
 
         $device = $campaign->device;
-        $template = $campaign->template?->load('variants');
+        // Semua varian dari semua template yang dipilih -> diacak per penerima (anti-seragam)
+        $templates = $campaign->usedTemplates()->keyBy('id');
+        $variants = $templates->flatMap(fn ($t) => $t->variants)->values();
 
-        if (! $device || ! $device->is_active || ! $template || $template->variants->isEmpty()) {
+        if (! $device || ! $device->is_active || $variants->isEmpty()) {
             $this->autoPause($campaign, 'Perangkat atau template tidak tersedia.');
 
             return 0;
@@ -146,8 +148,8 @@ class CampaignService
         $quota = max(0, $campaign->rate_per_minute - $recent);
 
         $capHours = (int) Setting::get('frequency_cap_hours');
-        $variants = $template->variants->values();
-        $media = $campaign->mediaFile();
+        $campaignMedia = $campaign->mediaFile();
+        $bag = [];
         $sent = 0;
 
         $pending = $campaign->recipients()->with('contact')->where('status', 'pending')->orderBy('id')->limit($quota)->get();
@@ -171,8 +173,14 @@ class CampaignService
                 continue;
             }
 
-            $variant = $variants[$recipient->id % $variants->count()];
+            // "kantong acak": tiap varian terpakai merata, tetapi urutannya acak
+            if (empty($bag)) {
+                $bag = $variants->shuffle()->all();
+            }
+            $variant = array_pop($bag);
             $body = Template::render($variant->body, $contact);
+            // lampiran campaign diutamakan; bila kosong pakai lampiran milik template terpilih
+            $media = $campaignMedia ?? $templates[$variant->template_id]?->mediaFile();
 
             $message = $this->messages->queueText($device, $contact->phone, $body, $campaign->creator, options: [
                 'contact' => $contact,

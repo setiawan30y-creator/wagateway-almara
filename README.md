@@ -8,7 +8,17 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
 📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
 
-## Baru di versi 0.6.0 — Kontak HP, riwayat chat, grup, broadcast berlampiran
+## Baru di versi 0.7.0 — Broadcast anti-seragam & rombongan
+
+| Fitur | Keterangan |
+|---|---|
+| Lampiran di template | Template bisa menyimpan foto / PDF / dokumen / audio / video; ikut terkirim saat broadcast (lampiran campaign tetap diutamakan bila diisi). |
+| Multi-template acak | Satu campaign boleh memakai beberapa / semua template. Setiap penerima mendapat varian acak dari semua template terpilih, dibagi merata. |
+| Spintax | Tulis `{Halo\|Hai\|Selamat siang}` di template — tiap penerima mendapat pilihan kata acak. |
+| Rombongan | Menu **Growth → Rombongan**: kelompok penerima per peruntukan; isi dari tempel nomor, tag, anggota grup WA, rombongan lain, atau aksi massal Kontak. Dipilih di form broadcast. |
+| Duplikat campaign | Tombol **Duplikat** di detail campaign untuk mengirim ulang ke rombongan lain. |
+
+## Versi 0.6.0 — Kontak HP, riwayat chat, grup, broadcast berlampiran
 
 Khusus perangkat **Scan QR**:
 

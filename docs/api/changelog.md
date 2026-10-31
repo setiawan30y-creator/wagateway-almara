@@ -1,5 +1,9 @@
 # Changelog API
 
+## 0.7.0 — 2026-10-31
+- Objek Campaign punya field `template_ids` (campaign multi-template; varian diacak per penerima)
+- Isi template mendukung spintax `{a|b|c}` saat dirender
+
 ## 0.6.0 — 2026-10-31
 - `POST /v1/messages/send` menerima `to` berupa ID grup (`…@g.us`, khusus perangkat Scan QR); error `GROUP_NOT_FOUND` bila grup belum disinkron
 - Objek Message punya field `group` (`jid`, `participant`, `participant_name`) untuk pesan grup; event `message.received` dari grup mengirim `contact: null`

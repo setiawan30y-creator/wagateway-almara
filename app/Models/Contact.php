@@ -99,6 +99,11 @@ class Contact extends Model
     }
 
     /** Cari atau buat kontak berdasarkan nomor (sudah dinormalisasi). */
+    public function recipientLists(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(RecipientList::class, 'contact_recipient_list');
+    }
+
     public static function findOrCreateByPhone(string $phone, array $attributes = []): self
     {
         $phone = PhoneNumber::normalize($phone);

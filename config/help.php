@@ -128,34 +128,54 @@ return [
 
     'campaigns.*' => [
         'judul' => 'Broadcast',
-        'fungsi' => 'Mengirim pesan massal ke kelompok kontak (berdasarkan tag / tahap) dengan pengaman anti-spam otomatis.',
+        'fungsi' => 'Mengirim pesan massal ke rombongan / tag / tahap tertentu, dengan pesan yang diacak antar-template agar tidak seragam, plus pengaman anti-spam otomatis.',
         'langkah' => [
-            'Buat Template terlebih dahulu (bisa beberapa varian A/B/C).',
-            '+ Campaign → isi nama, pilih template, perangkat, dan kecepatan (pesan per menit).',
-            'Pilih audience lewat tag / tahap; kotak hijau menunjukkan jumlah penerima yang memenuhi syarat.',
-            'Bagian "3. Lampiran foto / file": klik kotak atau seret foto / PDF / dokumen / video (maks 16 MB) — dikirim ke setiap penerima dengan isi template sebagai keterangan.',
-            'Lupa melampirkan? Buka detail campaign (status draft / terjadwal / dijeda) → "+ Tambah foto / file".',
+            'Siapkan Template (boleh beberapa, masing-masing dengan varian A/B/C dan lampiran foto / file).',
+            '+ Campaign → isi nama, perangkat, kecepatan, lalu centang SATU ATAU BEBERAPA template ("Pilih semua" untuk semuanya).',
+            'Pilih penerima: Rombongan (kelompok per peruntukan), tag, dan/atau tahap — kotak hijau menunjukkan jumlah penerima yang memenuhi syarat.',
+            'Opsional "3. Lampiran foto / file": berlaku untuk semua penerima. Bila kosong, lampiran milik template terpilih yang dikirim.',
             'Pilih Simpan draft, Mulai sekarang, atau Jadwalkan.',
-            'Pantau progres, tingkat gagal, balasan, dan opt-out di halaman detail. Jeda / Lanjutkan / Batalkan bila perlu.',
+            'Pantau progres per template / varian di halaman detail. Jeda / Lanjutkan / Batalkan bila perlu.',
+            'Duplikat: salin campaign untuk rombongan / peruntukan lain tanpa mengisi ulang template & lampiran.',
         ],
         'tips' => [
+            'Setiap penerima mendapat varian acak dari semua template terpilih (dibagi merata). Tambahkan juga {Halo|Hai|Selamat siang} di template untuk variasi kata.',
             'Hanya kontak opt-in yang dikirimi. Opt-out & belum ada izin otomatis dilewati.',
             'Pengaman: frequency cap, jam tenang, batas penerima, dan auto-pause bila gagal/opt-out tinggi (atur di Pengaturan).',
             'Pengiriman bertahap tiap menit membutuhkan jendela "php artisan schedule:work" berjalan.',
         ],
     ],
 
+    'lists.*' => [
+        'judul' => 'Rombongan Penerima',
+        'fungsi' => 'Kelompok kontak per peruntukan (mis. Reseller, Pelanggan VIP, Peserta Event) yang bisa dipilih saat membuat broadcast.',
+        'langkah' => [
+            '+ Rombongan → beri nama & keterangan peruntukan.',
+            'Tambah anggota: tempel daftar nomor, ambil dari tag, dari anggota grup WhatsApp, atau salin dari rombongan lain.',
+            'Dari menu Kontak: centang kontak → Aksi massal → "Masukkan ke rombongan" (isi nama rombongan).',
+            'Klik "Broadcast ke rombongan ini" untuk langsung membuat campaign dengan rombongan terpilih.',
+            'Centang anggota → "Keluarkan dari rombongan" untuk menghapus dari kelompok (kontak tetap tersimpan).',
+        ],
+        'tips' => [
+            'Satu kontak boleh masuk beberapa rombongan; saat broadcast ke beberapa rombongan, kontak yang sama tetap hanya dikirimi sekali.',
+            'Centang "sudah memberi izin" saat menempel nomor hanya bila pemilik nomor memang setuju — broadcast hanya ke kontak opt-in.',
+        ],
+    ],
+
     'templates.*' => [
         'judul' => 'Template',
-        'fungsi' => 'Menyimpan teks pesan siap pakai untuk Broadcast dan Balasan cepat di Inbox, dengan variabel personalisasi.',
+        'fungsi' => 'Menyimpan teks pesan (dan lampiran foto / file) siap pakai untuk Broadcast dan Balasan cepat di Inbox, dengan variabel personalisasi.',
         'langkah' => [
             '+ Template → isi nama & kategori.',
-            'Tulis Varian A (wajib). Varian B & C opsional untuk uji A/B.',
+            'Tulis Varian A (wajib). Varian B & C opsional — penerima mendapat salah satunya secara acak.',
             'Klik tombol variabel untuk menyisipkan {{name}}, {{first_name}}, {{phone}}, {{email}}.',
+            'Variasi kata: tulis {Halo|Hai|Selamat siang} — tiap penerima mendapat salah satunya.',
+            'Lampiran foto / file (opsional): ikut terkirim setiap kali template dipakai broadcast; isi varian menjadi keterangannya.',
             'Lihat hasil di kotak Pratinjau, lalu Simpan.',
         ],
         'tips' => [
-            'Saat broadcast, penerima dibagi rata ke varian; performa tiap varian tampil di daftar template.',
+            'Buat beberapa template dengan gaya berbeda lalu pilih semuanya di Broadcast agar pesan tidak seragam (lebih aman dari deteksi robot/spam).',
+            'Performa tiap varian tampil di daftar template & detail campaign.',
         ],
     ],
 

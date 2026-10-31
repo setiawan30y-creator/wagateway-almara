@@ -13,6 +13,7 @@
     ]) as [$a, $label, $cls, $confirm])
         <form method="POST" action="{{ route('campaigns.action', [$campaign, $a]) }}" class="inline" @if ($confirm) data-confirm="{{ $confirm }}" @endif>@csrf<button class="{{ $cls }}" data-once>{{ $label }}</button></form>
     @endforeach
+    <a class="btn" href="{{ route('campaigns.create', ['dari' => $campaign->id]) }}" title="Salin campaign ini untuk rombongan / peruntukan lain">Duplikat</a>
     @if ($campaign->status !== 'running')
         <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" class="inline" data-confirm="Hapus campaign ini? Riwayat pesan tetap tersimpan.">@csrf @method('DELETE')<button class="btn btn-danger">Hapus</button></form>
     @endif
@@ -35,7 +36,7 @@
         <div class="card-h">Detail</div>
         <div class="card-b">
             <dl class="kv">
-                <dt>Template</dt><dd>{{ $campaign->template?->name ?? '—' }}</dd>
+                <dt>Template</dt><dd>{{ $usedTemplates->pluck('name')->implode(', ') ?: '—' }}@if ($usedTemplates->count() > 1) <span class="muted">· diacak per penerima</span>@endif</dd>
                 <dt>Lampiran</dt><dd>
                     @if ($campaign->media_type)
                         📎 {{ $campaign->media_name ?: \App\Support\MediaFile::LABELS[$campaign->media_type] ?? 'media' }} <span class="muted">({{ \App\Support\MediaFile::LABELS[$campaign->media_type] ?? $campaign->media_type }}, {{ number_format(($campaign->media_size ?? 0) / 1024, 0, ',', '.') }} KB)</span>
@@ -59,6 +60,7 @@
                 <dt>Perangkat</dt><dd>{{ $campaign->device?->name ?? '—' }}</dd>
                 <dt>Kecepatan</dt><dd>{{ $campaign->rate_per_minute }} pesan/menit</dd>
                 <dt>Audience</dt><dd>
+                    @if (! empty($campaign->audience['lists']))Rombongan: {{ \App\Models\RecipientList::whereIn('id', $campaign->audience['lists'])->pluck('name')->implode(', ') }} ·@endif
                     Tag: {{ \App\Models\Tag::whereIn('id', $campaign->audience['tags'] ?? [])->pluck('name')->implode(', ') ?: 'semua' }} ·
                     Tahap: {{ collect($campaign->audience['stages'] ?? [])->map(fn ($s) => \App\Models\Contact::STAGES[$s] ?? $s)->implode(', ') ?: 'semua' }}
                 </dd>
@@ -69,15 +71,15 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-h">A/B varian</div>
+        <div class="card-h">Template & varian</div>
         <div class="table-wrap"><table class="dense">
             <thead><tr><th>Varian</th><th class="right">Penerima</th><th class="right">Terkirim</th><th class="right">Dibaca</th><th class="right">Gagal</th></tr></thead>
             <tbody>
-            @foreach ($campaign->template?->variants ?? [] as $v)
+            @foreach ($usedTemplates as $tpl) @foreach ($tpl->variants as $v)
                 @php $s = $variantStats[$v->id] ?? null; @endphp
-                <tr><td><b>{{ $v->label }}</b> <span class="muted msg" style="display:inline-block;max-width:200px;vertical-align:bottom">{{ $v->body }}</span></td>
+                <tr><td>@if ($usedTemplates->count() > 1)<span class="muted">{{ \Illuminate\Support\Str::limit($tpl->name, 18) }} ·</span> @endif<b>{{ $v->label }}</b> <span class="muted msg" style="display:inline-block;max-width:200px;vertical-align:bottom">{{ $v->body }}</span></td>
                     <td class="right mono">{{ $s->total ?? 0 }}</td><td class="right mono">{{ $s->sent ?? 0 }}</td><td class="right mono">{{ $s->read_count ?? 0 }}</td><td class="right mono">{{ $s->failed ?? 0 }}</td></tr>
-            @endforeach
+            @endforeach @endforeach
             </tbody>
         </table></div>
         @if ($skipReasons->isNotEmpty())
@@ -96,7 +98,7 @@
             <tr>
                 <td>@if ($r->contact)<a href="{{ route('contacts.show', $r->contact) }}">{{ $r->contact->name ?: '—' }}</a>@else — @endif</td>
                 <td class="mono">{{ $r->contact?->maskedPhone() }}</td>
-                <td>{{ $r->variant?->label ?? '—' }}</td>
+                <td>{{ $r->variant ? ($usedTemplates->count() > 1 ? \Illuminate\Support\Str::limit($usedTemplates->firstWhere('id', $r->variant->template_id)?->name ?? '', 14).' · ' : '').$r->variant->label : '—' }}</td>
                 <td><span class="badge st-{{ $r->message?->status ?? ($r->status === 'pending' ? 'queued' : $r->status) }}">{{ $r->message?->status ?? $r->status }}</span></td>
                 <td class="hide-sm muted">{{ $r->skip_reason ?? $r->message?->error }}</td>
                 <td class="hide-sm muted">{{ $r->processed_at?->format('d/m H:i') }}</td>

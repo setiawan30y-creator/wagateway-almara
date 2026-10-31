@@ -39,12 +39,13 @@
             <select class="input" name="action" required>
                 <option value="tag">Tambah tag</option>
                 <option value="untag">Hapus tag</option>
+                <option value="list">Masukkan ke rombongan (isi nama)</option>
                 <option value="opt_in">Tandai opt-in</option>
                 <option value="opt_out">Tandai opt-out</option>
                 <option value="stage">Ubah tahap (isi kode tahap)</option>
                 @can('admin')<option value="delete">Hapus kontak</option>@endcan
             </select>
-            <input class="input" name="value" placeholder="Nilai, mis. vip atau customer" style="width:190px">
+            <input class="input" name="value" placeholder="Nilai, mis. vip / nama rombongan" style="width:190px">
             <button class="btn btn-sm">Terapkan</button>
         </div>
         <div class="table-wrap">

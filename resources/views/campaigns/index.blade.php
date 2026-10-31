@@ -15,7 +15,7 @@
                 <tr>
                     <td><a href="{{ route('campaigns.show', $c) }}">{{ $c->name }}</a></td>
                     <td><span class="tag">{{ $c->statusLabel() }}</span></td>
-                    <td class="hide-sm">{{ $c->template?->name ?? '—' }}</td>
+                    <td class="hide-sm">{{ $c->template?->name ?? '—' }}@if (count($c->templateIds()) > 1) <span class="muted">+{{ count($c->templateIds()) - 1 }}</span>@endif</td>
                     <td class="hide-sm">{{ $c->device?->name ?? '—' }}</td>
                     <td><div class="progress"><i style="width:{{ $st['progress'] }}%"></i></div></td>
                     <td class="right mono">{{ $st['sent'] }}/{{ $st['total'] }}</td>

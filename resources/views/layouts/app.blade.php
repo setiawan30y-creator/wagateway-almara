@@ -20,6 +20,7 @@
         ],
         'Growth' => [
             ['campaigns.index', 'Broadcast', 'broadcast', 'campaigns.*', true],
+            ['lists.index', 'Rombongan', 'contacts', 'lists.*', false],
             ['templates.index', 'Template', 'template', 'templates.*', true],
             ['smart-links.index', 'Smart Link', 'link', 'smart-links.*', true],
             ['auto-replies.index', 'Auto-Reply', 'bot', 'auto-replies.*', true],

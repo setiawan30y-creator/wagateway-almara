@@ -135,15 +135,32 @@
   if (aud) {
     var outA = document.querySelector('[data-audience-out]');
     var runA = function () {
-      var tags = [], stages = [];
+      var tags = [], stages = [], lists = [];
+      aud.querySelectorAll('input[name="lists[]"]:checked').forEach(function (i) { lists.push(i.value); });
       aud.querySelectorAll('input[name="tags[]"]:checked').forEach(function (i) { tags.push(i.value); });
       aud.querySelectorAll('input[name="stages[]"]:checked').forEach(function (i) { stages.push(i.value); });
-      post(aud.getAttribute('data-audience-form'), { tags: tags, stages: stages }).then(function (d) {
+      post(aud.getAttribute('data-audience-form'), { lists: lists, tags: tags, stages: stages }).then(function (d) {
         outA.innerHTML = '<b>' + d.eligible + '</b> penerima memenuhi syarat dari ' + d.total + ' kontak · ' +
           d.no_consent + ' belum opt-in · ' + d.opted_out + ' opt-out' + (d.over_limit ? ' · ' + d.over_limit + ' melebihi batas' : '');
       });
     };
-    aud.addEventListener('change', runA); runA();
+    aud.addEventListener('change', function (e) { if (e.target && /^(lists|tags|stages)\[\]$/.test(e.target.name)) runA(); }); runA();
+
+    // Template: hitung varian terpilih + tombol pilih semua
+    var tplOut = document.querySelector('[data-template-count]');
+    var countT = function () {
+      var t = 0, v = 0;
+      aud.querySelectorAll('input[name="template_ids[]"]:checked').forEach(function (i) { t++; v += +(i.getAttribute('data-variants') || 1); });
+      if (tplOut) tplOut.textContent = t ? t + ' template · ' + v + ' variasi pesan diacak per penerima' : 'Pilih minimal satu template';
+    };
+    aud.addEventListener('change', function (e) { if (e.target && e.target.name === 'template_ids[]') countT(); });
+    var allBtn = document.querySelector('[data-template-all]');
+    if (allBtn) allBtn.addEventListener('click', function () {
+      var boxes = aud.querySelectorAll('input[name="template_ids[]"]');
+      var all = Array.prototype.every.call(boxes, function (b) { return b.checked; });
+      boxes.forEach(function (b) { b.checked = !all; }); countT();
+    });
+    countT();
   }
 
   // Enter = kirim, Shift+Enter = baris baru (composer inbox)

@@ -111,12 +111,21 @@ class ContactController extends Controller
         $data = $request->validate([
             'ids' => ['required', 'array', 'max:500'],
             'ids.*' => ['integer'],
-            'action' => ['required', Rule::in(['tag', 'untag', 'opt_in', 'opt_out', 'stage', 'delete'])],
+            'action' => ['required', Rule::in(['tag', 'untag', 'list', 'opt_in', 'opt_out', 'stage', 'delete'])],
             'value' => ['nullable', 'string', 'max:100'],
         ]);
 
         $contacts = Contact::whereIn('id', $data['ids'])->get();
         $value = (string) ($data['value'] ?? '');
+
+        if ($data['action'] === 'list') {
+            abort_if(trim($value) === '', 422, 'Isi nama rombongan.');
+            $list = \App\Models\RecipientList::firstOrCreate(['name' => trim($value)], ['created_by' => $request->user()->id]);
+            $added = $list->addContacts($contacts->pluck('id'));
+            AuditLog::record('list.add', "Tambah {$added} kontak ke rombongan {$list->name}");
+
+            return back()->with('success', "{$added} kontak dimasukkan ke rombongan \"{$list->name}\".");
+        }
 
         foreach ($contacts as $contact) {
             match ($data['action']) {
