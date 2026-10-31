@@ -16,7 +16,7 @@ return [
 
     'dashboard' => [
         'judul' => 'Dashboard',
-        'fungsi' => 'Ringkasan kondisi gateway: jumlah pesan 7 hari, pesan gagal, percakapan yang belum dibaca, kontak, perangkat, dan broadcast yang sedang berjalan.',
+        'fungsi' => 'Ringkasan kondisi akun usaha Anda: jumlah pesan 7 hari, pesan gagal, percakapan yang belum dibaca, kontak, perangkat, dan broadcast yang sedang berjalan.',
         'langkah' => [
             'Lihat kartu angka di atas untuk kondisi terkini.',
             'Grafik "Lalu lintas pesan" membandingkan pesan keluar & masuk per hari.',
@@ -24,7 +24,9 @@ return [
             'Periksa status perangkat — harus "connected" agar pesan terkirim.',
         ],
         'tips' => [
+            'Label di samping logo (GRATIS / PRO) menunjukkan paket akun Anda. Kotak kuning muncul bila masa sewa hampir habis.',
             'Angka "Gagal" tinggi? Cek perangkat dan menu Riwayat untuk melihat penyebabnya.',
+            'Di komputer (Laragon), klik dua kali mulai.bat agar jendela Scheduler & Engine berjalan — tanpa keduanya broadcast dan pesan WhatsApp tidak diproses.',
         ],
     ],
 
@@ -52,20 +54,21 @@ return [
 
     'contacts.index' => [
         'judul' => 'Kontak & CRM',
-        'fungsi' => 'Daftar semua pelanggan / lead. Kontak dibuat otomatis saat ada chat, atau bisa ditambah & di-import manual.',
+        'fungsi' => 'Daftar semua pelanggan / lead. Kontak dibuat otomatis saat ada chat, atau bisa ditambah, di-import, dan disinkron dari HP.',
         'langkah' => [
             'Cari dan saring berdasarkan tahap, tag, atau izin (opt-in / opt-out).',
             '+ Kontak untuk menambah satu kontak; Import CSV untuk banyak kontak sekaligus (kolom: name, phone, email, tags).',
-            'Centang beberapa kontak lalu pilih Aksi massal: tambah/hapus tag, tandai opt-in/opt-out, ubah tahap.',
+            'Centang beberapa kontak lalu pilih Aksi massal: tambah/hapus tag, masukkan ke rombongan (isi nama rombongan), tandai opt-in/opt-out, ubah tahap.',
             'Klik nama untuk melihat profil, riwayat chat, dan riwayat izin.',
             'Tombol Pipeline menampilkan kontak per tahap penjualan (kanban).',
             'Sinkron dari HP: mengambil kontak yang tersimpan di HP (perangkat Scan QR). Nama yang sudah Anda isi tidak ditimpa.',
         ],
         'tips' => [
-            'Kontak hasil sinkron berstatus "belum ada izin" — tandai opt-in hanya untuk yang memang setuju menerima broadcast.',
+            'Nama kontak dipakai untuk {{name}} / {{first_name}} di template. Kontak tanpa nama disapa "Pelanggan".',
+            'Broadcast (bawaan) hanya dikirim ke kontak berstatus "Izin (opt-in)". Tandai opt-in hanya untuk yang memang setuju.',
+            'Kontak hasil sinkron / import berstatus "belum ada izin" kecuali Anda centang "sudah memberi izin".',
             'WhatsApp mengirim daftar kontak beberapa saat setelah scan QR. Bila hasil sinkron masih 0, tunggu beberapa menit lalu coba lagi.',
-            'Broadcast hanya dikirim ke kontak berstatus "Izin (opt-in)". Centang "sudah memberi izin" saat import bila memang benar.',
-            'Kontak yang membalas STOP otomatis menjadi opt-out.',
+            'Kontak yang membalas STOP otomatis menjadi opt-out dan tidak pernah dikirimi broadcast.',
         ],
     ],
 
@@ -99,7 +102,7 @@ return [
 
     'send.*' => [
         'judul' => 'Kirim Pesan',
-        'fungsi' => 'Mengirim pesan WhatsApp langsung ke 1–20 nomor sekaligus, dengan atau tanpa lampiran.',
+        'fungsi' => 'Mengirim pesan WhatsApp langsung ke beberapa nomor sekaligus, dengan atau tanpa lampiran — langsung terkirim, tanpa jeda broadcast.',
         'langkah' => [
             'Pilih perangkat (nomor WhatsApp) pengirim.',
             'Isi nomor tujuan — pisahkan dengan koma atau baris baru.',
@@ -107,7 +110,8 @@ return [
             'Klik Kirim. Hasil dapat dilihat di menu Riwayat.',
         ],
         'tips' => [
-            'Untuk kirim ke banyak kontak (ratusan), gunakan Broadcast agar ada pengaman anti-spam.',
+            'Untuk kirim ke banyak kontak (puluhan / ratusan), gunakan Broadcast: ada jeda acak, kuota harian, dan pengaman anti-blokir.',
+            'Paket Gratis: maksimal 100 pesan keluar per hari dan setiap pesan diberi watermark.',
             'Kirim hanya ke orang yang memberi izin agar nomor tidak diblokir WhatsApp.',
         ],
     ],
@@ -128,40 +132,45 @@ return [
 
     'campaigns.*' => [
         'judul' => 'Broadcast',
-        'fungsi' => 'Mengirim pesan massal ke rombongan / tag / tahap tertentu, dengan pesan yang diacak antar-template agar tidak seragam, plus pengaman anti-spam otomatis.',
+        'fungsi' => 'Mengirim pesan massal ke rombongan / tag / tahap tertentu, dengan varian pesan yang diacak agar tidak seragam, plus pengaman anti-blokir otomatis.',
         'langkah' => [
             'Siapkan Template (boleh beberapa, masing-masing dengan varian A/B/C dan lampiran foto / file).',
-            '+ Campaign → isi nama, perangkat, kecepatan, lalu centang SATU ATAU BEBERAPA template ("Pilih semua" untuk semuanya).',
-            'Pilih penerima: Rombongan (kelompok per peruntukan), tag, dan/atau tahap — kotak hijau menunjukkan jumlah penerima yang memenuhi syarat.',
+            '+ Campaign → isi nama, pilih "Kirim melalui" = nomor Scan QR Anda (bukan Simulasi), dan kecepatan.',
+            'Template pesan: centang template, lalu pilih varian mana saja yang dipakai (A / B / C). Varian dari beberapa template boleh dicampur; "Pilih semua" untuk semuanya.',
+            'Penerima: centang Rombongan (dan bila perlu tag / tahap — semuanya saling mempersempit). Kotak HIJAU = jumlah yang akan dikirimi; kotak MERAH = tidak ada yang terkirim, beserta alasannya.',
             'Opsional "3. Lampiran foto / file": berlaku untuk semua penerima. Bila kosong, lampiran milik template terpilih yang dikirim.',
-            'Bagian "4. Kirim": pilih 🚀 Kirim sekarang, 🕒 Jadwalkan, atau 📝 Simpan draft, lalu klik tombol di bawahnya. Draft dikirim nanti lewat tombol "Kirim sekarang" di halaman campaign.',
-            'Panel "Proses pengiriman" di halaman campaign menampilkan secara realtime nomor yang sedang dikirim (menunggu jeda / mengetik / mengirim), antrean berikutnya, dan yang baru terkirim.',
-            'Pantau progres per template / varian di halaman detail. Jeda / Lanjutkan / Batalkan bila perlu.',
-            'Duplikat: salin campaign untuk rombongan / peruntukan lain tanpa mengisi ulang template & lampiran.',
+            '"4. Kirim": pilih 🚀 Kirim sekarang, 🕒 Jadwalkan, atau 📝 Simpan draft, lalu klik tombol di bawahnya. Draft dikirim nanti lewat tombol "🚀 Kirim sekarang" di halaman campaign.',
+            'Halaman campaign: panel "Proses pengiriman" menampilkan realtime nomor yang sedang dikirim (menunggu jeda / mengetik / mengirim), antrean berikutnya, dan yang baru terkirim. Kotak kuning/merah menjelaskan bila pengiriman menunggu.',
+            'Jeda / Lanjutkan / Batalkan bila perlu. Duplikat: salin campaign (template, varian, lampiran) untuk rombongan lain atau kirim ulang.',
         ],
         'tips' => [
-            'Anti-blokir (Scan QR): pesan dikirim satu per satu dengan jeda acak + "sedang mengetik…", dan dibatasi kuota harian per nomor (nomor baru dipanaskan bertahap). Kuota habis → sisa penerima lanjut besok otomatis.',
-            'Setiap penerima mendapat varian acak dari semua template terpilih (dibagi merata). Tambahkan juga {Halo|Hai|Selamat siang} di template untuk variasi kata.',
-            'Bawaan: hanya kontak opt-in yang dikirimi; opt-out & belum ada izin dilewati. Kotak hijau/merah di form menunjukkan berapa yang akan terkirim dan alasan yang dilewati. Aturan opt-in bisa dilonggarkan di Pengaturan (tidak disarankan).',
-            'Perangkat "Simulasi" tidak benar-benar mengirim ke WhatsApp — pilih nomor Scan QR untuk kirim sungguhan.',
-            'Pengaman: frequency cap, jam tenang, batas penerima, dan auto-pause bila gagal/opt-out tinggi (atur di Pengaturan).',
-            'Pengiriman bertahap tiap menit membutuhkan jendela "php artisan schedule:work" berjalan.',
+            'Penerima "dilewati" bila: belum opt-in, opt-out, atau sudah menerima broadcast dalam rentang Frequency cap (bawaan 24 jam). Tandai opt-in lewat Rombongan → "Tandai anggota opt-in".',
+            '"Sedang jam tenang — pengiriman menunggu": broadcast tidak dikirim pada jam tenang (bawaan 21:00–08:00) dan otomatis lanjut setelahnya. Ubah di Pengaturan.',
+            'Anti-blokir (Scan QR): pesan dikirim satu per satu dengan jeda acak + "sedang mengetik…", dibatasi kuota harian per nomor (nomor baru dipanaskan bertahap). Kuota habis → lanjut besok otomatis.',
+            'Variasi kata: tulis {Halo|Hai|Selamat siang} di template — tiap penerima mendapat salah satunya.',
+            'Perangkat "Simulasi" tidak benar-benar mengirim ke WhatsApp.',
+            'Biarkan jendela Scheduler & Engine (mulai.bat) terbuka sampai campaign selesai. Status "Selesai" muncul setelah antrean di engine habis terkirim.',
+            'Fitur Broadcast hanya untuk paket Pro.',
         ],
     ],
 
     'lists.*' => [
         'judul' => 'Rombongan Penerima',
-        'fungsi' => 'Kelompok kontak per peruntukan (mis. Reseller, Pelanggan VIP, Peserta Event) yang bisa dipilih saat membuat broadcast.',
+        'fungsi' => 'Kelompok kontak per peruntukan (mis. Reseller, Pelanggan VIP, Peserta Event) yang dipilih saat membuat broadcast.',
         'langkah' => [
             '+ Rombongan → beri nama & keterangan peruntukan.',
-            'Tambah anggota: tempel daftar nomor, ambil dari tag, dari anggota grup WhatsApp, atau salin dari rombongan lain.',
-            'Dari menu Kontak: centang kontak → Aksi massal → "Masukkan ke rombongan" (isi nama rombongan).',
-            'Klik "Broadcast ke rombongan ini" untuk langsung membuat campaign dengan rombongan terpilih.',
-            'Centang anggota → "Keluarkan dari rombongan" untuk menghapus dari kelompok (kontak tetap tersimpan).',
+            'Tempel nomor, boleh dengan nama — satu orang per baris: "081234567890, Nama Lengkap" atau "Nama - 0812…". Bisa juga salin 2 kolom (Nomor | Nama) dari Excel.',
+            'Dari tag: masukkan semua kontak yang punya tag tertentu (saat tombol diklik).',
+            'Dari anggota grup WhatsApp: masukkan anggota grup (sinkron dulu di menu Grup WA) untuk dikirimi pesan pribadi.',
+            'Salin dari rombongan lain, atau dari menu Kontak: centang → Aksi massal → "Masukkan ke rombongan".',
+            'Kotak kuning "anggota belum memberi izin": centang pernyataan lalu "Tandai … anggota opt-in" agar mereka ikut broadcast.',
+            'Klik "Broadcast ke rombongan ini" untuk langsung membuat campaign. Centang anggota → "Keluarkan dari rombongan" untuk menghapus dari kelompok.',
         ],
         'tips' => [
+            'Angka "Siap broadcast (opt-in)" = jumlah anggota yang benar-benar akan dikirimi.',
             'Satu kontak boleh masuk beberapa rombongan; saat broadcast ke beberapa rombongan, kontak yang sama tetap hanya dikirimi sekali.',
-            'Centang "sudah memberi izin" saat menempel nomor hanya bila pemilik nomor memang setuju — broadcast hanya ke kontak opt-in.',
+            'Nama yang sudah ada di Kontak tidak ditimpa saat menempel nomor.',
+            'Anggota dari grup WA masuk tanpa nama & "belum ada izin" — tandai opt-in hanya bila mereka setuju.',
         ],
     ],
 
@@ -169,15 +178,17 @@ return [
         'judul' => 'Template',
         'fungsi' => 'Menyimpan teks pesan (dan lampiran foto / file) siap pakai untuk Broadcast dan Balasan cepat di Inbox, dengan variabel personalisasi.',
         'langkah' => [
-            '+ Template → isi nama & kategori.',
-            'Tulis Varian A (wajib). Varian B & C opsional — penerima mendapat salah satunya secara acak.',
+            '+ Template → isi nama & kategori, centang Aktif.',
+            'Tulis Varian A (wajib). Varian B & C opsional — di Broadcast Anda bisa memilih varian mana yang dipakai.',
             'Klik tombol variabel untuk menyisipkan {{name}}, {{first_name}}, {{phone}}, {{email}}.',
             'Variasi kata: tulis {Halo|Hai|Selamat siang} — tiap penerima mendapat salah satunya.',
-            'Lampiran foto / file (opsional): ikut terkirim setiap kali template dipakai broadcast; isi varian menjadi keterangannya.',
+            'Lampiran foto / file (opsional): ikut terkirim setiap kali template dipakai broadcast; isi varian menjadi keterangannya. Saat mengubah, centang "Hapus lampiran ini" atau pilih berkas baru untuk mengganti.',
             'Lihat hasil di kotak Pratinjau, lalu Simpan.',
         ],
         'tips' => [
-            'Buat beberapa template dengan gaya berbeda lalu pilih semuanya di Broadcast agar pesan tidak seragam (lebih aman dari deteksi robot/spam).',
+            'Template nonaktif tidak muncul di pilihan Broadcast.',
+            'Buat beberapa template / varian dengan gaya berbeda agar pesan tidak seragam (lebih aman dari deteksi robot/spam).',
+            'Format WhatsApp: *tebal*, _miring_, ~coret~.',
             'Performa tiap varian tampil di daftar template & detail campaign.',
         ],
     ],
@@ -234,12 +245,13 @@ return [
         'judul' => 'Scan QR',
         'fungsi' => 'Menautkan nomor WhatsApp ke gateway seperti WhatsApp Web.',
         'langkah' => [
-            'Pastikan engine berjalan: PowerShell → cd C:\\laragon\\www\\wagateway-almara\\engine → npm start.',
+            'Pastikan engine berjalan: klik dua kali mulai.bat (atau PowerShell → cd C:\\laragon\\www\\wagateway-almara\\engine → npm start).',
             'Di HP buka WhatsApp → ⋮ / Pengaturan → Perangkat tertaut → Tautkan perangkat.',
             'Arahkan kamera ke QR. QR berganti otomatis ±20 detik.',
-            'Setelah terhubung, halaman kembali ke daftar perangkat.',
+            'Setelah terhubung, halaman kembali ke daftar perangkat. Kontak & chat terbaru dari HP ikut masuk beberapa saat kemudian.',
         ],
         'tips' => [
+            'Buka aplikasi lewat alamat APP_URL (Laragon: http://wagateway-almara.test, bukan https).',
             'Muncul "Engine QR tidak dapat dihubungi"? Engine belum jalan atau token tidak sama (lihat Panduan bagian 10).',
         ],
     ],
@@ -250,13 +262,16 @@ return [
         'langkah' => [
             'Tambah nomor — Scan QR: isi nama, lalu scan QR dari HP (cara termudah).',
             '+ Manual: untuk Meta Cloud API (resmi) — isi Phone Number ID & Access Token.',
-            'Cek: memeriksa koneksi. Jadikan utama: nomor default untuk pengiriman.',
-            'Logout: melepas nomor dari WhatsApp (perlu scan ulang untuk menyambung).',
-            'Sinkron kontak / Sinkron grup (perangkat Scan QR yang terhubung): mengambil kontak HP ke menu Kontak dan grup ke menu Grup WA.',
+            'Cek: memeriksa koneksi sekaligus mendaftarkan ulang alamat aplikasi ke engine (pakai bila pesan masuk / status tidak muncul).',
+            'Jadikan utama: nomor default untuk pengiriman. Logout: melepas nomor dari WhatsApp (perlu scan ulang).',
+            'Sinkron kontak / Sinkron grup (Scan QR yang terhubung): mengambil kontak HP ke menu Kontak dan grup ke menu Grup WA.',
+            'Kolom Status menampilkan kuota broadcast hari ini (mis. 12/60 · warm-up hari 3).',
         ],
         'tips' => [
-            'Perangkat "Simulasi" tidak mengirim sungguhan — untuk uji coba saja.',
-            'Kredensial disimpan terenkripsi.',
+            'Nomor baru dipanaskan bertahap: hari 1–3 maks 30, 4–7 maks 60, 8–14 maks 120, 15–21 maks 200 broadcast/hari.',
+            'Jendela engine menampilkan "fetch failed"? Pastikan APP_URL benar (http), lalu klik Cek.',
+            'Perangkat "Simulasi" tidak mengirim sungguhan — untuk uji coba saja dan tidak dihitung dalam batas nomor paket.',
+            'Jumlah nomor dibatasi paket (Gratis: 1). Kredensial disimpan terenkripsi.',
         ],
     ],
 
@@ -308,13 +323,16 @@ return [
 
     'users.*' => [
         'judul' => 'Pengguna & Role',
-        'fungsi' => 'Mengelola akun yang boleh masuk ke panel dan hak aksesnya.',
+        'fungsi' => 'Mengelola akun tim di akun usaha Anda (owner, admin, CS) dan hak aksesnya.',
         'langkah' => [
             '+ Pengguna → isi nama, email, password, dan role.',
-            'Owner/Admin: semua menu. Agent (CS): Inbox, Kontak, Tiket, Kirim, Riwayat.',
+            'Owner/Admin: semua menu. Agent (CS): Inbox, Kontak, Rombongan, Grup WA, Tiket, Kirim, Riwayat.',
             'Hapus centang "Aktif" untuk menonaktifkan akun tanpa menghapusnya.',
         ],
-        'tips' => [],
+        'tips' => [
+            'Pengguna hanya melihat data akun usahanya sendiri.',
+            'Email harus unik di seluruh aplikasi (satu email = satu akun).',
+        ],
     ],
 
     'logs.*' => [
@@ -346,32 +364,35 @@ return [
     ],
 
     'license.*' => [
-        'judul' => 'Lisensi',
-        'fungsi' => 'Menampilkan paket aktif (Gratis / Pro), pemakaian kuota, dan tempat mengaktifkan kode lisensi.',
+        'judul' => 'Lisensi / Paket',
+        'fungsi' => 'Menampilkan paket akun usaha Anda (Gratis / Pro), masa berlaku, pemakaian kuota, dan perbandingan paket.',
         'langkah' => [
-            'Lihat paket aktif, masa berlaku, jumlah nomor, dan pesan hari ini.',
-            'Untuk upgrade / perpanjang: hubungi penyedia aplikasi. Bila Anda menerima kode lisensi, tempel di sini → Aktifkan.',
+            'Lihat paket aktif, masa berlaku, jumlah nomor, dan pesan keluar hari ini.',
+            'Untuk upgrade / perpanjang: hubungi penyedia aplikasi. Paket diperbarui oleh penyedia; bila Anda menerima kode lisensi, tempel di sini → Aktifkan.',
             'Tabel Perbandingan paket menunjukkan fitur tiap paket.',
         ],
         'tips' => [
             'Paket Gratis: 1 nomor, 100 pesan/hari, tanpa broadcast & AI, pesan diberi watermark.',
-            'Lisensi kedaluwarsa masih berlaku 3 hari (masa tenggang) sebelum turun ke Gratis.',
+            'Masa sewa yang lewat masih berlaku 3 hari (masa tenggang) sebelum turun ke Gratis. Pengingat dikirim ke WhatsApp Anda H-7, H-3, H-1, dan hari H.',
         ],
     ],
 
     'settings.*' => [
         'judul' => 'Pengaturan',
-        'fungsi' => 'Aturan umum gateway: pengaman broadcast, kata kunci STOP/MULAI, penugasan otomatis, SLA tiket, dan jam kerja.',
+        'fungsi' => 'Aturan akun usaha Anda: pengaman broadcast & anti-blokir, kata kunci STOP/MULAI, penugasan otomatis, SLA tiket, dan jam kerja.',
         'langkah' => [
-            'Jam tenang: broadcast tidak dikirim pada rentang jam ini.',
-            'Frequency cap: jarak minimal antar broadcast ke kontak yang sama.',
+            'Jam tenang: broadcast tidak dikirim pada rentang jam ini (bawaan 21:00–08:00) dan otomatis lanjut setelahnya. Hilangkan centang untuk mematikan.',
+            '"Broadcast hanya ke kontak opt-in": disarankan tetap dicentang. Bila dimatikan, kontak "belum ada izin" ikut dikirimi (opt-out tetap tidak).',
+            'Frequency cap: jarak minimal antar broadcast ke kontak yang sama (0 = nonaktif). Pesan yang gagal tidak dihitung.',
             'Auto-pause: campaign dijeda otomatis bila tingkat gagal / opt-out melewati batas.',
-            'SLA tiket: batas waktu penanganan per prioritas.',
-            'Jam kerja: dipakai Auto-Reply "di luar jam kerja" dan mode AI.',
-            'Klik Simpan pengaturan.',
+            'Anti-blokir (Scan QR): jeda acak minimum–maksimum antar pesan, "sedang mengetik…", batas broadcast per nomor per hari, dan pemanasan nomor baru.',
+            'SLA tiket: batas waktu penanganan per prioritas. Jam kerja: dipakai Auto-Reply "di luar jam kerja" dan mode AI.',
+            'Klik Simpan pengaturan — campaign yang sedang menunggu ikut memakai pengaturan baru dalam ±1 menit.',
         ],
         'tips' => [
-            'Anti-blokir (Scan QR): atur jeda acak antar pesan, simulasi "sedang mengetik…", batas broadcast per nomor per hari, dan pemanasan nomor baru (hari 1–3: 30, 4–7: 60, 8–14: 120, 15–21: 200 pesan/hari).',
+            'Untuk uji coba malam hari, matikan sementara jam tenang dan/atau ubah Frequency cap ke 0 — kembalikan setelah selesai.',
+            'Pemanasan nomor baru: hari 1–3: 30, 4–7: 60, 8–14: 120, 15–21: 200 broadcast/hari.',
+            'Pengaturan berlaku per akun usaha (tidak memengaruhi penyewa lain).',
         ],
     ],
 
@@ -406,7 +427,10 @@ return [
             'Tombol Salin pada kotak perintah untuk menyalin perintah PowerShell.',
             'Cetak / PDF untuk menyimpan panduan.',
         ],
-        'tips' => [],
+        'tips' => [
+            '"Cara pemasangan" bagian 10 berisi pemecahan masalah umum (engine, token, fetch failed, database).',
+            'Tombol ? di setiap halaman berisi panduan singkat khusus halaman itu.',
+        ],
     ],
 
     '*' => [

@@ -8,7 +8,19 @@ Aplikasi **sederhana untuk mengirim pesan WhatsApp** — self-hosted, dibangun m
 📘 **Panduan pemasangan lengkap (Windows/Laragon & server Ubuntu, update, backup, pemecahan masalah): [`docs/INSTALASI.md`](docs/INSTALASI.md)**  
 📗 Dokumentasi API: [`docs/api/README.md`](docs/api/README.md) · Postman: [`docs/postman/`](docs/postman/) · Engine Scan QR: [`engine/README.md`](engine/README.md)
 
-## Baru di versi 1.0.0 — Siap disewakan (multi-penyewa)
+## Pembaruan setelah 1.0.0 — Broadcast lebih jelas
+
+| Fitur | Keterangan |
+|---|---|
+| Pilih varian | Di form Broadcast, tiap template menampilkan varian A/B/C dengan kotak centang sendiri — pilih varian mana saja yang dipakai, boleh campur antar template. |
+| Pilihan kirim jelas | Bagian "4. Kirim": 🚀 Kirim sekarang (bawaan), 🕒 Jadwalkan, 📝 Simpan draft — tombol mengikuti pilihan. |
+| Pratinjau penerima | Kotak hijau/merah menunjukkan berapa yang akan dikirimi dan alasan yang dilewati (belum opt-in, opt-out, frequency cap); konfirmasi bila 0 penerima. |
+| Proses pengiriman realtime | Panel di halaman campaign: nomor yang sedang dikirim (menunggu jeda / mengetik / mengirim + hitung mundur), antrean berikutnya, dan yang baru terkirim. Halaman diperbarui otomatis. |
+| Penjelasan menunggu | Kotak peringatan bila scheduler mati, nomor terputus, jam tenang, kuota habis, audience kosong, atau perangkat Simulasi. |
+| Opt-in lebih mudah | Rombongan → "Tandai anggota opt-in"; tempel nomor beserta nama ("0812…, Nama Lengkap"); opsi "Broadcast hanya ke kontak opt-in" di Pengaturan. |
+| Perbaikan | Frequency cap tidak menghitung pesan gagal; campaign baru "Selesai" setelah antrean engine terkirim; engine memakai APP_URL untuk mengirim kabar ke aplikasi (memperbaiki "fetch failed" di https lokal); `mulai.bat` untuk menjalankan scheduler & engine sekali klik. |
+
+## Versi 1.0.0 — Siap disewakan (multi-penyewa)
 
 | Fitur | Keterangan |
 |---|---|
