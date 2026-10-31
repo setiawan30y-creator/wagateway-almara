@@ -135,6 +135,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/broadcast', [CampaignController::class, 'store'])->name('campaigns.store')->middleware('feature:broadcast');
         Route::get('/broadcast/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
         Route::get('/template/{template}/lampiran', [\App\Http\Controllers\MediaController::class, 'template'])->name('templates.media');
+        Route::get('/broadcast/{campaign}/live', [CampaignController::class, 'live'])->name('campaigns.live');
         Route::get('/broadcast/{campaign}/lampiran', [\App\Http\Controllers\MediaController::class, 'campaign'])->name('campaigns.media');
         Route::post('/broadcast/{campaign}/lampiran', [CampaignController::class, 'attachment'])->name('campaigns.attachment')->middleware('feature:broadcast');
         Route::post('/broadcast/{campaign}/{action}', [CampaignController::class, 'action'])->whereIn('action', ['start', 'pause', 'resume', 'cancel', 'run'])->name('campaigns.action')->middleware('feature:broadcast');

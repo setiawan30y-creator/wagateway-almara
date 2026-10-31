@@ -46,7 +46,7 @@ class QrEngineProvider implements WhatsAppProvider
         if ($response->successful() && $response->json('success', true) !== false) {
             $id = $response->json('id') ?? $response->json('data.id') ?? $response->json('key.id');
 
-            return SendResult::success($id ? (string) $id : null);
+            return SendResult::success($id ? (string) $id : null, (bool) $response->json('queued', false));
         }
 
         $error = $response->json('message') ?? $response->json('error') ?? ('HTTP '.$response->status());
@@ -71,7 +71,7 @@ class QrEngineProvider implements WhatsAppProvider
         }
 
         if ($response->successful() && $response->json('success', true) !== false) {
-            return SendResult::success($response->json('id') ? (string) $response->json('id') : null);
+            return SendResult::success($response->json('id') ? (string) $response->json('id') : null, (bool) $response->json('queued', false));
         }
 
         return SendResult::failure('Engine QR: '.($response->json('message') ?? 'HTTP '.$response->status()), $response->serverError());

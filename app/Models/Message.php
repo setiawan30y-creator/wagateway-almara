@@ -19,13 +19,14 @@ class Message extends Model
     protected $fillable = [
         'public_id', 'device_id', 'user_id', 'api_key_id', 'contact_id', 'conversation_id', 'group_id', 'participant', 'participant_name', 'campaign_id', 'direction', 'sent_by_ai', 'to', 'body',
         'media_type', 'media_path', 'media_name', 'media_mime', 'media_size',
-        'status', 'provider_message_id', 'error', 'attempts', 'idempotency_key', 'sent_at',
+        'status', 'wa_sent_at', 'provider_message_id', 'error', 'attempts', 'idempotency_key', 'sent_at',
     ];
 
     protected function casts(): array
     {
         return [
             'sent_at' => 'datetime',
+            'wa_sent_at' => 'datetime',
             'attempts' => 'integer',
             'sent_by_ai' => 'boolean',
         ];

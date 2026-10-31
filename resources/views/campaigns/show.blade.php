@@ -20,6 +20,26 @@
 @endsection
 
 @section('content')
+@if (in_array($campaign->status, ['running', 'scheduled', 'completed', 'paused']))
+<div class="card live-panel" data-live-progress="{{ route('campaigns.live', $campaign) }}" style="margin-bottom:10px">
+    <div class="card-h"><span class="live-dot"></span> Proses pengiriman <span class="muted" data-lp-status style="font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+    <div class="card-b lp-grid">
+        <div class="lp-now">
+            <div class="lp-label">Sedang dikirim ke</div>
+            <div data-lp-current><span class="muted">—</span></div>
+        </div>
+        <div>
+            <div class="lp-label">Berikutnya <span class="muted" data-lp-more></span></div>
+            <ol class="lp-list" data-lp-queue></ol>
+        </div>
+        <div>
+            <div class="lp-label">Baru terkirim</div>
+            <ol class="lp-list" data-lp-recent></ol>
+        </div>
+    </div>
+    <div class="card-b lp-counts" data-lp-counts style="border-top:1px solid var(--border)"></div>
+</div>
+@endif
 <div id="campaign-live" @if (in_array($campaign->status, ['running', 'scheduled'])) data-live-refresh="10" @endif>
 @if ($campaign->status === 'draft')
     <div class="alert alert-warning">📝 Campaign ini masih <b>draft</b> — belum dikirim. Klik <b>🚀 Kirim sekarang</b> di kanan atas untuk mulai mengirim.</div>

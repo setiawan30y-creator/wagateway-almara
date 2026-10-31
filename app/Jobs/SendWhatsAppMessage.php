@@ -93,6 +93,7 @@ class SendWhatsAppMessage implements ShouldQueue
                 'provider_message_id' => $result->providerMessageId,
                 'error' => null,
                 'sent_at' => now(),
+                'wa_sent_at' => $result->queued ? null : now(), // antre di engine -> diisi saat benar-benar terkirim
             ])->save();
 
             $device->forceFill(['status' => 'connected', 'last_seen_at' => now()])->save();

@@ -177,6 +177,59 @@ class CampaignController extends Controller
         return back()->with('success', $msg);
     }
 
+    /** Progres pengiriman realtime: nomor yang sedang dikirim, antrean berikutnya, dan yang baru terkirim. */
+    public function live(Campaign $campaign)
+    {
+        $stats = $campaign->stats();
+        $msgs = fn () => \App\Models\Message::with('contact:id,name,phone')->where('campaign_id', $campaign->id)->where('direction', 'out');
+        $row = fn ($m, array $extra = []) => [
+            'name' => $m->contact?->name ?: null,
+            'phone' => $m->to,
+        ] + $extra;
+
+        // nomor yang sedang diproses engine (Scan QR)
+        $current = null;
+        $live = $campaign->device_id ? \Illuminate\Support\Facades\Cache::get('live.device.'.$campaign->device_id) : null;
+        if ($live && now()->getTimestampMs() - (int) $live['at'] < 120000) {
+            $m = $msgs()->where('provider_message_id', $live['id'])->whereNull('wa_sent_at')->where('status', '!=', 'failed')->first();
+            if ($m) {
+                $left = isset($live['wait_ms']) ? max(0, (int) ceil(((int) $live['at'] + (int) $live['wait_ms'] - now()->getTimestampMs()) / 1000)) : null;
+                $current = $row($m, [
+                    'state' => $live['state'],
+                    'label' => ['waiting' => 'Menunggu jeda acak', 'typing' => 'Sedang mengetik…', 'sending' => 'Mengirim…'][$live['state']] ?? $live['state'],
+                    'seconds_left' => in_array($live['state'], ['waiting', 'typing'], true) ? $left : null,
+                ]);
+            }
+        }
+
+        $queued = $msgs()->whereNull('wa_sent_at')->where('status', 'sent')->orderBy('id')
+            ->when($current, fn ($q) => $q->where('to', '!=', $current['phone']))->limit(5)->get();
+
+        $recent = $msgs()->where(fn ($q) => $q->whereNotNull('wa_sent_at')->orWhere('status', 'failed'))
+            ->orderByDesc(\Illuminate\Support\Facades\DB::raw('COALESCE(wa_sent_at, updated_at)'))->limit(8)->get();
+
+        return response()->json([
+            'status' => $campaign->status,
+            'status_label' => $campaign->statusLabel(),
+            'running' => in_array($campaign->status, ['running', 'scheduled'], true),
+            'stats' => [
+                'delivered_to_wa' => $msgs()->whereNotNull('wa_sent_at')->count(),
+                'in_engine' => $msgs()->whereNull('wa_sent_at')->where('status', 'sent')->count(),
+                'waiting' => $stats['pending'],
+                'failed' => $stats['failed'],
+                'skipped' => $stats['skipped'],
+                'target' => $stats['total'] - $stats['skipped'],
+            ],
+            'current' => $current,
+            'queue' => $queued->map(fn ($m) => $row($m))->values(),
+            'recent' => $recent->map(fn ($m) => $row($m, [
+                'status' => $m->status,
+                'error' => $m->status === 'failed' ? $m->error : null,
+                'time' => ($m->wa_sent_at ?? $m->updated_at)?->format('H:i:s'),
+            ]))->values(),
+        ]);
+    }
+
     /** Tambah / ganti / hapus lampiran campaign yang belum selesai. */
     public function attachment(Request $request, Campaign $campaign)
     {

@@ -264,7 +264,12 @@ export class SessionManager {
         const max = Math.max(min, Number(h.max_delay ?? 25) * 1000);
         const gap = rand(min, max);
         const wait = Math.max(0, s.lastHumanAt + gap - Date.now());
-        if (wait > 0) await this.sleep(wait);
+        // progres untuk tampilan realtime di aplikasi
+        const progress = (state, extra = {}) => this.emit(name, { type: 'progress', id: job.id, to: job.to, state, queue: s.humanQueue.length, ...extra });
+        if (wait > 0) {
+          progress('waiting', { wait_ms: Math.round(wait) });
+          await this.sleep(wait);
+        }
 
         s.humanQueue.shift();
 
@@ -272,8 +277,11 @@ export class SessionManager {
           if (s.state !== 'connected') throw new Error('Sesi WhatsApp terputus sebelum pesan terkirim.');
           if (h.typing !== false && s.driver.typing) {
             const len = (job.text || job.media?.caption || '').length;
-            await s.driver.typing(job.to, Math.min(6000, Math.max(1200, len * 50)) * (0.8 + Math.random() * 0.4));
+            const ms = Math.min(6000, Math.max(1200, len * 50)) * (0.8 + Math.random() * 0.4);
+            progress('typing', { wait_ms: Math.round(ms) });
+            await s.driver.typing(job.to, ms);
           }
+          progress('sending');
           if (job.kind === 'media') await s.driver.sendMedia(job.to, job.media, { messageId: job.id });
           else await s.driver.sendText(job.to, job.text, { messageId: job.id });
           this.emit(name, { type: 'status', id: job.id, status: 'sent' });

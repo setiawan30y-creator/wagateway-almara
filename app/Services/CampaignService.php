@@ -187,6 +187,8 @@ class CampaignService
         }
 
         if ($quota === 0) {
+            $this->maybeComplete($campaign);
+
             return 0;
         }
 
@@ -243,13 +245,7 @@ class CampaignService
 
         $this->checkQuality($campaign->refresh());
 
-        if ($campaign->status === 'running' && ! $campaign->recipients()->where('status', 'pending')->exists()) {
-            $campaign->forceFill(['status' => 'completed', 'finished_at' => now()])->save();
-            $stats = $campaign->stats();
-            AppNotification::notify('campaign.finished', 'Campaign "'.$campaign->name.'" selesai',
-                "Terkirim {$stats['sent']}, gagal {$stats['failed']}, dilewati {$stats['skipped']}.", route('campaigns.show', $campaign), 'admins');
-            $this->webhooks->dispatch('campaign.finished', ['campaign' => $campaign->toApiArray()]);
-        }
+        $this->maybeComplete($campaign);
 
         return $sent;
     }
@@ -350,6 +346,27 @@ class CampaignService
         }
 
         return $out;
+    }
+
+    /** Selesai bila tidak ada penerima menunggu DAN antrean engine sudah terkirim (maks. 30 menit ditunggu). */
+    private function maybeComplete(Campaign $campaign): void
+    {
+        if ($campaign->status !== 'running' || $campaign->recipients()->where('status', 'pending')->exists()) {
+            return;
+        }
+
+        $inEngine = Message::where('campaign_id', $campaign->id)->where('direction', 'out')->where('status', 'sent')
+            ->whereNull('wa_sent_at')->where('created_at', '>=', now()->subMinutes(30))->exists();
+
+        if ($inEngine) {
+            return;
+        }
+
+        $campaign->forceFill(['status' => 'completed', 'finished_at' => now()])->save();
+        $stats = $campaign->stats();
+        AppNotification::notify('campaign.finished', 'Campaign "'.$campaign->name.'" selesai',
+            "Terkirim {$stats['sent']}, gagal {$stats['failed']}, dilewati {$stats['skipped']}.", route('campaigns.show', $campaign), 'admins');
+        $this->webhooks->dispatch('campaign.finished', ['campaign' => $campaign->toApiArray()]);
     }
 
     private function autoPause(Campaign $campaign, string $reason): void

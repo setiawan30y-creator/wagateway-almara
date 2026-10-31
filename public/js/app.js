@@ -401,4 +401,44 @@
     };
     setTimeout(tick, every);
   }
+
+  // Panel "Proses pengiriman" broadcast: nomor yang sedang dikirim, antrean, & baru terkirim (realtime)
+  var lp = document.querySelector('[data-live-progress]');
+  if (lp) {
+    var esc = function (t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
+    var who = function (r) { return (r.name ? '<b>' + esc(r.name) + '</b> ' : '') + '<span class="mono">+' + esc(r.phone) + '</span>'; };
+    var left = null, leftTimer = null, lpTimer = null;
+    var draw = function (d) {
+      lp.querySelector('[data-lp-status]').textContent = '· ' + d.status_label;
+      var cur = lp.querySelector('[data-lp-current]');
+      clearInterval(leftTimer);
+      if (d.current) {
+        left = d.current.seconds_left;
+        cur.innerHTML = '<div class="lp-card"><div class="lp-name">' + esc(d.current.name || 'Tanpa nama') + '</div><div class="lp-phone">+' + esc(d.current.phone) + '</div>' +
+          '<div class="lp-state">' + (d.current.state === 'sending' ? '📤 <span class="typing-dots">Mengirim</span>' : d.current.state === 'typing' ? '✍️ <span class="typing-dots">Sedang mengetik</span>' : '⏳ Menunggu jeda acak') +
+          (left != null ? ' · <b data-lp-left>' + left + '</b> dtk' : '') + '</div></div>';
+        if (left != null) leftTimer = setInterval(function () { var el = cur.querySelector('[data-lp-left]'); if (el && left > 0) el.textContent = --left; }, 1000);
+      } else {
+        cur.innerHTML = d.running ? (d.stats.waiting + d.stats.in_engine > 0 ? '<span class="muted">Menyiapkan pesan berikutnya…</span>' : '<span class="muted">Menunggu…</span>') : '<span class="muted">Tidak ada pengiriman berjalan.</span>';
+      }
+      lp.querySelector('[data-lp-queue]').innerHTML = d.queue.length ? d.queue.map(function (r) { return '<li>' + who(r) + '</li>'; }).join('') : '<li class="muted" style="list-style:none;margin-left:-18px">—</li>';
+      var more = d.stats.in_engine - d.queue.length - (d.current ? 1 : 0) + d.stats.waiting;
+      lp.querySelector('[data-lp-more]').textContent = more > 0 ? '(+' + more + ' lagi)' : '';
+      lp.querySelector('[data-lp-recent]').innerHTML = d.recent.length ? d.recent.map(function (r) {
+        return '<li>' + (r.status === 'failed' ? '<span class="bad" title="' + esc(r.error) + '">✕</span> ' : '<span class="ok">✓</span> ') + who(r) + ' <span class="muted">' + esc(r.time) + '</span></li>';
+      }).join('') : '<li class="muted" style="list-style:none;margin-left:-18px">—</li>';
+      var s = d.stats;
+      lp.querySelector('[data-lp-counts]').innerHTML = 'Terkirim ke WhatsApp <b>' + s.delivered_to_wa + '</b> / ' + s.target +
+        ' · Antre di engine <b>' + s.in_engine + '</b> · Menunggu giliran <b>' + s.waiting + '</b> · Gagal <b style="color:var(--err)">' + s.failed + '</b>' + (s.skipped ? ' · Dilewati <b>' + s.skipped + '</b>' : '');
+      return d.running;
+    };
+    var poll = function () {
+      if (document.hidden) { lpTimer = setTimeout(poll, 3000); return; }
+      fetch(lp.getAttribute('data-live-progress'), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { var again = draw(d); lpTimer = setTimeout(poll, again ? 2000 : 15000); })
+        .catch(function () { lpTimer = setTimeout(poll, 5000); });
+    };
+    poll();
+  }
 })();

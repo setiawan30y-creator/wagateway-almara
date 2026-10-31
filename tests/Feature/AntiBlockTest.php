@@ -161,4 +161,42 @@ class AntiBlockTest extends TestCase
 
         return $c->refresh();
     }
+
+    public function test_live_progress_shows_current_queue_and_recent(): void
+    {
+        $n = 0;
+        Http::fake(function () use (&$n) {
+            $n++;
+
+            return Http::response(['success' => true, 'id' => 'L'.$n, 'queued' => true]);
+        });
+        Setting::set('warmup_enabled', '0');
+        Setting::set('broadcast_delay_min', '1');
+        Setting::set('broadcast_delay_max', '2');
+        $device = $this->qrDevice(40);
+        $campaign = $this->campaign($device, 4);
+        $this->assertSame(4, app(CampaignService::class)->runBatch($campaign));
+        $this->assertSame(4, Message::whereNull('wa_sent_at')->count()); // antre di engine
+
+        $h = ['X-Webhook-Token' => 'wh'];
+        $ids = Message::orderBy('id')->pluck('provider_message_id', 'to');
+        [$first, $second] = array_map('strval', $ids->keys()->all());
+
+        // pesan pertama terkirim, pesan kedua sedang "mengetik"
+        $this->withHeaders($h)->postJson("/api/webhooks/qr/{$device->id}", ['type' => 'progress', 'id' => $ids[$first], 'to' => $first, 'state' => 'sending'])->assertOk();
+        $this->withHeaders($h)->postJson("/api/webhooks/qr/{$device->id}", ['type' => 'status', 'id' => $ids[$first], 'status' => 'sent'])->assertOk();
+        $this->withHeaders($h)->postJson("/api/webhooks/qr/{$device->id}", ['type' => 'progress', 'id' => $ids[$second], 'to' => $second, 'state' => 'typing', 'wait_ms' => 3000, 'queue' => 2])->assertOk();
+
+        $admin = User::factory()->create(['role' => 'owner']);
+        $this->actingAs($admin)->get("/broadcast/{$campaign->id}")->assertOk()->assertSee('data-live-progress', false);
+        $this->actingAs($admin)->getJson("/broadcast/{$campaign->id}/live")->assertOk()
+            ->assertJsonPath('running', true)
+            ->assertJsonPath('current.phone', $second)
+            ->assertJsonPath('current.state', 'typing')
+            ->assertJsonPath('stats.delivered_to_wa', 1)
+            ->assertJsonPath('stats.in_engine', 3)
+            ->assertJsonCount(2, 'queue')
+            ->assertJsonPath('recent.0.phone', $first)
+            ->assertJsonPath('recent.0.status', 'sent');
+    }
 }

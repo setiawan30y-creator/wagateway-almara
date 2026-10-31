@@ -594,3 +594,22 @@ img, svg, canvas { max-width: 100%; }
 @media (max-width: 860px) { .send-modes { grid-template-columns: 1fr; } }
 .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 4px; animation: livepulse 1.4s ease-in-out infinite; vertical-align: middle; }
 @keyframes livepulse { 50% { opacity: .25; } }
+
+/* Panel progres broadcast realtime */
+.lp-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 14px; }
+.lp-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 5px; }
+.lp-now .lp-card { border: 1px solid var(--accent); border-radius: 8px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.lp-now .lp-name { font-weight: 700; font-size: 15px; }
+.lp-now .lp-phone { font-family: ui-monospace, monospace; font-size: 13px; }
+.lp-now .lp-state { margin-top: 4px; font-size: 12.5px; }
+.lp-now .lp-state b { font-variant-numeric: tabular-nums; }
+.lp-list { margin: 0; padding-left: 18px; font-size: 12.5px; }
+.lp-list li { padding: 2px 0; }
+.lp-list .mono { font-size: 12px; }
+.lp-list .ok { color: var(--ok); }
+.lp-list .bad { color: var(--err); }
+.lp-counts { font-size: 12.5px; display: flex; gap: 14px; flex-wrap: wrap; }
+.lp-counts b { font-variant-numeric: tabular-nums; }
+.typing-dots::after { content: '…'; animation: tdots 1.2s steps(4) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
+@keyframes tdots { 0% { width: 0; } 100% { width: 1.2em; } }
+@media (max-width: 860px) { .lp-grid { grid-template-columns: 1fr; } }

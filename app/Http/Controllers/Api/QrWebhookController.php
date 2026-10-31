@@ -48,6 +48,10 @@ class QrWebhookController extends Controller
             ]);
             $message = Message::where('provider_message_id', $data['id'])->where('direction', 'out')->where('device_id', $device->id)->first();
 
+            if ($message && $data['status'] !== 'failed' && ! $message->wa_sent_at) {
+                $message->forceFill(['wa_sent_at' => now()])->save();
+            }
+
             if ($message && self::RANK[$data['status']] > (self::RANK[$message->status] ?? 0)) {
                 $message->forceFill(['status' => $data['status']] + ($data['status'] === 'failed' ? ['error' => 'Engine QR: '.($data['error'] ?? 'gagal terkirim')] : []))->save();
 
@@ -57,6 +61,20 @@ class QrWebhookController extends Controller
 
                 $webhooks->dispatch('message.status', ['message' => $message->toApiArray()]);
             }
+
+            return response()->json(['received' => true]);
+        }
+
+        // Progres antrean broadcast (menunggu jeda / mengetik / mengirim) untuk tampilan realtime
+        if ($type === 'progress') {
+            $data = $request->validate([
+                'id' => ['required', 'string', 'max:191'],
+                'to' => ['nullable', 'string', 'max:64'],
+                'state' => ['required', Rule::in(['waiting', 'typing', 'sending'])],
+                'wait_ms' => ['nullable', 'integer', 'min:0', 'max:3600000'],
+                'queue' => ['nullable', 'integer', 'min:0'],
+            ]);
+            \Illuminate\Support\Facades\Cache::put('live.device.'.$device->id, $data + ['at' => now()->getTimestampMs()], 300);
 
             return response()->json(['received' => true]);
         }

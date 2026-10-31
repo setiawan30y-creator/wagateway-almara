@@ -149,5 +149,10 @@ test('antrean broadcast: jeda acak, mengetik, status lewat webhook', async () =>
   assert.ok(waits.slice(-3).every((w) => w > 7000));
   const st = events.filter((e) => e.payload.type === 'status');
   assert.deepEqual(st.map((e) => e.payload.status), ['sent', 'sent', 'sent', 'sent']);
+  const pr = events.filter((e) => e.payload.type === 'progress');
+  assert.ok(pr.some((e) => e.payload.state === 'waiting' && e.payload.wait_ms > 7000));
+  assert.ok(pr.some((e) => e.payload.state === 'typing'));
+  assert.equal(pr.filter((e) => e.payload.state === 'sending').length, 4);
+  assert.equal(pr.find((e) => e.payload.state === 'sending').payload.to, '6281111111111');
   app.close();
 });
