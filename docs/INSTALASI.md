@@ -124,6 +124,10 @@ Biarkan ketiga jendela tetap terbuka selama aplikasi dipakai.
 
 > Memakai virtual host Laragon (`http://wagateway-almara.test`)? Klik **Reload** di Laragon, lalu ubah `APP_URL` di `.env` menjadi alamat tersebut dan jalankan `php artisan config:clear`. Jendela 1 tidak diperlukan.
 
+### 2.7a Cara cepat: `mulai.bat`
+
+Setelah instalasi selesai, cukup **klik dua kali `mulai.bat`** di folder aplikasi (setelah Laragon menyala). File ini membuka jendela **Scheduler** dan **Engine WhatsApp** sekaligus (dan memasang paket engine otomatis bila belum ada), lalu membuka aplikasi di browser. Biarkan kedua jendela itu tetap terbuka; tutup keduanya untuk berhenti.
+
 ### 2.8 Uji instalasi (opsional)
 
 ```powershell
