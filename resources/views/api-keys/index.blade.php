@@ -15,7 +15,7 @@
 @endif
 
 <div class="alert alert-success" style="margin-bottom:10px">
-    Cara termudah: buka <a href="{{ route('devices.index') }}"><b>Perangkat</b></a> → kolom <b>Aksi</b> → <b>🔑 Salin token</b> (satu token per nomor WhatsApp, seperti Fonnte). Halaman ini untuk key tambahan, mis. satu key per aplikasi.
+    Cara termudah: buka <a href="{{ route('devices.index') }}"><b>Perangkat</b></a> → kolom <b>Aksi</b> → <b>🔑 Salin token</b> (satu token per nomor WhatsApp). Halaman ini untuk key tambahan, mis. satu key per aplikasi.
 </div>
 
 <div class="card" style="margin-bottom:10px">
@@ -74,7 +74,7 @@
     <div class="card">
         <div class="card-h">Alamat API untuk aplikasi lain</div>
         <div class="card-b stack">
-            @foreach ([['Gaya Fonnte (target, message)', url('/api/send')], ['Gaya Wablas (phone, message)', url('/api/send-message')], ['REST lengkap (to, message)', url('/api/v1/messages/send')]] as $i => [$label, $u])
+            @foreach ([['Kirim pesan (target, message)', url('/api/send')], ['Kirim pesan alternatif (phone, message)', url('/api/send-message')], ['REST API lengkap (to, message)', url('/api/v1/messages/send')]] as $i => [$label, $u])
                 <div><div class="integ-label">{{ $label }}</div>
                     <div class="secret"><code id="api-url-{{ $i }}">{{ $u }}</code><button type="button" class="btn btn-sm" data-copy="#api-url-{{ $i }}">Salin</button></div></div>
             @endforeach

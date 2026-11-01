@@ -75,8 +75,8 @@
                                 @php
                                     $rows = [
                                         ['Token (Authorization)', $plain, 'Tempel di kolom "Token" / "API Key" aplikasi Anda.'],
-                                        ['URL gaya Fonnte', url('/api/send'), 'POST · field: target, message · header Authorization: token'],
-                                        ['URL gaya Wablas', url('/api/send-message'), 'POST/GET · field: phone, message · header Authorization: token'],
+                                        ['URL kirim pesan', url('/api/send'), 'POST · field: target, message · header Authorization: token'],
+                                        ['URL kirim pesan alternatif', url('/api/send-message'), 'POST/GET · field: phone, message · header Authorization: token'],
                                         ['URL REST (lengkap)', url('/api/v1/messages/send'), 'POST JSON · to, message · header Authorization: Bearer token'],
                                         ['Kirim lewat link (GET)', url('/api/send-message').'?token='.$plain.'&phone=08xxxxxxxxxx&message=Halo', 'Ganti nomor & pesan, buka di browser untuk uji cepat.'],
                                         ['Device ID', (string) $d->id, 'Opsional — tidak perlu diisi bila memakai token perangkat ini.'],
